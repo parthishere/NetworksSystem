@@ -15,10 +15,22 @@
 
 #define MAXDATASIZE 100
 
+void *getin_addr(struct sockaddr *sa){
+    if(sa->sa_family == AF_INET){
+        return &(((struct sockaddr_in*)(sa))->sin_addr);
+    }
+    else if (sa->sa_family == AF_INET6){
+        return &(((struct sockaddr_in6*)(sa))->sin6_addr);
+    }
+    return NULL;
+}
 
-int main(int argc, char *argv[]){
-    if(argc != 3){
-        printf(" You messed up, command is ./client <SERVER_IP> <SERVER_PORT> | current command (%d) %s %s %s\n", argc, argv[0], argv[1], argv[2]);
+
+int main(int argc, char *argv[])
+{
+    if (argc != 3)
+    {
+        printf(" You messed up, command is ./client <SERVER_IP> <SERVER_PORT>\n");
         exit(EXIT_FAILURE);
     }
 
@@ -38,74 +50,26 @@ int main(int argc, char *argv[]){
     struct addrinfo hints, *serv_info, *temp;
     int status;
     int sockfd;
+    socklen_t addr_len = sizeof(struct addrinfo);
+    int numbytes;
+    char buf[MAXDATASIZE];
     char ip[INET6_ADDRSTRLEN];
-    void* address;  
 
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    // hints.ai_flags = 
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; // AF_INET
+    hints.ai_socktype = SOCK_DGRAM;
 
     char *server_address = argv[1];
     printf("Passed Server Address %s\n", server_address);
     char *server_port = argv[2];
     printf("Passed Server Port %s\n", server_port);
 
-    if((status = getaddrinfo(server_address, server_port, &hints, &serv_info)) < 0){
+    if ((status = getaddrinfo(server_address, server_port, &hints, &serv_info)) < 0)
+    {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
-        exit(EXIT_FAILURE); // exit if there is an error
+        exit(EXIT_FAILURE);                                         // exit if there is an error
     }
     printf("[+] getaddrinfo call successful\n");
-
-    for(temp = serv_info; temp != NULL; temp = temp->ai_next){
-        if((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0){
-            perror("socket");
-            continue;
-        }
-        printf("[+] socket call successful\n");
-
-
-        if((connect(sockfd, temp->ai_addr, temp->ai_addrlen) == -1)){
-            close(sockfd);
-            perror("client: connect");
-            continue;
-        }
-        printf("[+] connect call successful\n");
-
-        break;
-    }
-
-    if(temp == NULL){
-        fprintf(stderr, "client: failed to connect \n");
-        exit(EXIT_FAILURE);
-    }
-    
-    if(temp->ai_addr->sa_family == AF_INET){
-        address = &(((struct sockaddr_in*)(temp->ai_addr))->sin_addr);
-    }
-    else if (temp->ai_addr->sa_family == AF_INET6){
-        address = &(((struct sockaddr_in6*)(temp->ai_addr))->sin6_addr);
-    }
-    else{
-        address = NULL;
-    }
-    
-    inet_ntop(temp->ai_family, address, ip, sizeof ip);
-    printf("Client connecting to : %s\n", ip);
-
-    freeaddrinfo(serv_info); // we do not need this anumore
-
-    int numbytes;
-    char buf[MAXDATASIZE];
-    if((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) < 0){
-        perror("recv");
-        exit(EXIT_FAILURE);
-    }
-    printf("[+] recv call successful\n");
-
-    buf[numbytes] = '\0';
-    printf("client recieve %s\n", buf);
-    close(sockfd);
-
 
     /*
         int socket(int domain, int type, int protocol);
@@ -113,12 +77,52 @@ int main(int argc, char *argv[]){
         we need type to be UDP
         and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
     */
-    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0))){
-        perror("socket");
+    for (temp = serv_info; temp != NULL; temp = temp->ai_next)
+    {
+        if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+        {
+            perror("client: socket");
+            exit(EXIT_FAILURE);
+            continue;
+        }
+        printf("[+] socket call successful\n");
+
+        break;
+    }
+    freeaddrinfo(serv_info);
+
+    if(temp == NULL){
+        fprintf(stderr, "[-] socket connection failed for client \n");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    /* 
+     ssize_t sendto(int sockfd, const void buf[.len], size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+
+    */
+   snprintf(buf, sizeof buf, "hello world!");
+    if((numbytes = sendto(sockfd, buf, sizeof(buf), 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
+        perror("client: sendto");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
 
 
+
+    if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE -1, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
+        perror("client: recvfrom");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    
+    buf[numbytes] = '\0';
+    char *temp_ip = getin_addr((struct sockaddr *)serv_info->ai_addr);
+    printf("client recieve %s from IP %s\n", buf, temp_ip);
+
+    close(sockfd);
+    
 
     return EXIT_SUCCESS;
 }

@@ -13,12 +13,25 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define MAXDATASIZE 100
 
-int main(int argc, char *argv[])
-{
-    if (argc != 2)
-    {
-        printf(" You messed up, command is ./server <PORT>\n");
+/*
+SERVER
+*/
+
+void *getin_addr(struct sockaddr *sa){
+    if(sa->sa_family == AF_INET){
+        return (&(((struct sockaddr_in*)(sa))->sin_addr));
+    }
+    else if (sa->sa_family == AF_INET6){
+        return (&(((struct sockaddr_in6*)(sa))->sin6_addr));
+    }
+    return NULL;
+}
+
+int main(int argc, char *argv[]){
+    if(argc != 2){
+        printf(" You messed up, command is ./server <PORT> | current command (%d) %s %s\n", argc, argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
 
@@ -37,55 +50,39 @@ int main(int argc, char *argv[])
     */
     struct addrinfo hints, *serv_info, *temp;
     struct sockaddr_storage their_addr;
-    void *address;
     int status;
-    socklen_t sin_size;
     int sockfd;
-    int yes = 1;
+    socklen_t addr_len = sizeof their_addr;
+    int numbytes;
+    char buf[MAXDATASIZE];
+    char ip[INET6_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; // fill up my IP address
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE; // fill up my IP
 
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
 
-    if ((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0)
-    {
+    if((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
-        exit(EXIT_FAILURE);                                         // exit if there is an error
+        exit(EXIT_FAILURE); // exit if there is an error
     }
     printf("[+] getaddrinfo call successful\n");
 
-    /*
+    for(temp = serv_info; temp != NULL; temp = temp->ai_next){
+        /*
         int socket(int domain, int type, int protocol);
         we need domain to be IF_INET (IPv4)
         we need type to be UDP
         and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
-    */
-    for (temp = serv_info; temp != NULL; temp = temp->ai_next)
-    {
-        if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-        {
+        */
+        if((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0){
             perror("server: socket");
-            exit(EXIT_FAILURE);
             continue;
         }
         printf("[+] socket call successful\n");
-
-        /*
-        int setsockopt(int sockfd, int level, int optname,
-                      const void optval[.optlen],
-                      socklen_t optlen);
-
-        */
-        if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0){
-            close(sockfd);
-            perror("server: setsockopt");
-            continue;
-        }
-        printf("[+] setsockopt call successful\n");
 
         /*
         int bind(int sockfd, const struct sockaddr *addr,
@@ -96,60 +93,50 @@ int main(int argc, char *argv[])
             perror("server: bind");
             continue;
         }
-        printf("[+] bind call successful\n");
 
         break;
     }
-    freeaddrinfo(serv_info);
 
     if(temp == NULL){
         fprintf(stderr, "[-] socket connection failed for server \n");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    
+    inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
+    printf("Server recieving UDP packet to : %s\n", ip);
+
+    freeaddrinfo(serv_info); // we do not need this anymore
+
+    
+    if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE - 1, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
+        perror("recv");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    printf("[+] recv call successful\n");
+
+    buf[numbytes] = '\0';
+    char *temp_ip = getin_addr((struct sockaddr *)&their_addr);
+    printf("server recieve %s from IP %s\n", buf, temp_ip);
+
+    snprintf(buf, sizeof buf, "hello fuck");
+    /*
+    ssize_t sendto(int sockfd, const void buf[.len], size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+
+    */
+    if((numbytes = sendto(sockfd, buf, MAXDATASIZE - 1, 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+        perror("server: send");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
 
-    if ((status = listen(sockfd, 10)) < 0)
-    {
-        fprintf(stderr, "error in listen %s\n", gai_strerror(status));
-        exit(EXIT_FAILURE);
-    }
-    printf("[+] listen call successful\n");
+    close(sockfd);
 
-    int new_fd;
-    char ip[INET6_ADDRSTRLEN];
-   
-    while (1)
-    {
-    
-        // why we are passing by address here is, we have to allocate the space for thier addr as accept call does not allocate space for the pointer. 
-        sin_size = sizeof their_addr;
-        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-        if (new_fd == -1) {
-            perror("accept");
-            continue;
-        }
 
-        if(their_addr.ss_family == AF_INET){
-            address = &(((struct sockaddr_in*)&their_addr)->sin_addr);
-        }
-        else if(their_addr.ss_family == AF_INET6){
-            address = &(((struct sockaddr_in6*)&their_addr)->sin6_addr);
-        }
-        else{
-            address = NULL;
-        }
-        inet_ntop(their_addr.ss_family, address, ip, sizeof(ip));
-
-        printf("server: got connection from %s\n", ip);
-
-        /* 
-        ssize_t send(int sockfd, const void buf[.len], size_t len, int flags);
-        */
-        if(send(new_fd, "hello world!", 13, 0) < 0){
-            perror("send");
-        }
-        close(new_fd);
-    }
-    
 
     return EXIT_SUCCESS;
 }
