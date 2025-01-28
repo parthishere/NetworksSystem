@@ -15,6 +15,22 @@
 
 #define MAXDATASIZE 100
 
+typedef enum {
+    GET,
+    PUT,
+    DELETE,
+    LS,
+    EXIT,
+    number_of_command,
+}commands_t;
+
+// #define SCANF 1
+// #define FGETS 1
+
+commands_t print_menu();
+commands_t whichcmd(char *cmd);
+
+
 void *getin_addr(struct sockaddr *sa){
     if(sa->sa_family == AF_INET){
         return &(((struct sockaddr_in*)(sa))->sin_addr);
@@ -102,13 +118,28 @@ int main(int argc, char *argv[])
                       const struct sockaddr *dest_addr, socklen_t addrlen);
 
     */
-   snprintf(buf, sizeof buf, "hello world!");
+    switch(print_menu()){
+        case LS:
+            snprintf(buf, sizeof buf, "ls");
+            break;
+        case EXIT:
+            break;
+    }
+
+   
     if((numbytes = sendto(sockfd, buf, sizeof(buf), 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
         perror("client: sendto");
         close(sockfd);
         exit(EXIT_FAILURE);
     }
 
+
+   
+    // wait for the input;
+    // we can use scanf, fgets, read calls to do that
+
+
+    
 
 
     if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE -1, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
@@ -125,4 +156,46 @@ int main(int argc, char *argv[])
     
 
     return EXIT_SUCCESS;
+}
+
+commands_t print_menu(){
+    printf("This client can support FTP through UDP\n");
+    printf("Currently this program can support following commands \n");
+    printf("get <filename> : Get the file name in server and print the file");
+    printf("ls : get the list of all the files in server and print it\n");
+    printf("exit: exit from the client and free the resources\n");
+    printf("put <filename>: if filename does not exists on server, create one\n");
+    printf("\n");
+
+
+#if SCANF == 1
+    char cmd[100];
+    printf("Enter your choice \n");
+    scanf("%s", cmd);
+    printf("%s\n", cmd);
+    
+#elif FGETS == 1
+    char cmd[100];
+    printf("Enter your choice \n");
+    fgets(cmd, sizeof(cmd), stdin);
+    printf("%s\n", cmd);
+
+#else
+    char cmd[100];
+    printf("Enter your choice \n");
+    int bytesread = read(STDIN_FILENO, cmd, sizeof(cmd));
+    printf("%s\n", cmd);
+
+#endif
+
+    return whichcmd(cmd);
+}
+
+
+
+commands_t whichcmd(char *cmd){
+    if(strncmp(cmd, "ls", strlen("ls")) == 0){
+        printf("command is ls \n");
+        return LS;
+    }
 }
