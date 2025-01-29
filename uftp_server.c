@@ -96,6 +96,7 @@ void recieve_and_send(int sockfd){
                 while((ep = readdir(dp)) != NULL){
 retry:
                     int record_len = strlen(ep->d_name);
+                    bzero(transmit_buffer, sizeof(transmit_buffer));
 
                     memcpy(transmit_buffer, ep->d_name, record_len);
 
@@ -105,13 +106,16 @@ retry:
                     packet[2] = seq_num;
 
                     *(transmit_buffer + record_len) = '\n';
+                    record_len++;
+                    memcpy(packet+3, transmit_buffer, record_len);
                     
-                    if((sentBytes = sendto(sockfd, transmit_buffer, (record_len + 1), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+                    if((sentBytes = sendto(sockfd, packet, (record_len + 1 + 3), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
                         perror("server: send");
                         close(sockfd);
                         exit(EXIT_FAILURE);
                     }
 
+                    bzero(recieve_buffer, sizeof(recieve_buffer));
                     if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
                         perror("recv");
                         close(sockfd);
@@ -120,12 +124,12 @@ retry:
                     printf("server recieve %s \n", recieve_buffer);
 
                     if(strncmp(recieve_buffer, "ack\t\t\t\0", 7) == 0){
-                        printf("server recieve %s \n", recieve_buffer);
+                        printf("rcv ack\n");
                         // got the ack we can append
                         seq_num++;
                         continue;
                     }
-                    
+                    printf("rcv nack\n");
                     goto retry;
                     
                     

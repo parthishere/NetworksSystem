@@ -148,9 +148,10 @@ int main(int argc, char *argv[])
     char recieve_buffer[RECIEVE_SIZE]; //256bytes
     char transmit_buffer[RECIEVE_SIZE]; //256bytes
     int recvBytes, sentBytes;
+    int current_count = 0;
     do{
     // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
-
+        bzero(recieve_buffer, sizeof(recieve_buffer));
         if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
             perror("client: recvfrom");
             close(sockfd);
@@ -158,16 +159,24 @@ int main(int argc, char *argv[])
         }
 
         char *temp_ip = getin_addr((struct sockaddr *)serv_info->ai_addr);
-        printf("client recieve %s from IP %s\n", recieve_buffer, temp_ip);
+        printf("client recieve %s from IP %s\n", &recieve_buffer[3], temp_ip);
 
-        memcpy(transmit_buffer, "ack\t\t\t\0", 7);
 
+        bzero(transmit_buffer, sizeof(transmit_buffer));
+        if(recieve_buffer[2] == current_count){
+            memcpy(transmit_buffer, "ack\t\t\t\0", 7);
+            current_count++;
+        }else{
+            memcpy(transmit_buffer, "nack\t\t\t\0", 7);
+
+        }
+
+        memcpy(recieve_buffer, &recieve_buffer[2], recvBytes-3);
         if((sentBytes = sendto(sockfd, transmit_buffer, 7, 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
             perror("client: sendto");
             close(sockfd);
             exit(EXIT_FAILURE);
         }
-        printf("sent ack");
 
     }while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) != 0);
 
