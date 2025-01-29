@@ -136,18 +136,35 @@ void list_files(sockdetails_t *sd)
     }
 }
 
-void get_file(sockdetails_t *sd, char *filename)
+void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
+    char filename[20];
+    sscanf(&recieve_buffer[4], "%s", filename);
+    if (filename[0] == '\0')
+    {
+        printf("File not found");
+        _send(sd, sizeof(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        return;
+        // send nac
+        // return
+    }
+
     size_t bufsz;
+
+
 
     DIR *dp;
     struct dirent *ep;
     int total_bytes;
 
-    char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
 
     FILE *fp = fopen(filename, "r");
+    if(!fp){
+        _send(sd, sizeof(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        return;
+    }
+
     fseek(fp, 0, SEEK_END);
     bufsz = ftell(fp);
     fseek(fp, 0, SEEK_SET);
@@ -155,6 +172,7 @@ void get_file(sockdetails_t *sd, char *filename)
     char buff[bufsz];
     fread(buff, sizeof(char), bufsz, fp);
     fclose(fp);
+    
 
     while ((ep = readdir(dp)) != NULL)
     {
@@ -162,6 +180,7 @@ void get_file(sockdetails_t *sd, char *filename)
         bzero(transmit_buffer, sizeof(transmit_buffer));
         if (strncmp(ep->d_name, filename, sizeof(filename)))
         {
+            printf("%s\n", ep->d_name);
             // match
             // FILE *file = fopen(ep->d_name, );
             // while ()
@@ -185,7 +204,6 @@ void recieve_and_send(int sockfd)
     _recv(&sd, RECIEVE_SIZE, recieve_buffer);
     printf("[+] recv call successful\n");
 
-    // buf[numbytes] = '\0';
     char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
     printf("server recieve %s from IP %s\n", recieve_buffer, temp_ip);
 
@@ -198,14 +216,7 @@ void recieve_and_send(int sockfd)
         break;
 
     case GET:
-
-        char filename[20];
-        sscanf(&recieve_buffer[4], "%s", filename);
-        if (filename[0] == '\0')
-        {
-            // send nack
-        }
-
+        get_file(&sd, recieve_buffer);
         break;
     }
 
