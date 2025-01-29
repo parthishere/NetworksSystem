@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <dirent.h>
 
 #define MAXDATASIZE 100
 
@@ -128,15 +129,37 @@ int main(int argc, char *argv[]){
                       const struct sockaddr *dest_addr, socklen_t addrlen);
 
     */
-    if((numbytes = sendto(sockfd, buf, MAXDATASIZE - 1, 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+    // if((numbytes = sendto(sockfd, buf, MAXDATASIZE - 1, 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+    //     perror("server: send");
+    //     close(sockfd);
+    //     exit(EXIT_FAILURE);
+    // }
+
+
+    DIR *dp;
+    struct dirent *ep;
+    dp = opendir("./");
+    char dirent[256*100]; // 100 entries max
+    char *temp_dirent = dirent;
+    if(dp != NULL){
+        while((ep = readdir(dp)) != NULL){
+            memcpy(temp_dirent, ep->d_name, strlen(ep->d_name));
+            temp_dirent += strlen(ep->d_name);
+            *temp_dirent = '\n';
+            temp_dirent += 1;
+            
+        }
+        closedir(dp);
+    }
+
+    puts(dirent);
+    if((numbytes = sendto(sockfd, dirent, sizeof(dirent), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
         perror("server: send");
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-
     close(sockfd);
-
-
+    
 
     return EXIT_SUCCESS;
 }
