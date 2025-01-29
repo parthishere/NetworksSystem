@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 
         }
 
-        memcpy(recieve_buffer, &recieve_buffer[2], recvBytes-3);
+        
         if((sentBytes = sendto(sockfd, transmit_buffer, 7, 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
             perror("client: sendto");
             close(sockfd);
