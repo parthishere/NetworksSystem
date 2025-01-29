@@ -15,10 +15,38 @@
 #include <dirent.h>
 
 #define MAXDATASIZE 100
+#define RECIEVE_SIZE 256
+#define TRANSMIT_SIZE 512 
+// this means that we can read uptp 5 mb in total as of now.
+#define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
+
+#define END_OF_DYNAMIC_DATA			"\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA		"Unable to complete operation\n\t\t\t\0"
 
 /*
 SERVER
 */
+
+
+typedef struct {
+    uint8_t total_len; // 2bytes
+    uint8_t total_len_of_file; // 2bytes
+    uint8_t seqence_num; // 2 bytes
+}header_t;
+
+typedef enum {
+    GET,
+    PUT,
+    DELETE,
+    LS,
+    EXIT,
+    number_of_command,
+}commands_t;
+
+// #define SCANF 1
+// #define FGETS 1
+
+commands_t whichcmd(char *cmd);
 
 void *getin_addr(struct sockaddr *sa){
     if(sa->sa_family == AF_INET){
@@ -28,6 +56,113 @@ void *getin_addr(struct sockaddr *sa){
         return (&(((struct sockaddr_in6*)(sa))->sin6_addr));
     }
     return NULL;
+}
+
+
+void recieve_and_send(int sockfd){
+    struct sockaddr_storage their_addr;
+    socklen_t addr_len = sizeof their_addr;
+
+    char recieve_buffer[RECIEVE_SIZE]; //256bytes
+    char transmit_buffer[TRANSMIT_SIZE];
+    char data_buffer[DATA_SIZE];
+
+    int recvBytes, sentBytes;
+
+    if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
+        perror("recv");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    printf("[+] recv call successful\n");
+
+    // buf[numbytes] = '\0';
+    char *temp_ip = getin_addr((struct sockaddr *)&their_addr);
+    printf("server recieve %s from IP %s\n", recieve_buffer, temp_ip);
+
+    commands_t cmd = whichcmd(recieve_buffer);
+
+    
+    switch(cmd){
+        case LS:
+            DIR *dp;
+            struct dirent *ep;
+            int total_bytes;
+
+            dp = opendir("./");
+            
+            if(dp != NULL){
+                int seq_num = 0;
+                while((ep = readdir(dp)) != NULL){
+retry:
+                    int record_len = strlen(ep->d_name);
+
+                    memcpy(transmit_buffer, ep->d_name, record_len);
+
+                    char packet[256+1+1+1];
+                    packet[0] = record_len;
+                    packet[1] = -1;
+                    packet[2] = seq_num;
+
+                    *(transmit_buffer + record_len) = '\n';
+                    
+                    if((sentBytes = sendto(sockfd, transmit_buffer, (record_len + 1), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+                        perror("server: send");
+                        close(sockfd);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
+                        perror("recv");
+                        close(sockfd);
+                        exit(EXIT_FAILURE);
+                    }
+                    printf("server recieve %s \n", recieve_buffer);
+
+                    if(strncmp(recieve_buffer, "ack\t\t\t\0", 7) == 0){
+                        printf("server recieve %s \n", recieve_buffer);
+                        // got the ack we can append
+                        seq_num++;
+                        continue;
+                    }
+                    
+                    goto retry;
+                    
+                    
+                }
+
+                if((sentBytes = sendto(sockfd, END_OF_DYNAMIC_DATA, sizeof(END_OF_DYNAMIC_DATA), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
+                    perror("server: send");
+                    close(sockfd);
+                    exit(EXIT_FAILURE);
+                }
+
+        
+                
+                closedir(dp);
+            }
+            
+            puts(data_buffer);
+            
+            break;
+
+        case GET:
+            char *str = strtok(recieve_buffer, " ");
+            printf("%s\n", str);
+            str = strtok(NULL, " ");
+            printf("%s\n", str);
+
+            break;
+
+    }
+
+    /*
+    ssize_t sendto(int sockfd, const void buf[.len], size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+
+    */
+   
+
 }
 
 int main(int argc, char *argv[]){
@@ -50,10 +185,10 @@ int main(int argc, char *argv[]){
 
     */
     struct addrinfo hints, *serv_info, *temp;
-    struct sockaddr_storage their_addr;
+    
     int status;
     int sockfd;
-    socklen_t addr_len = sizeof their_addr;
+    
     int numbytes;
     char buf[MAXDATASIZE];
     char ip[INET6_ADDRSTRLEN];
@@ -111,55 +246,32 @@ int main(int argc, char *argv[]){
 
     freeaddrinfo(serv_info); // we do not need this anymore
 
+    recieve_and_send(sockfd);
+
     
-    if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE - 1, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
-        perror("recv");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-    printf("[+] recv call successful\n");
-
-    buf[numbytes] = '\0';
-    char *temp_ip = getin_addr((struct sockaddr *)&their_addr);
-    printf("server recieve %s from IP %s\n", buf, temp_ip);
-
-    snprintf(buf, sizeof buf, "hello fuck");
-    /*
-    ssize_t sendto(int sockfd, const void buf[.len], size_t len, int flags,
-                      const struct sockaddr *dest_addr, socklen_t addrlen);
-
-    */
-    // if((numbytes = sendto(sockfd, buf, MAXDATASIZE - 1, 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
-    //     perror("server: send");
-    //     close(sockfd);
-    //     exit(EXIT_FAILURE);
-    // }
-
-
-    DIR *dp;
-    struct dirent *ep;
-    dp = opendir("./");
-    char dirent[256*100]; // 100 entries max
-    char *temp_dirent = dirent;
-    if(dp != NULL){
-        while((ep = readdir(dp)) != NULL){
-            memcpy(temp_dirent, ep->d_name, strlen(ep->d_name));
-            temp_dirent += strlen(ep->d_name);
-            *temp_dirent = '\n';
-            temp_dirent += 1;
-            
-        }
-        closedir(dp);
-    }
-
-    puts(dirent);
-    if((numbytes = sendto(sockfd, dirent, sizeof(dirent), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
-        perror("server: send");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
     close(sockfd);
     
 
     return EXIT_SUCCESS;
+}
+
+// data will be 256 bytes;
+// header: total len, total_len of file, seq, data
+
+
+
+
+commands_t whichcmd(char *cmd){
+    if(strncmp(cmd, "ls", strlen("ls")) == 0){
+        printf("command is ls \n");
+        return LS;
+    }
+    else if(strncmp(cmd, "get", strlen("get")) == 0){
+        printf("command is get \n");
+        return GET;
+    }
+    else if(strncmp(cmd, "put", strlen("get")) == 0){
+        printf("command is put \n");
+        return PUT;
+    }
 }

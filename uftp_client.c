@@ -14,6 +14,18 @@
 #include <sys/socket.h>
 
 #define MAXDATASIZE 100
+#define RECIEVE_SIZE 256
+#define TRANSMIT_SIZE 512 
+#define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
+
+#define END_OF_DYNAMIC_DATA			"\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA		"Unable to complete operation\n\t\t\t\0"
+
+typedef struct {
+    uint16_t total_len; // 2bytes
+    uint16_t total_len_of_file; // 2bytes
+    uint16_t seqence_num; // 2 bytes
+}header_t;
 
 typedef enum {
     GET,
@@ -133,6 +145,32 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    char recieve_buffer[RECIEVE_SIZE]; //256bytes
+    char transmit_buffer[RECIEVE_SIZE]; //256bytes
+    int recvBytes, sentBytes;
+    while(1){
+    // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
+
+        if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
+            perror("client: recvfrom");
+            close(sockfd);
+            exit(EXIT_FAILURE);
+        }
+
+        char *temp_ip = getin_addr((struct sockaddr *)serv_info->ai_addr);
+        printf("client recieve %s from IP %s\n", recieve_buffer, temp_ip);
+
+        memcpy(transmit_buffer, "ack\t\t\t\0", 7);
+
+        if((sentBytes = sendto(sockfd, transmit_buffer, 7, 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
+            perror("client: sendto");
+            close(sockfd);
+            exit(EXIT_FAILURE);
+        }
+        printf("sent ack");
+
+    }
+
 
    
     // wait for the input;
@@ -140,17 +178,6 @@ int main(int argc, char *argv[])
 
 
     
-
-
-    if((numbytes = recvfrom(sockfd, buf, MAXDATASIZE -1, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
-        perror("client: recvfrom");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-    
-    buf[numbytes] = '\0';
-    char *temp_ip = getin_addr((struct sockaddr *)serv_info->ai_addr);
-    printf("client recieve %s from IP %s\n", buf, temp_ip);
 
     close(sockfd);
     

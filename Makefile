@@ -3,7 +3,7 @@ SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 TARGETS = $(SRCS:.c=)
 
-CFLAGS = 
+CFLAGS = -g
 LDFLAGS = 
 INC = 
 
