@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
     char recieve_buffer[RECIEVE_SIZE]; //256bytes
     char transmit_buffer[RECIEVE_SIZE]; //256bytes
     int recvBytes, sentBytes;
-    while(1){
+    do{
     // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
 
         if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)serv_info, &addr_len)) < 0){
@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
         }
         printf("sent ack");
 
-    }
+    }while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) != 0);
 
 
    
