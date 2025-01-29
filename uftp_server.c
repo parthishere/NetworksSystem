@@ -16,148 +16,197 @@
 
 #define MAXDATASIZE 100
 #define RECIEVE_SIZE 256
-#define TRANSMIT_SIZE 512 
+#define TRANSMIT_SIZE 512
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
+#define HEADERSIZE 3
 
-#define END_OF_DYNAMIC_DATA			"\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA		"Unable to complete operation\n\t\t\t\0"
+#define END_OF_DYNAMIC_DATA "\t\t\t\0"
+#define ACK "ack\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\n\t\t\t\0"
 
-/*
-SERVER
-*/
-
-
-typedef struct {
-    uint8_t total_len; // 2bytes
-    uint8_t total_len_of_file; // 2bytes
-    uint8_t seqence_num; // 2 bytes
-}header_t;
-
-typedef enum {
+typedef enum
+{
     GET,
     PUT,
     DELETE,
     LS,
     EXIT,
     number_of_command,
-}commands_t;
+} commands_t;
 
-// #define SCANF 1
-// #define FGETS 1
+typedef struct
+{
+    int sockfd;
+    struct sockaddr_storage their_addr;
+    int addr_len;
+    int recvBytes, sentBytes;
+} sockdetails_t;
 
 commands_t whichcmd(char *cmd);
 
-void *getin_addr(struct sockaddr *sa){
-    if(sa->sa_family == AF_INET){
-        return (&(((struct sockaddr_in*)(sa))->sin_addr));
+void *getin_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET)
+    {
+        return (&(((struct sockaddr_in *)(sa))->sin_addr));
     }
-    else if (sa->sa_family == AF_INET6){
-        return (&(((struct sockaddr_in6*)(sa))->sin6_addr));
+    else if (sa->sa_family == AF_INET6)
+    {
+        return (&(((struct sockaddr_in6 *)(sa))->sin6_addr));
     }
     return NULL;
 }
 
+void error(sockdetails_t *sd, char *msg)
+{
+    sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, sizeof(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
+    perror(msg);
+    close(sd->sockfd);
+    exit(EXIT_FAILURE);
+}
 
-void recieve_and_send(int sockfd){
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len = sizeof their_addr;
+void _send(sockdetails_t *sd, int size, void *packet)
+{
+    if ((sd->sentBytes = sendto(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, sd->addr_len)) < 0)
+    {
+        error(sd, "send");
+    }
+}
 
-    char recieve_buffer[RECIEVE_SIZE]; //256bytes
+void _recv(sockdetails_t *sd, int size, void *packet)
+{
+    if ((sd->recvBytes = recvfrom(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, &sd->addr_len)) < 0)
+    {
+        error(sd, "recv");
+    }
+}
+
+void list_files(sockdetails_t *sd)
+{
+    DIR *dp;
+    struct dirent *ep;
+    int total_bytes;
+
+    char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
-    char data_buffer[DATA_SIZE];
+
+    dp = opendir("./");
+    if (dp != NULL)
+    {
+        int seq_num = 0;
+        while ((ep = readdir(dp)) != NULL)
+        {
+        retry:
+            int record_len = strlen(ep->d_name);
+            bzero(transmit_buffer, sizeof(transmit_buffer));
+
+            memcpy(transmit_buffer, ep->d_name, record_len);
+
+            char packet[TRANSMIT_SIZE + HEADERSIZE];
+            packet[0] = record_len; // packet lenght
+            packet[1] = -1;         // total lenght
+            packet[2] = seq_num;    // seq number
+
+            // for better readability
+            *(transmit_buffer + record_len) = '\n';
+            record_len++;
+
+            memcpy(packet + HEADERSIZE, transmit_buffer, record_len);
+            _send(sd, record_len + HEADERSIZE, packet);
+
+            bzero(recieve_buffer, sizeof(recieve_buffer));
+            _recv(sd, RECIEVE_SIZE, recieve_buffer);
+            printf("server recieve %s \n", recieve_buffer);
+
+            if (strncmp(recieve_buffer, ACK, 7) == 0)
+            {
+                printf("rcv ack\n");
+                // got the ack we can append
+                seq_num++;
+                continue;
+            }
+            printf("rcv nack\n");
+            goto retry;
+        }
+
+        _send(sd, sizeof(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+
+        closedir(dp);
+    }
+}
+
+void get_file(sockdetails_t *sd, char *filename)
+{
+    size_t bufsz;
+
+    DIR *dp;
+    struct dirent *ep;
+    int total_bytes;
+
+    char recieve_buffer[RECIEVE_SIZE]; // 256bytes
+    char transmit_buffer[TRANSMIT_SIZE];
+
+    FILE *fp = fopen(filename, "r");
+    fseek(fp, 0, SEEK_END);
+    bufsz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    printf("File size: %li bytes\n", bufsz);
+    char buff[bufsz];
+    fread(buff, sizeof(char), bufsz, fp);
+    fclose(fp);
+
+    while ((ep = readdir(dp)) != NULL)
+    {
+        int record_len = strlen(ep->d_name);
+        bzero(transmit_buffer, sizeof(transmit_buffer));
+        if (strncmp(ep->d_name, filename, sizeof(filename)))
+        {
+            // match
+            // FILE *file = fopen(ep->d_name, );
+            // while ()
+            // {
+            // }
+        }
+    }
+}
+
+void recieve_and_send(int sockfd)
+{
+    char recieve_buffer[RECIEVE_SIZE]; // 256bytes
+    char transmit_buffer[TRANSMIT_SIZE];
 
     int recvBytes, sentBytes;
 
-    if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
-        perror("recv");
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
+    sockdetails_t sd;
+    sd.sockfd = sockfd;
+    sd.addr_len = sizeof(sd.their_addr);
+
+    _recv(&sd, RECIEVE_SIZE, recieve_buffer);
     printf("[+] recv call successful\n");
 
     // buf[numbytes] = '\0';
-    char *temp_ip = getin_addr((struct sockaddr *)&their_addr);
+    char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
     printf("server recieve %s from IP %s\n", recieve_buffer, temp_ip);
 
     commands_t cmd = whichcmd(recieve_buffer);
 
-    
-    switch(cmd){
-        case LS:
-            DIR *dp;
-            struct dirent *ep;
-            int total_bytes;
+    switch (cmd)
+    {
+    case LS:
+        list_files(&sd);
+        break;
 
-            dp = opendir("./");
-            
-            if(dp != NULL){
-                int seq_num = 0;
-                while((ep = readdir(dp)) != NULL){
-retry:
-                    int record_len = strlen(ep->d_name);
-                    bzero(transmit_buffer, sizeof(transmit_buffer));
+    case GET:
 
-                    memcpy(transmit_buffer, ep->d_name, record_len);
+        char filename[20];
+        sscanf(&recieve_buffer[4], "%s", filename);
+        if (filename[0] == '\0')
+        {
+            // send nack
+        }
 
-                    char packet[256+1+1+1];
-                    packet[0] = record_len;
-                    packet[1] = -1;
-                    packet[2] = seq_num;
-
-                    *(transmit_buffer + record_len) = '\n';
-                    record_len++;
-                    memcpy(packet+3, transmit_buffer, record_len);
-                    
-                    if((sentBytes = sendto(sockfd, packet, (record_len + 1 + 3), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
-                        perror("server: send");
-                        close(sockfd);
-                        exit(EXIT_FAILURE);
-                    }
-
-                    bzero(recieve_buffer, sizeof(recieve_buffer));
-                    if((recvBytes = recvfrom(sockfd, recieve_buffer, RECIEVE_SIZE, 0, (struct sockaddr *)&their_addr, &addr_len)) < 0){
-                        perror("recv");
-                        close(sockfd);
-                        exit(EXIT_FAILURE);
-                    }
-                    printf("server recieve %s \n", recieve_buffer);
-
-                    if(strncmp(recieve_buffer, "ack\t\t\t\0", 7) == 0){
-                        printf("rcv ack\n");
-                        // got the ack we can append
-                        seq_num++;
-                        continue;
-                    }
-                    printf("rcv nack\n");
-                    goto retry;
-                    
-                    
-                }
-
-                if((sentBytes = sendto(sockfd, END_OF_DYNAMIC_DATA, sizeof(END_OF_DYNAMIC_DATA), 0,(struct sockaddr *)&their_addr, addr_len)) < 0){
-                    perror("server: send");
-                    close(sockfd);
-                    exit(EXIT_FAILURE);
-                }
-
-        
-                
-                closedir(dp);
-            }
-            
-            puts(data_buffer);
-            
-            break;
-
-        case GET:
-            char *str = strtok(recieve_buffer, " ");
-            printf("%s\n", str);
-            str = strtok(NULL, " ");
-            printf("%s\n", str);
-
-            break;
-
+        break;
     }
 
     /*
@@ -165,12 +214,12 @@ retry:
                       const struct sockaddr *dest_addr, socklen_t addrlen);
 
     */
-   
-
 }
 
-int main(int argc, char *argv[]){
-    if(argc != 2){
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
         printf(" You messed up, command is ./server <PORT> | current command (%d) %s %s\n", argc, argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
@@ -189,10 +238,10 @@ int main(int argc, char *argv[]){
 
     */
     struct addrinfo hints, *serv_info, *temp;
-    
+
     int status;
     int sockfd;
-    
+
     int numbytes;
     char buf[MAXDATASIZE];
     char ip[INET6_ADDRSTRLEN];
@@ -205,20 +254,23 @@ int main(int argc, char *argv[]){
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
 
-    if((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0){
+    if ((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0)
+    {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
-        exit(EXIT_FAILURE); // exit if there is an error
+        exit(EXIT_FAILURE);                                         // exit if there is an error
     }
     printf("[+] getaddrinfo call successful\n");
 
-    for(temp = serv_info; temp != NULL; temp = temp->ai_next){
+    for (temp = serv_info; temp != NULL; temp = temp->ai_next)
+    {
         /*
         int socket(int domain, int type, int protocol);
         we need domain to be IF_INET (IPv4)
         we need type to be UDP
         and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
         */
-        if((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0){
+        if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+        {
             perror("server: socket");
             continue;
         }
@@ -228,7 +280,8 @@ int main(int argc, char *argv[]){
         int bind(int sockfd, const struct sockaddr *addr,
                 socklen_t addrlen);
         */
-        if(bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0){
+        if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
+        {
             close(sockfd);
             perror("server: bind");
             continue;
@@ -237,14 +290,13 @@ int main(int argc, char *argv[]){
         break;
     }
 
-    if(temp == NULL){
+    if (temp == NULL)
+    {
         fprintf(stderr, "[-] socket connection failed for server \n");
         close(sockfd);
         exit(EXIT_FAILURE);
     }
-    
-    
-    
+
     inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
     printf("Server recieving UDP packet to : %s\n", ip);
 
@@ -252,9 +304,7 @@ int main(int argc, char *argv[]){
 
     recieve_and_send(sockfd);
 
-    
     close(sockfd);
-    
 
     return EXIT_SUCCESS;
 }
@@ -262,19 +312,20 @@ int main(int argc, char *argv[]){
 // data will be 256 bytes;
 // header: total len, total_len of file, seq, data
 
-
-
-
-commands_t whichcmd(char *cmd){
-    if(strncmp(cmd, "ls", strlen("ls")) == 0){
+commands_t whichcmd(char *cmd)
+{
+    if (strncmp(cmd, "ls", strlen("ls")) == 0)
+    {
         printf("command is ls \n");
         return LS;
     }
-    else if(strncmp(cmd, "get", strlen("get")) == 0){
+    else if (strncmp(cmd, "get", strlen("get")) == 0)
+    {
         printf("command is get \n");
         return GET;
     }
-    else if(strncmp(cmd, "put", strlen("get")) == 0){
+    else if (strncmp(cmd, "put", strlen("get")) == 0)
+    {
         printf("command is put \n");
         return PUT;
     }

@@ -134,6 +134,9 @@ int main(int argc, char *argv[])
         case LS:
             snprintf(buf, sizeof buf, "ls");
             break;
+        case GET:
+            snprintf(buf, sizeof buf, "get parth");
+            break;
         case EXIT:
             break;
     }
@@ -168,10 +171,8 @@ int main(int argc, char *argv[])
             current_count++;
         }else{
             memcpy(transmit_buffer, "nack\t\t\t\0", 7);
-
         }
 
-        
         if((sentBytes = sendto(sockfd, transmit_buffer, 7, 0, (struct sockaddr*)serv_info->ai_addr, addr_len)) < 0){
             perror("client: sendto");
             close(sockfd);
@@ -233,5 +234,13 @@ commands_t whichcmd(char *cmd){
     if(strncmp(cmd, "ls", strlen("ls")) == 0){
         printf("command is ls \n");
         return LS;
+    }
+    else if(strncmp(cmd, "get", strlen("get")) == 0){
+        printf("command is get \n");
+        return GET;
+    }
+    else if(strncmp(cmd, "put", strlen("get")) == 0){
+        printf("command is put \n");
+        return PUT;
     }
 }
