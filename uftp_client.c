@@ -144,7 +144,39 @@ void list_files(sockdetails_t *sd)
 
 
 void get_file(sockdetails_t *sd){
+    char recieve_buffer[RECIEVE_SIZE];  // 256bytes
+    char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
+    int current_count = 0;
+    do
+    {
+        // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
+        bzero(recieve_buffer, sizeof(recieve_buffer));
+        _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
+        char *temp_ip = getin_addr(sd->their_addr);
+        printf("client recieve %s from IP %s\n", &recieve_buffer[3], temp_ip);
+
+        bzero(transmit_buffer, sizeof(transmit_buffer));
+        if (recieve_buffer[2] == current_count)
+        {
+            memcpy(transmit_buffer, ACK, 7);
+            _send(sd, 7, transmit_buffer);
+            current_count++;
+        }
+        else
+        {
+            memcpy(transmit_buffer, NACK, 7);
+            _send(sd, 8, transmit_buffer);
+        }
+
+        if(strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, sizeof(ERROR_FOR_DYNAMIC_DATA)) == 0) {
+            printf("Error somewhere \n");
+            return;
+        }
+
+        
+
+    } while (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) != 0);
 }
 
 void put_file(sockdetails_t *sd){

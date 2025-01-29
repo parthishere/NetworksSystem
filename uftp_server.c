@@ -149,45 +149,53 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         // return
     }
 
-    size_t bufsz;
-
-
-
+    size_t file_size;
     DIR *dp;
     struct dirent *ep;
     int total_bytes;
+    int seq_num = 0;
 
     char transmit_buffer[TRANSMIT_SIZE];
 
     FILE *fp = fopen(filename, "r");
-    if(!fp){
+    if (!fp)
+    {
         _send(sd, sizeof(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
 
     fseek(fp, 0, SEEK_END);
-    bufsz = ftell(fp);
+    file_size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    printf("File size: %li bytes\n", bufsz);
-    char buff[bufsz];
-    fread(buff, sizeof(char), bufsz, fp);
-    fclose(fp);
-    
+    printf("File size: %li bytes\n", file_size);
 
-    while ((ep = readdir(dp)) != NULL)
+    bzero(transmit_buffer, TRANSMIT_SIZE);
+    bzero(recieve_buffer, RECIEVE_SIZE);
+    while (total_bytes = fread(transmit_buffer + HEADERSIZE, sizeof(char), TRANSMIT_SIZE - HEADERSIZE, fp) > 0)
     {
-        int record_len = strlen(ep->d_name);
+    retry:
+        printf("%s\n", transmit_buffer);
+        _send(sd, TRANSMIT_SIZE, transmit_buffer);
         bzero(transmit_buffer, sizeof(transmit_buffer));
-        if (strncmp(ep->d_name, filename, sizeof(filename)))
+
+        transmit_buffer[0] = total_bytes;
+        transmit_buffer[1] = -1;
+        transmit_buffer[2] = seq_num++;
+
+        _recv(sd, RECIEVE_SIZE, recieve_buffer);
+        if (strncmp(recieve_buffer, ACK, 7) == 0)
         {
-            printf("%s\n", ep->d_name);
-            // match
-            // FILE *file = fopen(ep->d_name, );
-            // while ()
-            // {
-            // }
+            printf("rcv ack\n");
+            // got the ack we can append
+            seq_num++;
+            continue;
         }
+        goto retry;
     }
+
+    _send(sd, sizeof(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+
+    fclose(fp);
 }
 
 void recieve_and_send(int sockfd)
@@ -287,6 +295,21 @@ int main(int argc, char *argv[])
         }
         printf("[+] socket call successful\n");
 
+        int timeout = 100;
+        struct timeval time;
+        time.tv_sec = 5;
+        time.tv_usec = 0;
+
+        int yes = 1;
+
+        // if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 ||
+        //     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &time, sizeof(time)) == -1 ||
+        //     setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &time, sizeof(time)) == -1)
+        // {
+        //     perror("setsockopt");
+        //     exit(1);
+        // }
+
         /*
         int bind(int sockfd, const struct sockaddr *addr,
                 socklen_t addrlen);
@@ -313,7 +336,11 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(serv_info); // we do not need this anymore
 
-    recieve_and_send(sockfd);
+    bool exit = false;
+    while (true)
+    {
+        recieve_and_send(sockfd);
+    }
 
     close(sockfd);
 
