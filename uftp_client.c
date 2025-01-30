@@ -14,8 +14,8 @@
 #include <sys/socket.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 1024
-#define TRANSMIT_SIZE 1024
+#define RECIEVE_SIZE 1024 * 10
+#define TRANSMIT_SIZE 1024 * 10
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
@@ -23,7 +23,9 @@
 #define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
 #define ACK "ack\t\t\t\0"
 #define NACK "nack\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\t\t\t\n\0"
+#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
+#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
+#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
 
 typedef struct
 {
@@ -146,29 +148,32 @@ void get_file(sockdetails_t *sd, char *filename)
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
     char whole_filename[60];
-    snprintf(whole_filename, sizeof(whole_filename),"./Downloads/%s", filename);
+    snprintf(whole_filename, sizeof(whole_filename), "./Downloads/%s", filename);
     FILE *fp = fopen(whole_filename, "wb");
     while (1)
     {
 
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
-        
-        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)+1) == 0)
+
+        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA) + 1) == 0)
         {
             printf("End of file received.\n");
             break;
         }
 
+        if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
+        {
+            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
+            return;
+            fclose(fp);
+        }
+
         int seq_num = (uint16_t)recieve_buffer[2];
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
 
-        // recieve_buffer[HEADERSIZE + data_length] = '\0';
-        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
-        printf("%s\n", recieve_buffer + HEADERSIZE);
-        fwrite(&recieve_buffer[HEADERSIZE], 1, data_length, fp);
-
         bzero(transmit_buffer, TRANSMIT_SIZE);
+
         if (seq_num == current_count)
         {
             memcpy(transmit_buffer, ACK, strlen(ACK));
@@ -180,14 +185,12 @@ void get_file(sockdetails_t *sd, char *filename)
             printf("retry.... \n");
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
+            continue;
         }
 
-        if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
-        {
-            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
-            return;
-            fclose(fp);
-        }
+        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
+        printf("%s\n", recieve_buffer + HEADERSIZE);
+        fwrite(&recieve_buffer[HEADERSIZE], 1, data_length, fp);
     }
     fclose(fp);
 }

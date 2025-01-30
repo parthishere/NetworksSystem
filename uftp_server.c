@@ -18,16 +18,16 @@
 #include <fcntl.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 512
-#define TRANSMIT_SIZE 512
-// this means that we can read uptp 5 mb in total as of now.
-#define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
+#define RECIEVE_SIZE 1024 * 10  // 10KB buffer
+#define TRANSMIT_SIZE 1024 * 10 // 10KB buffer
 #define HEADERSIZE 3
 
 #define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
 #define ACK "ack\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\t\t\t\n\0"
-#define FILE_NOT_FOUND ""
+#define NACK "nack\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
+#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
+#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
 
 typedef enum
 {
@@ -159,35 +159,22 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     char transmit_buffer[TRANSMIT_SIZE];
 
     int fd = open(filename, O_RDONLY);
-    if(fd < 0){
+    if (fd < 0)
+    {
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
 
-    // FILE *fp = fopen(filename, "rb");
-    // if (!fp)
-    // {
-    //     _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
-    //     return;
-    // }
-
-    // fseek(fp, 0, SEEK_END);
-    // file_size = ftell(fp);
-    // fseek(fp, 0, SEEK_SET);
-    // printf("File size: %li bytes\n", file_size);
-
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
 
-    // while ((total_bytes = fread(transmit_buffer + HEADERSIZE, 1, TRANSMIT_SIZE - HEADERSIZE - 1, fp)) > 0)
-    // {
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
     retry:
         transmit_buffer[0] = (total_bytes & 0x00FF);
         transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = seq_num;
-        printf("first char ->> %c %c %c %c %c %c\n", transmit_buffer[HEADERSIZE], transmit_buffer[HEADERSIZE+1], transmit_buffer[HEADERSIZE+2], transmit_buffer[HEADERSIZE+3], transmit_buffer[HEADERSIZE+4], transmit_buffer[HEADERSIZE+5]);
+        printf("first char ->> %c %c %c %c %c %c\n", transmit_buffer[HEADERSIZE], transmit_buffer[HEADERSIZE + 1], transmit_buffer[HEADERSIZE + 2], transmit_buffer[HEADERSIZE + 3], transmit_buffer[HEADERSIZE + 4], transmit_buffer[HEADERSIZE + 5]);
 
         printf("Sending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
         printf("%s", transmit_buffer + HEADERSIZE);
@@ -198,8 +185,6 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
         if (strncmp(recieve_buffer, ACK, 7) == 0)
         {
-            // printf("rcv ack\n");
-            // got the ack we can append
             bzero(transmit_buffer, TRANSMIT_SIZE);
             seq_num++;
             continue;
@@ -221,6 +206,84 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
     // fclose(fp);
     close(fd);
+}
+
+void put_file(sockdetails_t *sd, char *recieve_buffer)
+{
+
+    char filename[50];
+    sscanf(&recieve_buffer[4], "%s", filename);
+    if (filename[0] == '\0')
+    {
+        printf("File not found");
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        return;
+    }
+
+    size_t file_size;
+    DIR *dp;
+    struct dirent *ep;
+    int total_bytes;
+    int seq_num = 0;
+    int retry_count = 0;
+    int current_count = 0;
+    char transmit_buffer[TRANSMIT_SIZE];
+
+    int fd = open(filename, O_WRONLY);
+    if (fd < 0)
+    {
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        return;
+    }
+
+    bzero(transmit_buffer, TRANSMIT_SIZE);
+    bzero(recieve_buffer, RECIEVE_SIZE);
+
+    while(1)
+    {
+    retry:
+        bzero(recieve_buffer, RECIEVE_SIZE);
+        _recv(sd, RECIEVE_SIZE, recieve_buffer);
+
+        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA) + 1) == 0)
+        {
+            printf("End of file received.\n");
+            break;
+        }
+
+        if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
+        {
+            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
+            return;
+            close(fd);
+        }
+
+        int seq_num = (uint16_t)recieve_buffer[2];
+        int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
+
+        bzero(transmit_buffer, TRANSMIT_SIZE);
+
+        if (seq_num == current_count)
+        {
+            memcpy(transmit_buffer, ACK, strlen(ACK));
+            _send(sd, strlen(ACK), transmit_buffer);
+            current_count++;
+        }
+        else
+        {
+            printf("retry.... \n");
+            memcpy(transmit_buffer, NACK, strlen(NACK));
+            _send(sd, strlen(NACK), transmit_buffer);
+            continue;
+        }
+
+        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
+        printf("%s\n", recieve_buffer + HEADERSIZE);
+        total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
+
+    }
+
+    _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 }
 
 void recieve_and_send(int sockfd)
@@ -250,6 +313,10 @@ void recieve_and_send(int sockfd)
 
     case GET:
         get_file(&sd, recieve_buffer);
+        break;
+
+    case PUT:
+        put_file(&sd, recieve_buffer);
         break;
     }
 
@@ -320,20 +387,18 @@ int main(int argc, char *argv[])
         }
         printf("[+] socket call successful\n");
 
-        int timeout = 100;
-        struct timeval time;
-        time.tv_sec = 5;
-        time.tv_usec = 0;
+        struct timeval timeout;
+        timeout.tv_sec = 2;
+        timeout.tv_usec = 0;
 
         int yes = 1;
 
-        // if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 ||
-        //     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &time, sizeof(time)) == -1 ||
-        //     setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &time, sizeof(time)) == -1)
-        // {
-        //     perror("setsockopt");
-        //     exit(1);
-        // }
+        // setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,sizeof(struct timeval));
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        {
+            perror("setsockopt");
+            exit(1);
+        }
 
         /*
         int bind(int sockfd, const struct sockaddr *addr,

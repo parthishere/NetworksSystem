@@ -18,8 +18,8 @@
 #include <fcntl.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 512
-#define TRANSMIT_SIZE 512
+#define RECIEVE_SIZE 1024*10 // 10KB buffer
+#define TRANSMIT_SIZE 1024*10 // 10KB buffer
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
@@ -164,23 +164,9 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
-    // FILE *fp = fopen(filename, "rb");
-    // if (!fp)
-    // {
-    //     _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
-    //     return;
-    // }
-
-    // fseek(fp, 0, SEEK_END);
-    // file_size = ftell(fp);
-    // fseek(fp, 0, SEEK_SET);
-    // printf("File size: %li bytes\n", file_size);
-
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
 
-    // while ((total_bytes = fread(transmit_buffer + HEADERSIZE, 1, TRANSMIT_SIZE - HEADERSIZE - 1, fp)) > 0)
-    // {
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
     retry:
@@ -198,8 +184,6 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
         if (strncmp(recieve_buffer, ACK, 7) == 0)
         {
-            // printf("rcv ack\n");
-            // got the ack we can append
             bzero(transmit_buffer, TRANSMIT_SIZE);
             seq_num++;
             continue;
