@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <termios.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,8 +15,8 @@
 #include <sys/socket.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 1024 * 10
-#define TRANSMIT_SIZE 1024 * 10
+#define RECIEVE_SIZE 512
+#define TRANSMIT_SIZE 512
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
@@ -105,9 +106,20 @@ commands_t whichcmd(char *cmd)
         printf("command is put \n");
         return PUT;
     }
+    else if (strncmp(cmd, "exit", strlen("exit")) == 0)
+    {
+        printf("command is put \n");
+        return EXIT;
+    }
+    else if (strncmp(cmd, "delete", strlen("delete")) == 0)
+    {
+        printf("command is delete \n");
+        return DELETE;
+    }
     else
     {
         printf("Wrong command try again \n\r");
+        return -1;
     }
 }
 
@@ -197,6 +209,97 @@ void get_file(sockdetails_t *sd, char *filename)
 
 void put_file(sockdetails_t *sd)
 {
+    char recieve_buffer[RECIEVE_SIZE];
+    char transmit_buffer[TRANSMIT_SIZE];
+    int write_pointer = HEADERSIZE; // 0, 1, 2 are filled
+    int seq_number = 0;
+    int retry_count = 0;
+    bool send_data = false, end_of_data = false;
+    // char *write_pointer = transmit_buffer;
+
+    // reddit artical about changing behaviour of the unix
+    struct termios old_tio, new_tio;
+    unsigned char c;
+
+    // Get current terminal settings
+    tcgetattr(STDIN_FILENO, &old_tio);
+    new_tio = old_tio;
+
+    // Disable canonical mode and echo
+    new_tio.c_lflag &= (~ICANON & ~ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+
+    while (1)
+    {
+        char ch;
+        read(STDIN_FILENO, &ch, 1);
+        // char ch = getc(stdin); // Get character without echo
+        printf("entered char %c\n", ch);
+
+        if (write_pointer >= 10 || ch == 27) // -1 as it is index, and index starts from 0;
+        // if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE) // -1 as it is index, and index starts from 0;
+        {
+            if (ch == 27 && write_pointer > 0)
+            {
+                send_data = true;
+                end_of_data = true;
+            }
+            else if (ch != 27 && write_pointer > 0)
+            {
+                send_data = true;
+                end_of_data = false;
+            }
+            else if (ch == 27 && write_pointer == 0)
+            {
+                send_data = false;
+                end_of_data = true;
+            }
+
+            if (send_data)
+            {
+            retry:
+                transmit_buffer[0] = ((write_pointer - HEADERSIZE) & 0xFF);
+                transmit_buffer[1] = (((write_pointer - HEADERSIZE) & 0xFF00) >> 8);
+                transmit_buffer[2] = seq_number;
+
+                _send(sd, TRANSMIT_SIZE, transmit_buffer);
+                write_pointer = HEADERSIZE;
+
+                bzero(recieve_buffer, TRANSMIT_SIZE);
+                _recv(sd, RECIEVE_SIZE, recieve_buffer);
+                if (strncmp(recieve_buffer, ACK, 7) == 0)
+                {
+
+                    bzero(transmit_buffer, TRANSMIT_SIZE);
+                    seq_number++;
+                }
+                else
+                {
+                    retry_count++;
+                    if (retry_count >= 3)
+                    {
+                        retry_count = 0;
+                        printf("Max retries reached. Aborting.\n");
+                        break;
+                    }
+                    printf("retry \n\r");
+                    goto retry;
+                }
+            }
+
+            if (end_of_data)
+            {
+                seq_number = 0;
+                printf("End of file sent !\n\n\n");
+                _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+                end_of_data = false;
+                break;
+            }
+        }
+
+        transmit_buffer[write_pointer++] = ch;
+    }
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
 }
 
 int main(int argc, char *argv[])

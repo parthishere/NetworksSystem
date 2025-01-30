@@ -18,8 +18,8 @@
 #include <fcntl.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 1024 * 10  // 10KB buffer
-#define TRANSMIT_SIZE 1024 * 10 // 10KB buffer
+#define RECIEVE_SIZE 512
+#define TRANSMIT_SIZE 512
 #define HEADERSIZE 3
 
 #define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
@@ -194,6 +194,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
             retry_count++;
             if (retry_count >= 3)
             {
+                retry_count = 0;
                 printf("Max retries reached. Aborting.\n");
                 break;
             }
@@ -226,12 +227,13 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     int total_bytes;
     int seq_num = 0;
     int retry_count = 0;
-    int current_count = 0;
     char transmit_buffer[TRANSMIT_SIZE];
+    int current_count = 0;
 
-    int fd = open(filename, O_WRONLY);
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0)
     {
+        printf("some error \n");
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -239,15 +241,16 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
 
-    while(1)
+    while (1)
     {
     retry:
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
-        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA) + 1) == 0)
+        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0)
         {
-            printf("End of file received.\n");
+            printf("End of file received.\n\n\n\n");
+            close(fd);
             break;
         }
 
@@ -277,13 +280,17 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             continue;
         }
 
-        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
         printf("%s\n", recieve_buffer + HEADERSIZE);
         total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
-
     }
+}
 
-    _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+void delete_file(sockdetails_t *sd, char *recieve_buffer)
+{
+}
+
+void cleanup_client_resouces(sockdetails_t *sd)
+{
 }
 
 void recieve_and_send(int sockfd)
@@ -317,6 +324,17 @@ void recieve_and_send(int sockfd)
 
     case PUT:
         put_file(&sd, recieve_buffer);
+        break;
+
+    case EXIT:
+        cleanup_client_resouces(&sd);
+        break;
+
+    case DELETE:
+        delete_file(&sd, recieve_buffer);
+        break;
+
+    default:
         break;
     }
 
@@ -393,7 +411,6 @@ int main(int argc, char *argv[])
 
         int yes = 1;
 
-        // setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout,sizeof(struct timeval));
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
             perror("setsockopt");
@@ -452,9 +469,24 @@ commands_t whichcmd(char *cmd)
         printf("command is get \n");
         return GET;
     }
-    else if (strncmp(cmd, "put", strlen("get")) == 0)
+    else if (strncmp(cmd, "put", strlen("put")) == 0)
     {
         printf("command is put \n");
         return PUT;
+    }
+    else if (strncmp(cmd, "exit", strlen("exit")) == 0)
+    {
+        printf("command is put \n");
+        return EXIT;
+    }
+    else if (strncmp(cmd, "delete", strlen("delete")) == 0)
+    {
+        printf("command is delete \n");
+        return DELETE;
+    }
+    else
+    {
+        printf("Wrong command try again \n\r");
+        return -1;
     }
 }
