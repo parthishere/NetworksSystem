@@ -1,0 +1,9 @@
+CC := gcc
+SRCS = $(wildcard *.c)
+OBJS = $(SRCS:.c=.o)
+TARGETS = $(SRCS:.c=)
+
+CFLAGS = -g
+LDFLAGS = 
+INC = 
+

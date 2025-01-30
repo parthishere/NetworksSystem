@@ -14,16 +14,20 @@
 #include <sys/socket.h>
 #include <dirent.h>
 
+#include <unistd.h> // For system calls write, read e close
+#include <fcntl.h>
+
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 256
+#define RECIEVE_SIZE 512
 #define TRANSMIT_SIZE 512
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
 
-#define END_OF_DYNAMIC_DATA "\t\t\t\0"
+#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
 #define ACK "ack\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\n\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\t\t\t\n\0"
+#define FILE_NOT_FOUND ""
 
 typedef enum
 {
@@ -60,7 +64,7 @@ void *getin_addr(struct sockaddr *sa)
 
 void error(sockdetails_t *sd, char *msg)
 {
-    sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, sizeof(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
+    sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
     perror(msg);
     close(sd->sockfd);
     exit(EXIT_FAILURE);
@@ -121,16 +125,14 @@ void list_files(sockdetails_t *sd)
 
             if (strncmp(recieve_buffer, ACK, 7) == 0)
             {
-                printf("rcv ack\n");
                 // got the ack we can append
                 seq_num++;
                 continue;
             }
-            printf("rcv nack\n");
             goto retry;
         }
 
-        _send(sd, sizeof(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+        _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
         closedir(dp);
     }
@@ -138,15 +140,13 @@ void list_files(sockdetails_t *sd)
 
 void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
-    char filename[20];
+    char filename[50];
     sscanf(&recieve_buffer[4], "%s", filename);
     if (filename[0] == '\0')
     {
         printf("File not found");
-        _send(sd, sizeof(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
-        // send nac
-        // return
     }
 
     size_t file_size;
@@ -154,48 +154,73 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     struct dirent *ep;
     int total_bytes;
     int seq_num = 0;
+    int retry_count = 0;
 
     char transmit_buffer[TRANSMIT_SIZE];
 
-    FILE *fp = fopen(filename, "r");
-    if (!fp)
-    {
-        _send(sd, sizeof(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+    int fd = open(filename, O_RDONLY);
+    if(fd < 0){
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
 
-    fseek(fp, 0, SEEK_END);
-    file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    printf("File size: %li bytes\n", file_size);
+    // FILE *fp = fopen(filename, "rb");
+    // if (!fp)
+    // {
+    //     _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+    //     return;
+    // }
+
+    // fseek(fp, 0, SEEK_END);
+    // file_size = ftell(fp);
+    // fseek(fp, 0, SEEK_SET);
+    // printf("File size: %li bytes\n", file_size);
 
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
-    while (total_bytes = fread(transmit_buffer + HEADERSIZE, sizeof(char), TRANSMIT_SIZE - HEADERSIZE, fp) > 0)
+
+    // while ((total_bytes = fread(transmit_buffer + HEADERSIZE, 1, TRANSMIT_SIZE - HEADERSIZE - 1, fp)) > 0)
+    // {
+    while ((total_bytes = read(fd, transmit_buffer, TRANSMIT_SIZE - HEADERSIZE - 1)) > 0)
     {
+        transmit_buffer[HEADERSIZE + total_bytes] = '\0';
     retry:
-        printf("%s\n", transmit_buffer);
-        _send(sd, TRANSMIT_SIZE, transmit_buffer);
-        bzero(transmit_buffer, sizeof(transmit_buffer));
+        transmit_buffer[0] = (total_bytes+HEADERSIZE & 0x00FF);
+        transmit_buffer[1] = (total_bytes+HEADERSIZE & 0xFF00) >> 8;
+        transmit_buffer[2] = seq_num;
 
-        transmit_buffer[0] = total_bytes;
-        transmit_buffer[1] = -1;
-        transmit_buffer[2] = seq_num++;
+        printf("Sending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
+        printf("%s", transmit_buffer + HEADERSIZE);
+        _send(sd, total_bytes + HEADERSIZE, transmit_buffer);
 
+        bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
+
         if (strncmp(recieve_buffer, ACK, 7) == 0)
         {
-            printf("rcv ack\n");
+            // printf("rcv ack\n");
             // got the ack we can append
+            bzero(transmit_buffer, TRANSMIT_SIZE);
             seq_num++;
             continue;
         }
-        goto retry;
+        else
+        {
+            retry_count++;
+            if (retry_count >= 3)
+            {
+                printf("Max retries reached. Aborting.\n");
+                break;
+            }
+            printf("retry \n\r");
+            goto retry;
+        }
     }
 
-    _send(sd, sizeof(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+    _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
-    fclose(fp);
+    // fclose(fp);
+    close(fd);
 }
 
 void recieve_and_send(int sockfd)

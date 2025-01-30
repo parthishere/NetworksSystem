@@ -14,16 +14,16 @@
 #include <sys/socket.h>
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 256
-#define TRANSMIT_SIZE 512
+#define RECIEVE_SIZE 1024
+#define TRANSMIT_SIZE 1024
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
 
-#define END_OF_DYNAMIC_DATA "\t\t\t\0"
+#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
 #define ACK "ack\t\t\t\0"
 #define NACK "nack\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\n\t\t\t\0"
+#define ERROR_FOR_DYNAMIC_DATA "Unable to complete operation\t\t\t\n\0"
 
 typedef struct
 {
@@ -112,19 +112,19 @@ commands_t whichcmd(char *cmd)
 void list_files(sockdetails_t *sd)
 {
 
-    char recieve_buffer[RECIEVE_SIZE];  // 256bytes
+    char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
     do
     {
         // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
-        bzero(recieve_buffer, sizeof(recieve_buffer));
+        bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
         char *temp_ip = getin_addr(sd->their_addr);
-        printf("client recieve %s from IP %s\n", &recieve_buffer[3], temp_ip);
+        printf("%s", &recieve_buffer[3]);
 
-        bzero(transmit_buffer, sizeof(transmit_buffer));
+        bzero(transmit_buffer, TRANSMIT_SIZE);
         if (recieve_buffer[2] == current_count)
         {
             memcpy(transmit_buffer, ACK, 7);
@@ -137,50 +137,63 @@ void list_files(sockdetails_t *sd)
             _send(sd, 8, transmit_buffer);
         }
 
-        
-
-    } while (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) != 0);
+    } while (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) != 0);
 }
 
-
-void get_file(sockdetails_t *sd){
-    char recieve_buffer[RECIEVE_SIZE];  // 256bytes
+void get_file(sockdetails_t *sd, char *filename)
+{
+    char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
-    do
+    char whole_filename[60];
+    snprintf(whole_filename, sizeof(whole_filename),"./Downloads/%s", filename);
+    FILE *fp = fopen(whole_filename, "wb");
+    while (1)
     {
-        // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
-        bzero(recieve_buffer, sizeof(recieve_buffer));
+
+        bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
-
-        char *temp_ip = getin_addr(sd->their_addr);
-        printf("client recieve %s from IP %s\n", &recieve_buffer[3], temp_ip);
-
-        bzero(transmit_buffer, sizeof(transmit_buffer));
-        if (recieve_buffer[2] == current_count)
+        
+        if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)+1) == 0)
         {
-            memcpy(transmit_buffer, ACK, 7);
-            _send(sd, 7, transmit_buffer);
+            printf("End of file received.\n");
+            break;
+        }
+
+        int seq_num = (uint16_t)recieve_buffer[2];
+        int data_length = (recieve_buffer[0] | recieve_buffer[1] << 8) - HEADERSIZE;
+
+        recieve_buffer[HEADERSIZE + data_length] = '\0';
+        printf("Sending packet %d (length: %d)\n", seq_num, data_length);
+        printf("%s", recieve_buffer + HEADERSIZE);
+        fwrite(recieve_buffer + HEADERSIZE, data_length, 1, fp);
+
+        bzero(transmit_buffer, TRANSMIT_SIZE);
+        if (seq_num == current_count)
+        {
+            memcpy(transmit_buffer, ACK, strlen(ACK));
+            _send(sd, strlen(ACK), transmit_buffer);
             current_count++;
         }
         else
         {
-            memcpy(transmit_buffer, NACK, 7);
-            _send(sd, 8, transmit_buffer);
+            printf("retry.... \n");
+            memcpy(transmit_buffer, NACK, strlen(NACK));
+            _send(sd, strlen(NACK), transmit_buffer);
         }
 
-        if(strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, sizeof(ERROR_FOR_DYNAMIC_DATA)) == 0) {
-            printf("Error somewhere \n");
+        if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
+        {
+            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
             return;
+            fclose(fp);
         }
-
-        
-
-    } while (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) != 0);
+    }
+    fclose(fp);
 }
 
-void put_file(sockdetails_t *sd){
-
+void put_file(sockdetails_t *sd)
+{
 }
 
 int main(int argc, char *argv[])
@@ -209,7 +222,7 @@ int main(int argc, char *argv[])
     int sockfd;
     socklen_t addr_len = sizeof(struct addrinfo);
     int numbytes;
-    char recieve_buffer[RECIEVE_SIZE];  // 256bytes
+    char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
 
     char ip[INET6_ADDRSTRLEN];
@@ -268,7 +281,7 @@ int main(int argc, char *argv[])
     */
     bool exit = false;
     char filename[256];
-    
+
     while (true)
     {
         switch (print_menu(filename))
@@ -281,14 +294,14 @@ int main(int argc, char *argv[])
             list_files(&sd);
             break;
         case GET:
-            bzero(transmit_buffer, sizeof transmit_buffer);            
+            bzero(transmit_buffer, sizeof transmit_buffer);
             if (filename[0] == '\0') // return error
             {
                 //
             }
             snprintf(transmit_buffer, sizeof transmit_buffer, "get %s", filename);
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
-            get_file(&sd);
+            get_file(&sd, filename);
             break;
         case PUT:
             bzero(transmit_buffer, sizeof transmit_buffer);
