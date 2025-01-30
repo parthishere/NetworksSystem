@@ -313,6 +313,7 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
             if(strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0){
                 bzero(transmit_buffer, sizeof(transmit_buffer));
                 _send(sd, sizeof(ACK), ACK);
+                remove(ep->d_name);
                 closedir(dp);
                 return;
             }            
