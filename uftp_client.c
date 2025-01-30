@@ -178,6 +178,7 @@ void get_file(sockdetails_t *sd, char *filename)
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
+    int retry_count = 0;
     char whole_filename[60];
     snprintf(whole_filename, sizeof(whole_filename), "./Downloads/%s", filename);
     FILE *fp = fopen(whole_filename, "wb");
@@ -207,15 +208,19 @@ void get_file(sockdetails_t *sd, char *filename)
 
         if (seq_num == current_count)
         {
+            retry_count = 0;
             memcpy(transmit_buffer, ACK, strlen(ACK));
             _send(sd, strlen(ACK), transmit_buffer);
             current_count++;
         }
         else
         {
+            retry_count++;
+            if(retry_count >= 3) break;
             printf(RED "[-]  Sequence number does not match, asking to re-send the packet \n\r" RESET);
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
+            
             continue;
         }
 
@@ -235,9 +240,8 @@ void put_file(sockdetails_t *sd)
     int seq_number = 0;
     int retry_count = 0;
     bool send_data = false, end_of_data = false;
-    // char *write_pointer = transmit_buffer;
 
-    // reddit artical about changing behaviour of the unix
+    // // reddit artical about changing behaviour of the unix
     struct termios old_tio, new_tio;
     unsigned char c;
 
@@ -247,16 +251,38 @@ void put_file(sockdetails_t *sd)
 
     // Disable canonical mode and echo
     new_tio.c_lflag &= (~ICANON & ~ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+    if(tcsetattr(STDIN_FILENO, TCSANOW, &new_tio)<0)perror("tcsetattr");
 
+    int column_number = 1;
     while (1)
     {
         char ch;
         read(STDIN_FILENO, &ch, 1);
-        printf(MAG"%c"RESET, ch);
+        if (ch == 10) {  // Enter key resets to a new line
+            printf("\n");
+            // printf("\033[0C");
+            column_number = 1;
+            // fflush(stdout);
+        }else if(ch == 127){ // backspace
+            write_pointer--;
+            column_number-=2;
+            printf("\033[%dC", column_number);
+            fflush(stdout);
+            // printf(" ");
+            column_number++;
+            printf("\033[%dC", column_number);
+            fflush(stdout);
+            continue;
+        } 
+        else {
+            printf(MAG"%c\n"RESET, ch, ch);
+            printf("\033[1A"); // Move cursor up
+            printf("\033[%dC", column_number); // Move cursor right
+            column_number++;
+            fflush(stdout);
+        }
 
-        if (write_pointer >= 10 || ch == 27) // -1 as it is index, and index starts from 0;
-        // if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE) // -1 as it is index, and index starts from 0;
+        if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE || ch == 27) // -1 as it is index, and index starts from 0;
         {
             if (ch == 27 && write_pointer > 0)
             {
@@ -320,6 +346,90 @@ void put_file(sockdetails_t *sd)
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
 }
+
+// void put_file(sockdetails_t *sd)
+// {
+//     char recieve_buffer[RECIEVE_SIZE];
+//     char transmit_buffer[TRANSMIT_SIZE];
+//     int write_pointer = HEADERSIZE; // 0, 1, 2 are filled
+//     int seq_number = 0;
+//     int retry_count = 0;
+//     bool send_data = false, end_of_data = false;
+//     // char *write_pointer = transmit_buffer;
+//     // reddit artical about changing behaviour of the unix
+//     struct termios old_tio, new_tio;
+//     unsigned char c;
+//     // Get current terminal settings
+//     tcgetattr(STDIN_FILENO, &old_tio);
+//     new_tio = old_tio;
+//     // Disable canonical mode and echo
+//     new_tio.c_lflag &= (~ICANON & ~ECHO);
+//     tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+//     while (1)
+//     {
+//         char ch;
+//         read(STDIN_FILENO, &ch, 1);
+//         // char ch = getc(stdin); // Get character without echo
+//         printf(MAG"entered char %c\n" RESET, ch);
+//         if (write_pointer >= 10 || ch == 27) // -1 as it is index, and index starts from 0;
+//         // if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE) // -1 as it is index, and index starts from 0;
+//         {
+//             if (ch == 27 && write_pointer > 0)
+//             {
+//                 send_data = true;
+//                 end_of_data = true;
+//             }
+//             else if (ch != 27 && write_pointer > 0)
+//             {
+//                 send_data = true;
+//                 end_of_data = false;
+//             }
+//             else if (ch == 27 && write_pointer == 0)
+//             {
+//                 send_data = false;
+//                 end_of_data = true;
+//             }
+//             if (send_data)
+//             {
+//             retry:
+//                 transmit_buffer[0] = ((write_pointer - HEADERSIZE) & 0xFF);
+//                 transmit_buffer[1] = (((write_pointer - HEADERSIZE) & 0xFF00) >> 8);
+//                 transmit_buffer[2] = seq_number;
+//                 _send(sd, TRANSMIT_SIZE, transmit_buffer);
+//                 write_pointer = HEADERSIZE;
+//                 bzero(recieve_buffer, TRANSMIT_SIZE);
+//                 _recv(sd, RECIEVE_SIZE, recieve_buffer);
+//                 if (strncmp(recieve_buffer, ACK, 7) == 0)
+//                 {
+//                     bzero(transmit_buffer, TRANSMIT_SIZE);
+//                     seq_number++;
+//                 }
+//                 else
+//                 {
+//                     retry_count++;
+//                     if (retry_count >= 3)
+//                     {
+//                         retry_count = 0;
+//                         printf("Max retries reached. Aborting.\n");
+//                         break;
+//                     }
+//                     printf("retry \n\r");
+//                     goto retry;
+//                 }
+//             }
+//             if (end_of_data)
+//             {
+//                 seq_number = 0;
+//                 printf("End of file sent !\n\n\n");
+//                 _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
+//                 end_of_data = false;
+//                 break;
+//             }
+//         }
+//         transmit_buffer[write_pointer++] = ch;
+//     }
+//     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+// }
 
 
 void delete_file(sockdetails_t *sd, char* filename){

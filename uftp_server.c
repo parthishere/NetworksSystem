@@ -278,19 +278,22 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             return;
         }
 
-        int seq_num = (uint16_t)recieve_buffer[2];
+        int seq_num = recieve_buffer[2] & 0x000000FF;
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
 
         bzero(transmit_buffer, TRANSMIT_SIZE);
 
         if (seq_num == current_count)
         {
+            retry_count = 0;
             memcpy(transmit_buffer, ACK, strlen(ACK));
             _send(sd, strlen(ACK), transmit_buffer);
             current_count++;
         }
         else
         {
+            retry_count++;
+            if(retry_count >= 3) break;
             printf(RED "[-]  Sequence number does not match, asking to re-send the packet \n\r" RESET);
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
