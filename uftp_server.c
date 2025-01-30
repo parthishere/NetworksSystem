@@ -274,8 +274,8 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
         {
             printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
-            return;
             close(fd);
+            return;
         }
 
         int seq_num = (uint16_t)recieve_buffer[2];
@@ -300,6 +300,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         printf(MAG "%s\n" RESET, recieve_buffer + HEADERSIZE);
         total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
     }
+    printf(GRN"\n\n[+] Wrote \"%s\" file to current folder\n\n"RESET, filename);
 }
 
 void delete_file(sockdetails_t *sd, char *recieve_buffer)
@@ -309,7 +310,7 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
     sscanf(&recieve_buffer[strlen("delete")+1], "%s", filename);
     if (filename[0] == '\0')
     {
-        printf(RED "[-] File Name is Empty" RESET);
+        printf(RED "[-] File Name is Empty\n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }

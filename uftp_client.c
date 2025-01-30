@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define SCREEN_HEIGHT 50
+
 #define RED   "\x1B[31m"
 #define GRN   "\x1B[32m"
 #define YEL   "\x1B[33m"
@@ -36,6 +38,9 @@
 #define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
 #define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
 #define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
+
+#define clrscr ({printf("\033[2J\033[H");\
+fflush(stdout); })
 
 typedef struct
 {
@@ -102,32 +107,31 @@ commands_t whichcmd(char *cmd)
 {
     if (strncmp(cmd, "ls", strlen("ls")) == 0)
     {
-        printf("command is ls \n");
         return LS;
     }
     else if (strncmp(cmd, "get", strlen("get")) == 0)
     {
-        printf("command is get \n");
         return GET;
     }
     else if (strncmp(cmd, "put", strlen("get")) == 0)
     {
-        printf("command is put \n");
         return PUT;
     }
     else if (strncmp(cmd, "exit", strlen("exit")) == 0)
     {
-        printf("command is put \n");
         return EXIT;
     }
     else if (strncmp(cmd, "delete", strlen("delete")) == 0)
     {
-        printf("command is delete \n");
         return DELETE;
+    }
+    else if(*cmd == 10){
+        clrscr;
+        return -2;
     }
     else
     {
-        printf("Wrong command try again \n\r");
+        printf(RED "[-] Wrong command try again \n\r" RESET);
         return -1;
     }
 }
@@ -144,12 +148,12 @@ void list_files(sockdetails_t *sd)
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
         if(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0){
-            printf(GRN "\n\n Done \n\n" RESET);
+            printf(GRN "\n\n-- Done -- \n\n" RESET);
             break;
         }
 
         char *temp_ip = getin_addr(sd->their_addr);
-        printf("%s", &recieve_buffer[3]);
+        printf(MAG"> %s"RESET, &recieve_buffer[3]);
 
         bzero(transmit_buffer, TRANSMIT_SIZE);
         if (recieve_buffer[2] == current_count)
@@ -170,6 +174,7 @@ void list_files(sockdetails_t *sd)
 
 void get_file(sockdetails_t *sd, char *filename)
 {
+    printf("\n\nGET\n\n");
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
@@ -184,15 +189,15 @@ void get_file(sockdetails_t *sd, char *filename)
 
         if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA) + 1) == 0)
         {
-            printf("End of file received.\n");
+            printf(GRN "\n\n--- End of file received. --\n\n" RESET);
             break;
         }
 
         if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
         {
-            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
-            return;
+            printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
             fclose(fp);
+            return;
         }
 
         int seq_num = (uint16_t)recieve_buffer[2];
@@ -208,21 +213,22 @@ void get_file(sockdetails_t *sd, char *filename)
         }
         else
         {
-            printf("retry.... \n");
+            printf(RED "[-]  Sequence number does not match, asking to re-send the packet \n\r" RESET);
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
             continue;
         }
 
-        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
-        printf("%s\n", recieve_buffer + HEADERSIZE);
+        printf(MAG"%s\n"RESET, recieve_buffer + HEADERSIZE);
         fwrite(&recieve_buffer[HEADERSIZE], 1, data_length, fp);
     }
+    printf(GRN"\n\n[+] Downloaded \"%s\" file in Downloads folder\n\n"RESET, filename);
     fclose(fp);
 }
 
 void put_file(sockdetails_t *sd)
 {
+    printf("\n\nPUT\n\n");
     char recieve_buffer[RECIEVE_SIZE];
     char transmit_buffer[TRANSMIT_SIZE];
     int write_pointer = HEADERSIZE; // 0, 1, 2 are filled
@@ -247,7 +253,7 @@ void put_file(sockdetails_t *sd)
     {
         char ch;
         read(STDIN_FILENO, &ch, 1);
-        printf("%c", ch);
+        printf(MAG"%c"RESET, ch);
 
         if (write_pointer >= 10 || ch == 27) // -1 as it is index, and index starts from 0;
         // if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE) // -1 as it is index, and index starts from 0;
@@ -292,10 +298,10 @@ void put_file(sockdetails_t *sd)
                     if (retry_count >= 3)
                     {
                         retry_count = 0;
-                        printf("Max retries reached. Aborting.\n");
+                        printf(RED "[-] Max retries reached. Aborting.\n" RESET);
                         break;
                     }
-                    printf("retry \n\r");
+                    printf(RED "[-]  NACK -> Retry sending the packet \n\r" RESET);
                     goto retry;
                 }
             }
@@ -303,7 +309,7 @@ void put_file(sockdetails_t *sd)
             if (end_of_data)
             {
                 seq_number = 0;
-                printf("End of file sent !\n\n\n");
+                printf(GRN "\n\n-- End Of File --\n\n" RESET);
                 _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
                 end_of_data = false;
                 break;
@@ -316,20 +322,22 @@ void put_file(sockdetails_t *sd)
 }
 
 
-void delete_file(sockdetails_t *sd){
+void delete_file(sockdetails_t *sd, char* filename){
+    printf("\n\nDELETE\n\n");
+
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     bzero(recieve_buffer, RECIEVE_SIZE);
     _recv(sd, RECIEVE_SIZE, recieve_buffer);
     if(strncmp(recieve_buffer, FILE_NOT_FOUND, strlen(FILE_NOT_FOUND)) == 0){
-        printf("File not found on server \n\n");
+        printf(RED"[-] Could not find the file on server: %s\n" RESET, filename);
         return;
     } 
     else if(strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA) == 0)){
-        printf("Something went wrong \n\n");
+        printf(RED"[-] Something went wrong on server\n\n"RESET);
         return;
     }
-    printf("File deleted \n\n");
+    printf(GRN"\n\n[+] File: \"%s\" deleted \n\n", recieve_buffer);
 }
 
 
@@ -373,16 +381,16 @@ int main(int argc, char *argv[])
     hints.ai_socktype = SOCK_DGRAM;
 
     char *server_address = argv[1];
-    printf("Passed Server Address %s\n", server_address);
+    printf(GRN"[+] Passed Server Address %s\n"RESET, server_address);
     char *server_port = argv[2];
-    printf("Passed Server Port %s\n", server_port);
+    printf(GRN"[+] Passed Server Port %s\n"RESET, server_port);
 
     if ((status = getaddrinfo(server_address, server_port, &hints, &serv_info)) < 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
         exit(EXIT_FAILURE);                                         // exit if there is an error
     }
-    printf("[+] getaddrinfo call successful\n");
+    printf(GRN"[+] getaddrinfo call successful\n"RESET);
 
     /*
         int socket(int domain, int type, int protocol);
@@ -398,7 +406,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
             continue;
         }
-        printf("[+] socket call successful\n");
+        printf(GRN"[+] socket call successful\n"RESET);
 
         break;
     }
@@ -438,7 +446,8 @@ int main(int argc, char *argv[])
             bzero(transmit_buffer, sizeof transmit_buffer);
             if (filename[0] == '\0') // return error
             {
-                //
+                printf(RED "[-] File Name is Empty\n" RESET);
+                break;
             }
             snprintf(transmit_buffer, sizeof transmit_buffer, "get %s", filename);
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
@@ -455,7 +464,7 @@ int main(int argc, char *argv[])
             bzero(transmit_buffer, sizeof transmit_buffer);
             snprintf(transmit_buffer, sizeof transmit_buffer, "delete %s", filename);
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
-            delete_file(&sd);
+            delete_file(&sd, filename);
             break;
         case EXIT:
             bzero(transmit_buffer, sizeof transmit_buffer);
@@ -463,8 +472,13 @@ int main(int argc, char *argv[])
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
             // cleanup();
             break;
+        case -2:
+            continue;
+        default:
+            break;
         }
 
+        
         if (exit)
             break;
     }
@@ -479,13 +493,16 @@ int main(int argc, char *argv[])
 
 commands_t print_menu(char *filename)
 {
-    printf("This client can support FTP through UDP\n");
+    
+    printf(YEL"\n\nThis client can support FTP through UDP\n\n");
     printf("Currently this program can support following commands \n");
-    printf("get <filename> : Get the file name in server and print the file");
-    printf("ls : get the list of all the files in server and print it\n");
-    printf("exit: exit from the client and free the resources\n");
-    printf("put <filename>: if filename does not exists on server, create one\n");
-    printf("\n");
+    printf("get <filename> : Get the file name in server and print the file\n");
+    printf("put <filename> : if filename does not exists on server, create one\n");
+    printf("delete         : <filename>: if filename does not exists on server, delete that file\n");
+    printf("ls             : get the list of all the files in server and print it\n");
+    printf("exit           : exit from the client program and free the resources in client and server\n");
+    printf("enter (|_>)    : Again pressing enter will clear the screen\n");
+    printf("\n"RESET);
 
 #if SCANF == 1
     char cmd[100];
@@ -501,9 +518,9 @@ commands_t print_menu(char *filename)
 
 #else
     char cmd[256];
-    printf("Enter your choice \n");
+    printf("Enter one of the comamnds ! \n>");
     int bytesread = read(STDIN_FILENO, cmd, sizeof(cmd));
-    printf("%s\n", cmd);
+    printf(MAG"%s\n"RESET, cmd);
 
 #endif
     sscanf(cmd, "%*s %s", filename);
