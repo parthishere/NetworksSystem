@@ -14,6 +14,15 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
 #define MAXDATASIZE 100
 #define RECIEVE_SIZE 512
 #define TRANSMIT_SIZE 512
@@ -129,11 +138,15 @@ void list_files(sockdetails_t *sd)
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
-    do
+    while (1)
     {
-        // while(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, 4) == 0){
+        
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
+        if(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0){
+            printf(GRN "\n\n Done \n\n" RESET);
+            break;
+        }
 
         char *temp_ip = getin_addr(sd->their_addr);
         printf("%s", &recieve_buffer[3]);
@@ -145,13 +158,14 @@ void list_files(sockdetails_t *sd)
             _send(sd, 7, transmit_buffer);
             current_count++;
         }
+        
         else
         {
             memcpy(transmit_buffer, NACK, 7);
             _send(sd, 8, transmit_buffer);
         }
 
-    } while (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) != 0);
+    } 
 }
 
 void get_file(sockdetails_t *sd, char *filename)

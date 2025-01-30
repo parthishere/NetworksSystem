@@ -17,6 +17,16 @@
 #include <unistd.h> // For system calls write, read e close
 #include <fcntl.h>
 
+#define RED   "\x1B[31m"
+#define GRN   "\x1B[32m"
+#define YEL   "\x1B[33m"
+#define BLU   "\x1B[34m"
+#define MAG   "\x1B[35m"
+#define CYN   "\x1B[36m"
+#define WHT   "\x1B[37m"
+#define RESET "\x1B[0m"
+
+
 #define MAXDATASIZE 100
 #define RECIEVE_SIZE 512
 #define TRANSMIT_SIZE 512
@@ -28,6 +38,7 @@
 #define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
 #define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
 #define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
+#define WRONG_COMMAND "WRONG_COMMAND\t\t\t\n\0"
 
 typedef enum
 {
@@ -64,6 +75,7 @@ void *getin_addr(struct sockaddr *sa)
 
 void error(sockdetails_t *sd, char *msg)
 {
+    printf(RED "[-] Error somewhere ! Check below message to see details \n" RESET);
     sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
     perror(msg);
     close(sd->sockfd);
@@ -74,7 +86,7 @@ void _send(sockdetails_t *sd, int size, void *packet)
 {
     if ((sd->sentBytes = sendto(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, sd->addr_len)) < 0)
     {
-        error(sd, "send");
+        error(sd, "[-] send");
     }
 }
 
@@ -82,12 +94,13 @@ void _recv(sockdetails_t *sd, int size, void *packet)
 {
     if ((sd->recvBytes = recvfrom(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, &sd->addr_len)) < 0)
     {
-        error(sd, "recv");
+        error(sd, "[-] recv");
     }
 }
 
 void list_files(sockdetails_t *sd)
 {
+    printf("\n\nLS\n\n");
     DIR *dp;
     struct dirent *ep;
     int total_bytes;
@@ -108,20 +121,20 @@ void list_files(sockdetails_t *sd)
             memcpy(transmit_buffer, ep->d_name, record_len);
 
             char packet[TRANSMIT_SIZE + HEADERSIZE];
-            packet[0] = record_len; // packet lenght
-            packet[1] = -1;         // total lenght
+            packet[0] = (record_len & 0x00FF); // packet lenght
+            packet[1] = ((record_len & 0xFF00) >> 8);         // total lenght
             packet[2] = seq_num;    // seq number
 
             // for better readability
             *(transmit_buffer + record_len) = '\n';
             record_len++;
-
+            
             memcpy(packet + HEADERSIZE, transmit_buffer, record_len);
             _send(sd, record_len + HEADERSIZE, packet);
+            printf(MAG "> %s" RESET , transmit_buffer);
 
             bzero(recieve_buffer, sizeof(recieve_buffer));
             _recv(sd, RECIEVE_SIZE, recieve_buffer);
-            printf("server recieve %s \n", recieve_buffer);
 
             if (strncmp(recieve_buffer, ACK, 7) == 0)
             {
@@ -129,9 +142,11 @@ void list_files(sockdetails_t *sd)
                 seq_num++;
                 continue;
             }
+            printf(RED "[-] NACK -> Retry sending the packet\n" RESET);
             goto retry;
         }
 
+    
         _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
         closedir(dp);
@@ -140,11 +155,12 @@ void list_files(sockdetails_t *sd)
 
 void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
+    printf("\n\nGET\n\n");
     char filename[50];
     sscanf(&recieve_buffer[strlen("get")+1], "%s", filename);
     if (filename[0] == '\0')
     {
-        printf("File not found");
+        printf(RED "[-] File Name is Empty" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -161,6 +177,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     int fd = open(filename, O_RDONLY);
     if (fd < 0)
     {
+        printf(RED "[-] Error Opening File \n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -174,10 +191,9 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         transmit_buffer[0] = (total_bytes & 0x00FF);
         transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = seq_num;
-        printf("first char ->> %c %c %c %c %c %c\n", transmit_buffer[HEADERSIZE], transmit_buffer[HEADERSIZE + 1], transmit_buffer[HEADERSIZE + 2], transmit_buffer[HEADERSIZE + 3], transmit_buffer[HEADERSIZE + 4], transmit_buffer[HEADERSIZE + 5]);
-
-        printf("Sending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
-        printf("%s", transmit_buffer + HEADERSIZE);
+        
+        printf("\nSending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
+        printf(MAG "> %s" RESET, transmit_buffer + HEADERSIZE );
         _send(sd, total_bytes + HEADERSIZE, transmit_buffer);
 
         bzero(recieve_buffer, RECIEVE_SIZE);
@@ -195,28 +211,29 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
             if (retry_count >= 3)
             {
                 retry_count = 0;
-                printf("Max retries reached. Aborting.\n");
+                printf(RED "[-] Max retries reached. Aborting.\n" RESET);
                 break;
             }
-            printf("retry \n\r");
+            printf(RED "[-]  NACK -> Retry sending the packet \n\r" RESET);
             goto retry;
         }
     }
 
+    printf(GRN "\n\n-- End Of File --\n\n" RESET);
     _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
-    // fclose(fp);
     close(fd);
 }
 
 void put_file(sockdetails_t *sd, char *recieve_buffer)
 {
 
+    printf("\n\nPUT\n\n");
     char filename[50];
     sscanf(&recieve_buffer[strlen("put")+1], "%s", filename);
     if (filename[0] == '\0')
     {
-        printf("File not found");
+        printf(RED "[-] File Name is Empty" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -233,7 +250,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0)
     {
-        printf("some error \n");
+        printf(RED "[-] Error Opening File \n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -249,14 +266,14 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 
         if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0)
         {
-            printf("End of file received.\n\n\n\n");
+            printf(GRN "\n\n--- End of file received. --\n\n" RESET);
             close(fd);
             break;
         }
 
         if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
         {
-            printf("!!!!!~~~~~~~~~~Error somewhere~~~~~~~~~~~!!!!!!!! \n");
+            printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
             return;
             close(fd);
         }
@@ -274,26 +291,25 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         }
         else
         {
-            printf("retry.... \n");
+            printf(RED "[-]  Sequence number does not match, asking to re-send the packet \n\r" RESET);
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
             continue;
         }
 
-        printf("%s\n", recieve_buffer + HEADERSIZE);
+        printf(MAG "%s\n" RESET, recieve_buffer + HEADERSIZE);
         total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
     }
 }
 
 void delete_file(sockdetails_t *sd, char *recieve_buffer)
 {
-
+    printf("\n\nDELETE\n\n");
     char filename[50];
-    printf("recv buf: %s\n", filename);
     sscanf(&recieve_buffer[strlen("delete")+1], "%s", filename);
     if (filename[0] == '\0')
     {
-        printf("File not found");
+        printf(RED "[-] File Name is Empty" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
         return;
     }
@@ -303,7 +319,6 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
     int total_bytes;
 
     char transmit_buffer[TRANSMIT_SIZE];
-    printf("filename %s\n", filename);
     dp = opendir("./");
     if (dp != NULL)
     {
@@ -311,6 +326,7 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
         while ((ep = readdir(dp)) != NULL)
         {
             if(strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0){
+                printf(GRN"[+] Found the file %s, deleting it\n" RESET, filename);
                 bzero(transmit_buffer, sizeof(transmit_buffer));
                 _send(sd, sizeof(ACK), ACK);
                 remove(ep->d_name);
@@ -319,23 +335,27 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
             }            
         }
 
+        printf(RED"[-] Could not find the file: %s\n" RESET, filename);
         _send(sd, strlen(FILE_NOT_FOUND), FILE_NOT_FOUND);
         closedir(dp);
         
     }
     else{
+        printf(RED"[-] Something went wrong while opening PWD\n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
     }
 }
 
 void cleanup_client_resouces(sockdetails_t *sd)
 {
+    // something cleanup, we will use child processes to make it more useable !
 }
 
 void recieve_and_send(int sockfd)
 {
     char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
+    char ip[INET6_ADDRSTRLEN];
 
     int recvBytes, sentBytes;
 
@@ -344,11 +364,10 @@ void recieve_and_send(int sockfd)
     sd.addr_len = sizeof(sd.their_addr);
 
     _recv(&sd, RECIEVE_SIZE, recieve_buffer);
-    printf("[+] recv call successful\n");
 
     char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
-    printf("server recieve %s from IP %s\n", recieve_buffer, temp_ip);
-
+    printf(GRN"\n\n[+] Recieved Command \"%s\" from IP %s\n" RESET, recieve_buffer, inet_ntop(sd.their_addr.ss_family, temp_ip, ip, sizeof ip));
+    
     commands_t cmd = whichcmd(recieve_buffer);
 
     switch (cmd)
@@ -374,6 +393,7 @@ void recieve_and_send(int sockfd)
         break;
 
     default:
+        _send(&sd, strlen(WRONG_COMMAND), WRONG_COMMAND);
         break;
     }
 
@@ -388,7 +408,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        printf(" You messed up, command is ./server <PORT> | current command (%d) %s %s\n", argc, argv[0], argv[1]);
+        printf(RED"[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n"RESET, argc, argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
 
@@ -427,7 +447,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
         exit(EXIT_FAILURE);                                         // exit if there is an error
     }
-    printf("[+] getaddrinfo call successful\n");
+    printf(GRN "[+] getaddrinfo call successful\n" RESET);
 
     for (temp = serv_info; temp != NULL; temp = temp->ai_next)
     {
@@ -442,7 +462,7 @@ int main(int argc, char *argv[])
             perror("server: socket");
             continue;
         }
-        printf("[+] socket call successful\n");
+        printf(GRN"[+] socket call successful\n" RESET);
 
         struct timeval timeout;
         timeout.tv_sec = 2;
@@ -478,7 +498,7 @@ int main(int argc, char *argv[])
     }
 
     inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
-    printf("Server recieving UDP packet to : %s\n", ip);
+    printf(GRN "[+] Server recieving UDP packet to : %s\n" RESET, ip);
 
     freeaddrinfo(serv_info); // we do not need this anymore
 
@@ -500,32 +520,27 @@ commands_t whichcmd(char *cmd)
 {
     if (strncmp(cmd, "ls", strlen("ls")) == 0)
     {
-        printf("command is ls \n");
         return LS;
     }
     else if (strncmp(cmd, "get", strlen("get")) == 0)
     {
-        printf("command is get \n");
         return GET;
     }
     else if (strncmp(cmd, "put", strlen("put")) == 0)
     {
-        printf("command is put \n");
         return PUT;
     }
     else if (strncmp(cmd, "exit", strlen("exit")) == 0)
     {
-        printf("command is put \n");
         return EXIT;
     }
     else if (strncmp(cmd, "delete", strlen("delete")) == 0)
     {
-        printf("command is delete \n");
         return DELETE;
     }
     else
     {
-        printf("Wrong command try again \n\r");
+        printf(RED"[-] Wrong command try again \n\r"RESET);
         return -1;
     }
 }
