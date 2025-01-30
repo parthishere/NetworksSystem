@@ -260,19 +260,24 @@ void put_file(sockdetails_t *sd)
         read(STDIN_FILENO, &ch, 1);
         if (ch == 10) {  // Enter key resets to a new line
             printf("\n");
-            // printf("\033[0C");
             column_number = 1;
-            // fflush(stdout);
         }else if(ch == 127){ // backspace
-            write_pointer--;
-            column_number-=2;
-            printf("\033[%dC", column_number);
-            fflush(stdout);
-            // printf(" ");
-            column_number++;
-            printf("\033[%dC", column_number);
-            fflush(stdout);
-            continue;
+            if(column_number <= 1){
+
+            }
+            else{
+                write_pointer--;
+                column_number-=1;
+                
+                printf("\033[1D");
+                printf(" ");
+                printf("\033[1D");
+                // column_number++;
+                // printf("\033[1C");
+                fflush(stdout);
+                continue;
+            }
+            
         } 
         else {
             printf(MAG"%c\n"RESET, ch, ch);
