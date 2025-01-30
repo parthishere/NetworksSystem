@@ -114,7 +114,7 @@ void list_files(sockdetails_t *sd)
         int seq_num = 0;
         while ((ep = readdir(dp)) != NULL)
         {
-        retry:
+        retry: ;
             int record_len = strlen(ep->d_name);
             bzero(transmit_buffer, sizeof(transmit_buffer));
 
@@ -187,7 +187,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
-    retry:
+    retry: ;
         transmit_buffer[0] = (total_bytes & 0x00FF);
         transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = seq_num;
@@ -260,7 +260,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 
     while (1)
     {
-    retry:
+    retry: ;
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 

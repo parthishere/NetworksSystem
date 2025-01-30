@@ -307,7 +307,7 @@ void put_file(sockdetails_t *sd)
 
             if (send_data)
             {
-            retry:
+            retry: ;
                 transmit_buffer[0] = ((write_pointer - HEADERSIZE) & 0xFF);
                 transmit_buffer[1] = (((write_pointer - HEADERSIZE) & 0xFF00) >> 8);
                 transmit_buffer[2] = seq_number;
@@ -396,7 +396,7 @@ void put_file(sockdetails_t *sd)
 //             }
 //             if (send_data)
 //             {
-//             retry:
+//             retry: ;
 //                 transmit_buffer[0] = ((write_pointer - HEADERSIZE) & 0xFF);
 //                 transmit_buffer[1] = (((write_pointer - HEADERSIZE) & 0xFF00) >> 8);
 //                 transmit_buffer[2] = seq_number;
