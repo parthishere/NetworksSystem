@@ -181,13 +181,13 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
     // while ((total_bytes = fread(transmit_buffer + HEADERSIZE, 1, TRANSMIT_SIZE - HEADERSIZE - 1, fp)) > 0)
     // {
-    while ((total_bytes = read(fd, transmit_buffer, TRANSMIT_SIZE - HEADERSIZE - 1)) > 0)
+    while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
-        transmit_buffer[HEADERSIZE + total_bytes] = '\0';
     retry:
-        transmit_buffer[0] = (total_bytes+HEADERSIZE & 0x00FF);
-        transmit_buffer[1] = (total_bytes+HEADERSIZE & 0xFF00) >> 8;
+        transmit_buffer[0] = (total_bytes & 0x00FF);
+        transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = seq_num;
+        printf("first char ->> %c %c %c %c %c %c\n", transmit_buffer[HEADERSIZE], transmit_buffer[HEADERSIZE+1], transmit_buffer[HEADERSIZE+2], transmit_buffer[HEADERSIZE+3], transmit_buffer[HEADERSIZE+4], transmit_buffer[HEADERSIZE+5]);
 
         printf("Sending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
         printf("%s", transmit_buffer + HEADERSIZE);

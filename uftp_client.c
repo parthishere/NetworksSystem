@@ -161,12 +161,12 @@ void get_file(sockdetails_t *sd, char *filename)
         }
 
         int seq_num = (uint16_t)recieve_buffer[2];
-        int data_length = (recieve_buffer[0] | recieve_buffer[1] << 8) - HEADERSIZE;
+        int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
 
-        recieve_buffer[HEADERSIZE + data_length] = '\0';
-        printf("Sending packet %d (length: %d)\n", seq_num, data_length);
-        printf("%s", recieve_buffer + HEADERSIZE);
-        fwrite(recieve_buffer + HEADERSIZE, data_length, 1, fp);
+        // recieve_buffer[HEADERSIZE + data_length] = '\0';
+        printf("Recieved packet %d (length: %d)\n", seq_num, data_length);
+        printf("%s\n", recieve_buffer + HEADERSIZE);
+        fwrite(&recieve_buffer[HEADERSIZE], 1, data_length, fp);
 
         bzero(transmit_buffer, TRANSMIT_SIZE);
         if (seq_num == current_count)
