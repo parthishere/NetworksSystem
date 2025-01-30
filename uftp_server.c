@@ -141,7 +141,7 @@ void list_files(sockdetails_t *sd)
 void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
     char filename[50];
-    sscanf(&recieve_buffer[4], "%s", filename);
+    sscanf(&recieve_buffer[strlen("get")+1], "%s", filename);
     if (filename[0] == '\0')
     {
         printf("File not found");
@@ -213,7 +213,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 {
 
     char filename[50];
-    sscanf(&recieve_buffer[4], "%s", filename);
+    sscanf(&recieve_buffer[strlen("put")+1], "%s", filename);
     if (filename[0] == '\0')
     {
         printf("File not found");
@@ -287,6 +287,44 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 
 void delete_file(sockdetails_t *sd, char *recieve_buffer)
 {
+
+    char filename[50];
+    printf("recv buf: %s\n", filename);
+    sscanf(&recieve_buffer[strlen("delete")+1], "%s", filename);
+    if (filename[0] == '\0')
+    {
+        printf("File not found");
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        return;
+    }
+
+    DIR *dp;
+    struct dirent *ep;
+    int total_bytes;
+
+    char transmit_buffer[TRANSMIT_SIZE];
+    printf("filename %s\n", filename);
+    dp = opendir("./");
+    if (dp != NULL)
+    {
+        int seq_num = 0;
+        while ((ep = readdir(dp)) != NULL)
+        {
+            if(strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0){
+                bzero(transmit_buffer, sizeof(transmit_buffer));
+                _send(sd, sizeof(ACK), ACK);
+                closedir(dp);
+                return;
+            }            
+        }
+
+        _send(sd, strlen(FILE_NOT_FOUND), FILE_NOT_FOUND);
+        closedir(dp);
+        
+    }
+    else{
+        _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+    }
 }
 
 void cleanup_client_resouces(sockdetails_t *sd)

@@ -233,8 +233,7 @@ void put_file(sockdetails_t *sd)
     {
         char ch;
         read(STDIN_FILENO, &ch, 1);
-        // char ch = getc(stdin); // Get character without echo
-        printf("entered char %c\n", ch);
+        printf("%c", ch);
 
         if (write_pointer >= 10 || ch == 27) // -1 as it is index, and index starts from 0;
         // if (write_pointer >= TRANSMIT_SIZE - 1 - HEADERSIZE) // -1 as it is index, and index starts from 0;
@@ -300,6 +299,28 @@ void put_file(sockdetails_t *sd)
         transmit_buffer[write_pointer++] = ch;
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
+}
+
+
+void delete_file(sockdetails_t *sd){
+    char recieve_buffer[RECIEVE_SIZE];   // 256bytes
+    char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
+    bzero(recieve_buffer, RECIEVE_SIZE);
+    _recv(sd, RECIEVE_SIZE, recieve_buffer);
+    if(strncmp(recieve_buffer, FILE_NOT_FOUND, strlen(FILE_NOT_FOUND)) == 0){
+        printf("File not found on server \n\n");
+        return;
+    } 
+    else if(strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA) == 0)){
+        printf("Something went wrong \n\n");
+        return;
+    }
+    printf("File deleted \n\n");
+}
+
+
+void cleanup_resources(sockdetails_t *sd){
+
 }
 
 int main(int argc, char *argv[])
@@ -415,6 +436,13 @@ int main(int argc, char *argv[])
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
             put_file(&sd);
             break;
+
+        case DELETE:
+            bzero(transmit_buffer, sizeof transmit_buffer);
+            snprintf(transmit_buffer, sizeof transmit_buffer, "delete %s", filename);
+            _send(&sd, sizeof transmit_buffer, transmit_buffer);
+            delete_file(&sd);
+            break;
         case EXIT:
             bzero(transmit_buffer, sizeof transmit_buffer);
             snprintf(transmit_buffer, sizeof transmit_buffer, "exit");
@@ -458,13 +486,12 @@ commands_t print_menu(char *filename)
     printf("%s\n", cmd);
 
 #else
-    char cmd[100];
+    char cmd[256];
     printf("Enter your choice \n");
     int bytesread = read(STDIN_FILENO, cmd, sizeof(cmd));
     printf("%s\n", cmd);
 
 #endif
-
-    sscanf(&cmd[strlen("get") + 1], "%s", filename);
+    sscanf(cmd, "%*s %s", filename);
     return whichcmd(cmd);
 }
