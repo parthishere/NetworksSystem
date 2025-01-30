@@ -163,7 +163,7 @@ void list_files(sockdetails_t *sd)
 
     char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
-    unsigned crc = crc8(0, NULL, 0);
+    uint8_t crc = crc8(0, NULL, 0);
     dp = opendir("./");
     if (dp != NULL)
     {
@@ -181,8 +181,7 @@ void list_files(sockdetails_t *sd)
             packet[1] = ((record_len & 0xFF00) >> 8);        
             packet[2] = (seq_num & 0x00FF);
             packet[3] = (seq_num & 0xFF00) >> 8;
-            crc = crc8(crc, &packet[HEADERSIZE], record_len); // crc
-            printf("crc, %d\n", crc);
+            crc = crc8(crc, transmit_buffer, record_len); // crc
             packet[4] = crc;
 
             // for better readability
@@ -244,7 +243,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
-    unsigned crc = crc8(0, NULL, 0);
+    uint8_t crc = crc8(0, NULL, 0);
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
         if(seq_num >= 0xFFFF){
@@ -255,8 +254,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = (seq_num & 0x00FF);
         transmit_buffer[3] = (seq_num & 0xFF00) >> 8;
-        crc8(crc, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE); // crc
-        printf("crc, %d\n", crc);
+        crc = crc8(crc, &transmit_buffer[HEADERSIZE], total_bytes); // crc
         transmit_buffer[4] = crc;
 
         
@@ -325,7 +323,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
-    unsigned crc = crc8(0, NULL, 0);
+    uint8_t crc = crc8(0, NULL, 0);
     while (1)
     {
     retry: ;
@@ -348,12 +346,12 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
 
         int seq_num     = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
-        unsigned crc_server    = recieve_buffer[4];
+        uint8_t crc_server    = recieve_buffer[4];
         crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
         printf("CRC %d %d\n", crc_server, crc);
         bzero(transmit_buffer, TRANSMIT_SIZE);
 
-        if (seq_num == current_count)
+        if ((unsigned)crc_server == (unsigned)crc && seq_num == current_count)
         {
             retry_count = 0;
             memcpy(transmit_buffer, ACK, strlen(ACK));

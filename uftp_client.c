@@ -187,9 +187,11 @@ void list_files(sockdetails_t *sd)
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
+    int retry_count = 0;
+    uint8_t crc = crc8(0, NULL, 0);
     while (1)
     {
-        
+        retry: ;
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
         if(strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0){
@@ -204,13 +206,16 @@ void list_files(sockdetails_t *sd)
 
         int seq_num         = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
         int data_length     = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
-        unsigned crc_server = recieve_buffer[4];
+        uint8_t crc_server = recieve_buffer[4];
+
+        crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
+        bzero(transmit_buffer, TRANSMIT_SIZE);
 
         char *temp_ip = getin_addr(sd->their_addr);
         printf(MAG"> %s"RESET, &recieve_buffer[HEADERSIZE]);
 
         bzero(transmit_buffer, TRANSMIT_SIZE);
-        if (recieve_buffer[2] == current_count)
+        if ((unsigned)crc_server == (unsigned)crc && seq_num == current_count)
         {
             memcpy(transmit_buffer, ACK, 7);
             _send(sd, 7, transmit_buffer);
@@ -219,10 +224,16 @@ void list_files(sockdetails_t *sd)
         
         else
         {
+            retry_count++;
             memcpy(transmit_buffer, NACK, 7);
             _send(sd, 8, transmit_buffer);
+            if(retry_count >= 3){
+                retry_count = 0;
+                printf(RED "[-] Max retries reached. Aborting.\n" RESET);
+                break;
+            }
+            goto retry;
         }
-
     } 
 }
 
@@ -236,7 +247,7 @@ void get_file(sockdetails_t *sd, char *filename)
     char whole_filename[60];
     snprintf(whole_filename, sizeof(whole_filename), "./Downloads/%s", filename);
     FILE *fp = fopen(whole_filename, "wb");
-    unsigned crc = crc8(0, NULL, 0);
+    uint8_t crc = crc8(0, NULL, 0);
     while (1)
     {
 
@@ -258,13 +269,12 @@ void get_file(sockdetails_t *sd, char *filename)
 
         int seq_num     = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
-        unsigned crc_server    = recieve_buffer[4];
-        crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
-        printf("CRC %d %d\n", crc_server, crc);
+        uint8_t crc_server    = recieve_buffer[4];
+        crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);  
         bzero(transmit_buffer, TRANSMIT_SIZE);
 
-        if (seq_num == current_count)
-        {
+
+        if(crc_server == crc && seq_num == current_count){
             retry_count = 0;
             memcpy(transmit_buffer, ACK, strlen(ACK));
             _send(sd, strlen(ACK), transmit_buffer);
@@ -311,7 +321,7 @@ void put_file(sockdetails_t *sd)
     if(tcsetattr(STDIN_FILENO, TCSANOW, &new_tio)<0)perror("tcsetattr");
 
     int column_number = 1;
-    unsigned crc = crc8(0, NULL, 0);
+    uint8_t crc = crc8(0, NULL, 0);
     while (1)
     {
         char ch;
@@ -368,7 +378,7 @@ void put_file(sockdetails_t *sd)
                 transmit_buffer[1] = (((write_pointer - HEADERSIZE) & 0xFF00) >> 8);
                 transmit_buffer[2] = (seq_number & 0x00FF);
                 transmit_buffer[3] = (seq_number & 0xFF00) >> 8;
-                crc8(crc, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE); // crc
+                crc = crc8(crc, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE); // crc
                 printf("CRC %d\n", crc);
                 transmit_buffer[4] = crc;
 
