@@ -26,8 +26,8 @@
 #define RESET "\x1B[0m"
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 512
-#define TRANSMIT_SIZE 512
+#define RECIEVE_SIZE 1024 * 30 // 30 KB
+#define TRANSMIT_SIZE 1024 * 30 // 30KB
 // this means that we can read uptp 5 mb in total as of now.
 #define DATA_SIZE 1024 * 1024 * 5 // 5MB buffer;
 #define HEADERSIZE 3
@@ -501,7 +501,7 @@ commands_t print_menu(char *filename)
     printf("delete         : <filename>: if filename does not exists on server, delete that file\n");
     printf("ls             : get the list of all the files in server and print it\n");
     printf("exit           : exit from the client program and free the resources in client and server\n");
-    printf("enter (|_>)    : Again pressing enter will clear the screen\n");
+    printf("enter key (|_) : Again pressing enter will clear the screen\n");
     printf("\n"RESET);
 
 #if SCANF == 1

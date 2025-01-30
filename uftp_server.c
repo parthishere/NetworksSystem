@@ -28,8 +28,8 @@
 
 
 #define MAXDATASIZE 100
-#define RECIEVE_SIZE 512
-#define TRANSMIT_SIZE 512
+#define RECIEVE_SIZE 1024 * 30
+#define TRANSMIT_SIZE 1024 * 30
 #define HEADERSIZE 3
 
 #define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
