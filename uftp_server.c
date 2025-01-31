@@ -446,6 +446,7 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
                 _send(sd, sizeof(ACK), ACK);
                 remove(ep->d_name);
                 closedir(dp);
+                remove_timeout(sd);
                 return;
             }
         }
@@ -652,6 +653,7 @@ commands_t whichcmd(char *cmd)
     }
     else if (strncmp(cmd, "exit", strlen("exit")) == 0)
     {
+        printf("exit");
         return EXIT;
     }
     else if (strncmp(cmd, "delete", strlen("delete")) == 0)

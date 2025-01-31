@@ -492,7 +492,7 @@ void delete_file(sockdetails_t *sd, char *filename)
         printf(RED "[-] Something went wrong on server\n\n" RESET);
         return;
     }
-    printf(GRN "\n\n[+] File: \"%s\" deleted \n\n", recieve_buffer);
+    printf(GRN "\n\n[+] File: \"%s\" deleted \n\n", filename);
     remove_timeout(sd);
 }
 
@@ -503,8 +503,9 @@ void cleanup_resources(sockdetails_t *sd)
 
     bzero(recieve_buffer, TRANSMIT_SIZE);
     _recv(sd, RECIEVE_SIZE, recieve_buffer);
-    if (strncmp(recieve_buffer, ACK, strlen(ACK)))
+    if (strncmp(recieve_buffer, ACK, strlen(ACK)) == 0)
     {
+        printf(GRN"[+] ACK recieved exiting \n"RESET);
         // done
         close(sd->sockfd);
         exit(EXIT_SUCCESS);
@@ -636,7 +637,7 @@ int main(int argc, char *argv[])
             bzero(transmit_buffer, sizeof transmit_buffer);
             snprintf(transmit_buffer, sizeof transmit_buffer, "exit");
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
-            // cleanup();
+            cleanup_resources(&sd);
             break;
         case -2:
             continue;
