@@ -27,6 +27,7 @@
 #define WHT "\x1B[37m"
 #define RESET "\x1B[0m"
 
+// dd if=/dev/zero of=output.file bs=1024 count=1024
 #define MAXDATASIZE 100
 #define RECIEVE_SIZE 1024 * 30
 #define TRANSMIT_SIZE 1024 * 30
