@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,20 +18,21 @@
 #include <unistd.h> // For system calls write, read e close
 #include <fcntl.h>
 
-#define RED   "\x1B[31m"
-#define GRN   "\x1B[32m"
-#define YEL   "\x1B[33m"
-#define BLU   "\x1B[34m"
-#define MAG   "\x1B[35m"
-#define CYN   "\x1B[36m"
-#define WHT   "\x1B[37m"
+#define RED "\x1B[31m"
+#define GRN "\x1B[32m"
+#define YEL "\x1B[33m"
+#define BLU "\x1B[34m"
+#define MAG "\x1B[35m"
+#define CYN "\x1B[36m"
+#define WHT "\x1B[37m"
 #define RESET "\x1B[0m"
-
 
 #define MAXDATASIZE 100
 #define RECIEVE_SIZE 1024 * 30
 #define TRANSMIT_SIZE 1024 * 30
 #define HEADERSIZE 5
+
+#define TIMEOUT 5
 
 #define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
 #define ACK "ack\t\t\t\0"
@@ -57,7 +59,6 @@ typedef struct
     int addr_len;
     int recvBytes, sentBytes;
 } sockdetails_t;
-
 
 // 8-bit CRC using the polynomial x^8+x^6+x^3+x^2+1, 0x14D.
 // Chosen based on Koopman, et al. (0xA6 in his notation = 0x14D >> 1):
@@ -96,7 +97,6 @@ static unsigned char const crc8_table[] = {
     0xd0, 0xee, 0xac, 0x92, 0x28, 0x16, 0x54, 0x6a, 0x45, 0x7b, 0x39, 0x07,
     0xbd, 0x83, 0xc1, 0xff};
 
-
 commands_t whichcmd(char *cmd);
 
 void *getin_addr(struct sockaddr *sa)
@@ -132,10 +132,18 @@ unsigned crc8(unsigned crc, unsigned char const *data, size_t len)
 void error(sockdetails_t *sd, char *msg)
 {
     printf(RED "[-] Error somewhere ! Check below message to see details \n" RESET);
-    sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
+
     perror(msg);
-    close(sd->sockfd);
-    exit(EXIT_FAILURE);
+    if (errno == EAGAIN || errno == EWOULDBLOCK)
+    {
+        printf(RED "[-] Timeout\n" RESET);
+    }
+    else
+    {
+        sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
+        // close(sd->sockfd);
+        // exit(EXIT_FAILURE);
+    }
 }
 
 void _send(sockdetails_t *sd, int size, void *packet)
@@ -154,8 +162,36 @@ void _recv(sockdetails_t *sd, int size, void *packet)
     }
 }
 
+void set_timeout(sockdetails_t *sd, int sec)
+{
+
+    struct timeval timeout;
+    timeout.tv_sec = sec;
+    timeout.tv_usec = 0;
+
+    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+    {
+        perror("setsockopt");
+        exit(1);
+    }
+}
+
+void remove_timeout(sockdetails_t *sd)
+{
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+    {
+        perror("setsockopt");
+        exit(1);
+    }
+}
+
 void list_files(sockdetails_t *sd)
 {
+    set_timeout(sd, TIMEOUT);
     printf("\n\nLS\n\n");
     DIR *dp;
     struct dirent *ep;
@@ -170,7 +206,7 @@ void list_files(sockdetails_t *sd)
         int seq_num = 0;
         while ((ep = readdir(dp)) != NULL)
         {
-        retry: ;
+        retry:;
             int record_len = strlen(ep->d_name);
             bzero(transmit_buffer, sizeof(transmit_buffer));
 
@@ -178,7 +214,7 @@ void list_files(sockdetails_t *sd)
 
             char packet[TRANSMIT_SIZE + HEADERSIZE];
             packet[0] = (record_len & 0x00FF); // packet lenght
-            packet[1] = ((record_len & 0xFF00) >> 8);        
+            packet[1] = ((record_len & 0xFF00) >> 8);
             packet[2] = (seq_num & 0x00FF);
             packet[3] = (seq_num & 0xFF00) >> 8;
             crc = crc8(crc, transmit_buffer, record_len); // crc
@@ -187,10 +223,10 @@ void list_files(sockdetails_t *sd)
             // for better readability
             *(transmit_buffer + record_len) = '\n';
             record_len++;
-            
+
             memcpy(packet + HEADERSIZE, transmit_buffer, record_len);
             _send(sd, record_len + HEADERSIZE, packet);
-            printf(MAG "> %s" RESET , transmit_buffer);
+            printf(MAG "> %s" RESET, transmit_buffer);
 
             bzero(recieve_buffer, sizeof(recieve_buffer));
             _recv(sd, RECIEVE_SIZE, recieve_buffer);
@@ -205,18 +241,19 @@ void list_files(sockdetails_t *sd)
             goto retry;
         }
 
-    
         _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
         closedir(dp);
     }
+    remove_timeout(sd);
 }
 
 void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
+    set_timeout(sd, TIMEOUT);
     printf("\n\nGET\n\n");
     char filename[50];
-    sscanf(&recieve_buffer[strlen("get")+1], "%s", filename);
+    sscanf(&recieve_buffer[strlen("get") + 1], "%s", filename);
     if (filename[0] == '\0')
     {
         printf(RED "[-] File Name is Empty" RESET);
@@ -246,10 +283,11 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     uint8_t crc = crc8(0, NULL, 0);
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
-        if(seq_num >= 0xFFFF){
+        if (seq_num >= 0xFFFF)
+        {
             break;
         }
-    retry: ;
+    retry:;
         transmit_buffer[0] = (total_bytes & 0x00FF);
         transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
         transmit_buffer[2] = (seq_num & 0x00FF);
@@ -257,9 +295,8 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         crc = crc8(crc, &transmit_buffer[HEADERSIZE], total_bytes); // crc
         transmit_buffer[4] = crc;
 
-        
         printf("\nSending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
-        printf(MAG "> %s" RESET, transmit_buffer + HEADERSIZE );
+        printf(MAG "> %s" RESET, transmit_buffer + HEADERSIZE);
         _send(sd, total_bytes + HEADERSIZE, transmit_buffer);
 
         bzero(recieve_buffer, RECIEVE_SIZE);
@@ -289,14 +326,15 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
     close(fd);
+    remove_timeout(sd);
 }
 
 void put_file(sockdetails_t *sd, char *recieve_buffer)
 {
-
+    set_timeout(sd, 100);
     printf("\n\nPUT\n\n");
     char filename[50];
-    sscanf(&recieve_buffer[strlen("put")+1], "%s", filename);
+    sscanf(&recieve_buffer[strlen("put") + 1], "%s", filename);
     if (filename[0] == '\0')
     {
         printf(RED "[-] File Name is Empty" RESET);
@@ -326,7 +364,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     uint8_t crc = crc8(0, NULL, 0);
     while (1)
     {
-    retry: ;
+    retry:;
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
@@ -344,9 +382,9 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             return;
         }
 
-        int seq_num     = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
+        int seq_num = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
-        uint8_t crc_server    = recieve_buffer[4];
+        uint8_t crc_server = recieve_buffer[4];
         crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
         printf("CRC %d %d\n", crc_server, crc);
         bzero(transmit_buffer, TRANSMIT_SIZE);
@@ -361,8 +399,9 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         else
         {
             retry_count++;
-            if(retry_count >= 3) break;
-            printf(RED "[-]  Sequence number does not match, asking to re-send the packet \n\r" RESET);
+            if (retry_count >= 3)
+                break;
+            printf(RED "[-]  Sequence number does not match, asking to re-send the packet Seq:%d(%d) crc_recv %d(%d) \n\r" RESET, seq_num, current_count, crc, crc_server);
             memcpy(transmit_buffer, NACK, strlen(NACK));
             _send(sd, strlen(NACK), transmit_buffer);
             continue;
@@ -371,14 +410,16 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         printf(MAG "%s\n" RESET, recieve_buffer + HEADERSIZE);
         total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
     }
-    printf(GRN"\n\n[+] Wrote \"%s\" file to current folder\n\n"RESET, filename);
+    printf(GRN "\n\n[+] Wrote \"%s\" file to current folder\n\n" RESET, filename);
+    remove_timeout(sd);
 }
 
 void delete_file(sockdetails_t *sd, char *recieve_buffer)
 {
+    set_timeout(sd, TIMEOUT);
     printf("\n\nDELETE\n\n");
     char filename[50];
-    sscanf(&recieve_buffer[strlen("delete")+1], "%s", filename);
+    sscanf(&recieve_buffer[strlen("delete") + 1], "%s", filename);
     if (filename[0] == '\0')
     {
         printf(RED "[-] File Name is Empty\n" RESET);
@@ -397,30 +438,31 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
         int seq_num = 0;
         while ((ep = readdir(dp)) != NULL)
         {
-            if(strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0){
-                printf(GRN"[+] Found the file %s, deleting it\n" RESET, filename);
+            if (strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0)
+            {
+                printf(GRN "[+] Found the file %s, deleting it\n" RESET, filename);
                 bzero(transmit_buffer, sizeof(transmit_buffer));
                 _send(sd, sizeof(ACK), ACK);
                 remove(ep->d_name);
                 closedir(dp);
                 return;
-            }            
+            }
         }
 
-        printf(RED"[-] Could not find the file: %s\n" RESET, filename);
+        printf(RED "[-] Could not find the file: %s\n" RESET, filename);
         _send(sd, strlen(FILE_NOT_FOUND), FILE_NOT_FOUND);
         closedir(dp);
-        
     }
-    else{
-        printf(RED"[-] Something went wrong while opening PWD\n" RESET);
+    else
+    {
+        printf(RED "[-] Something went wrong while opening PWD\n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
     }
+    remove_timeout(sd);
 }
 
 void cleanup_client_resouces(sockdetails_t *sd)
 {
-
     char transmit_buffer[TRANSMIT_SIZE];
     bzero(transmit_buffer, TRANSMIT_SIZE);
     snprintf(transmit_buffer, sizeof(ACK), ACK);
@@ -443,8 +485,8 @@ void recieve_and_send(int sockfd)
     _recv(&sd, RECIEVE_SIZE, recieve_buffer);
 
     char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
-    printf(GRN"\n\n[+] Recieved Command \"%s\" from IP %s\n" RESET, recieve_buffer, inet_ntop(sd.their_addr.ss_family, temp_ip, ip, sizeof ip));
-    
+    printf(GRN "\n\n[+] Recieved Command \"%s\" from IP %s\n" RESET, recieve_buffer, inet_ntop(sd.their_addr.ss_family, temp_ip, ip, sizeof ip));
+
     commands_t cmd = whichcmd(recieve_buffer);
 
     switch (cmd)
@@ -485,7 +527,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        printf(RED"[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n"RESET, argc, argv[0], argv[1]);
+        printf(RED "[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n" RESET, argc, argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
 
@@ -539,15 +581,15 @@ int main(int argc, char *argv[])
             perror("server: socket");
             continue;
         }
-        printf(GRN"[+] socket call successful\n" RESET);
+        printf(GRN "[+] socket call successful\n" RESET);
 
         struct timeval timeout;
-        timeout.tv_sec = 2;
+        timeout.tv_sec = 3;
         timeout.tv_usec = 0;
 
         int yes = 1;
 
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
         {
             perror("setsockopt");
             exit(1);
@@ -617,7 +659,7 @@ commands_t whichcmd(char *cmd)
     }
     else
     {
-        printf(RED"[-] Wrong command try again \n\r"RESET);
+        printf(RED "[-] Wrong command try again \n\r" RESET);
         return -1;
     }
 }

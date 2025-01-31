@@ -2,7 +2,8 @@
     "files.associations": {
         "types.h": "c",
         "netdb.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "inet.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
