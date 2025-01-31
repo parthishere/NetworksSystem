@@ -304,6 +304,7 @@ void get_file(sockdetails_t *sd, char *filename)
         {
             printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
             fclose(fp);
+            remove(whole_filename);
             return;
         }
 

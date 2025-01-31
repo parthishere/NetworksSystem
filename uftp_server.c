@@ -259,6 +259,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     {
         printf(RED "[-] File Name is Empty" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        remove_timeout(sd);
         return;
     }
 
@@ -276,6 +277,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     {
         printf(RED "[-] Error Opening File \n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        remove_timeout(sd);
         return;
     }
 
@@ -340,6 +342,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     {
         printf(RED "[-] File Name is Empty" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        remove_timeout(sd);
         return;
     }
 
@@ -357,6 +360,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     {
         printf(RED "[-] Error Opening File \n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        remove_timeout(sd);
         return;
     }
 
@@ -380,6 +384,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         {
             printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
             close(fd);
+            remove_timeout(sd);
             return;
         }
 
@@ -425,6 +430,7 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
     {
         printf(RED "[-] File Name is Empty\n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
+        remove_timeout(sd);
         return;
     }
 
@@ -469,6 +475,7 @@ void cleanup_client_resouces(sockdetails_t *sd)
     bzero(transmit_buffer, TRANSMIT_SIZE);
     snprintf(transmit_buffer, sizeof(ACK), ACK);
     _send(sd, TRANSMIT_SIZE, transmit_buffer);
+    remove_timeout(sd);
     // something cleanup, we will use child processes to make it more useable !
 }
 
