@@ -684,7 +684,9 @@ commands_t print_menu(char *filename)
     printf("%s\n", cmd);
 
 #else
+    
     char cmd[256];
+    bzero(cmd, sizeof cmd);
     printf("Enter one of the comamnds ! \n>");
     int bytesread = read(STDIN_FILENO, cmd, sizeof(cmd));
     printf(MAG "%s\n" RESET, cmd);
