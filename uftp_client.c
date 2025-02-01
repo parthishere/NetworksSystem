@@ -757,12 +757,12 @@ commands_t print_menu(char *filename)
 
     printf(YEL "\n\nThis client can support FTP through UDP\n\n");
     printf("Currently this program can support following commands \n");
-    printf("get <filename> : Get the file name in server and print the file\n");
-    printf("put <filename> : if filename does not exists on server, create one\n");
-    printf("delete         : <filename>: if filename does not exists on server, delete that file\n");
-    printf("ls             : get the list of all the files in server and print it\n");
-    printf("exit           : exit from the client program and free the resources in client and server\n");
-    printf("enter key (|_) : Again pressing enter will clear the screen\n");
+    printf("get <filename>   : Get the file name in server and print the file\n");
+    printf("put <filename>   : if filename does not exists on server, create one. \n\t\t   *If there is any error while opening file on client,\n\t\t   It will go manual and you have to enter you input through command line !!*\n");
+    printf("delete <filename>: if filename does not exists on server, delete that file\n");
+    printf("ls               : get the list of all the files in server and print it\n");
+    printf("exit             : exit from the client program and free the resources in client and server\n");
+    printf("enter key (|_)   : Again pressing enter will clear the screen\n");
     printf("\n" RESET);
 
 #if SCANF == 1
