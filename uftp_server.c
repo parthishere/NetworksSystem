@@ -132,7 +132,7 @@ unsigned crc8(unsigned crc, unsigned char const *data, size_t len)
 
 void error(sockdetails_t *sd, char *msg)
 {
-    printf(RED "[-] Error somewhere ! Check below message to see details \n" RESET);
+    printf(RED "[-] Error somewhere ! Check below message to see details \n");
 
     perror(msg);
     if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -569,10 +569,14 @@ int main(int argc, char *argv[])
 
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
+    if(atoi(server_port) <= 5000){
+        fprintf(stderr, RED"[-] Port Value <= 5000 ! keep port value more than 5000 \n"RESET);
+        exit(EXIT_FAILURE);
+    }
 
     if ((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0)
     {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status)); // this will print error to stderr fd
+        fprintf(stderr, RED"getaddrinfo: %s\n"RESET , gai_strerror(status)); // this will print error to stderr fd
         exit(EXIT_FAILURE);                                         // exit if there is an error
     }
     printf(GRN "[+] getaddrinfo call successful\n" RESET);
@@ -587,7 +591,7 @@ int main(int argc, char *argv[])
         */
         if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
         {
-            perror("server: socket");
+            perror(RED"server: socket");
             continue;
         }
         printf(GRN "[+] socket call successful\n" RESET);
@@ -600,7 +604,7 @@ int main(int argc, char *argv[])
 
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
         {
-            perror("setsockopt");
+            perror(RED"setsockopt");
             exit(1);
         }
 
@@ -611,7 +615,7 @@ int main(int argc, char *argv[])
         if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
         {
             close(sockfd);
-            perror("server: bind");
+            perror(RED"server: bind");
             continue;
         }
 
@@ -620,7 +624,7 @@ int main(int argc, char *argv[])
 
     if (temp == NULL)
     {
-        fprintf(stderr, "[-] socket connection failed for server \n");
+        fprintf(stderr, RED"[-] socket connection failed for server \n"RESET);
         close(sockfd);
         exit(EXIT_FAILURE);
     }

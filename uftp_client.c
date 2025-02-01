@@ -15,9 +15,12 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <unistd.h> // For system calls write, read e close
 #include <fcntl.h>
+
 
 #define SCREEN_HEIGHT 50
 
@@ -45,6 +48,8 @@
 #define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
 #define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
 #define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
+
+#define DOWNLOAD_FOLDER_NAME "./Downloads"
 
 #define clrscr ({printf("\033[2J\033[H");\
 fflush(stdout); })
@@ -354,14 +359,13 @@ int put_file_file(sockdetails_t *sd, char *recieve_buffer)
     {
 
         printf(RED "[-] File Name is Empty" RESET);
-        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n"RESET );
+        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n" RESET);
         remove_timeout(sd);
         return -1;
     }
 
     snprintf(whole_filename, sizeof(whole_filename), "./Downloads/%s", recieve_buffer);
     printf("Recieve buffer %s\n", whole_filename);
-    
 
     size_t file_size;
     DIR *dp;
@@ -376,7 +380,7 @@ int put_file_file(sockdetails_t *sd, char *recieve_buffer)
     if (fd < 0)
     {
         printf(RED "[-] Error Opening File \n" RESET);
-        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n"RESET );
+        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n" RESET);
         remove_timeout(sd);
         return -1;
     }
@@ -612,6 +616,13 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    struct stat st = {0};
+
+    if (stat("/Downloads", &st) == -1)
+    {
+        mkdir("/Downloads", 0700);
+    }
+
     /*
     struct addrinfo {
                int              ai_flags;
@@ -661,7 +672,7 @@ int main(int argc, char *argv[])
     {
         if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
         {
-            perror("client: socket");
+            perror(RED"client: socket"RESET);
             exit(EXIT_FAILURE);
             continue;
         }
@@ -672,7 +683,7 @@ int main(int argc, char *argv[])
 
     if (temp == NULL)
     {
-        fprintf(stderr, "[-] socket connection failed for client \n");
+        fprintf(stderr, RED"[-] socket connection failed for client \n"RESET);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
@@ -717,7 +728,8 @@ int main(int argc, char *argv[])
             snprintf(transmit_buffer, sizeof transmit_buffer, "put %s", filename);
             printf("put %s\n", filename);
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
-            if(put_file_file(&sd, filename) == -1){
+            if (put_file_file(&sd, filename) == -1)
+            {
                 put_file(&sd);
             }
             break;
