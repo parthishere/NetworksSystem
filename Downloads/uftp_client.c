@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
-#include <dirent.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,9 +14,6 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
-#include <unistd.h> // For system calls write, read e close
-#include <fcntl.h>
 
 #define SCREEN_HEIGHT 50
 
@@ -159,6 +155,7 @@ void set_timeout(sockdetails_t *sd, int sec)
     }
 }
 
+
 void remove_timeout(sockdetails_t *sd)
 {
     struct timeval timeout;
@@ -187,23 +184,23 @@ void *getin_addr(struct sockaddr *sa)
 
 commands_t whichcmd(char *cmd)
 {
-    if (strncmp(cmd, "ls\n", strlen(cmd)) == 0)
+    if (strncmp(cmd, "ls", strlen("ls")) == 0)
     {
         return LS;
     }
-    else if (strncmp(cmd, "get ", strlen("get ")) == 0)
+    else if (strncmp(cmd, "get", strlen("get")) == 0)
     {
         return GET;
     }
-    else if (strncmp(cmd, "put ", strlen("put ")) == 0)
+    else if (strncmp(cmd, "put", strlen("get")) == 0)
     {
         return PUT;
     }
-    else if (strncmp(cmd, "exit\n", strlen(cmd)) == 0)
+    else if (strncmp(cmd, "exit", strlen("exit")) == 0)
     {
         return EXIT;
     }
-    else if (strncmp(cmd, "delete ", strlen("delete ")) == 0)
+    else if (strncmp(cmd, "delete", strlen("delete")) == 0)
     {
         return DELETE;
     }
@@ -222,7 +219,7 @@ commands_t whichcmd(char *cmd)
 void list_files(sockdetails_t *sd)
 {
     set_timeout(sd, TIMEOUT);
-
+    
     char recieve_buffer[RECIEVE_SIZE];   // 256bytes
     char transmit_buffer[TRANSMIT_SIZE]; // 256bytes
     int current_count = 0;
@@ -344,98 +341,10 @@ void get_file(sockdetails_t *sd, char *filename)
     remove_timeout(sd);
 }
 
-int put_file_file(sockdetails_t *sd, char *recieve_buffer)
-{
-    set_timeout(sd, TIMEOUT);
-    printf("\n\PUT\n\n");
-    char whole_filename[100];
-
-    if (recieve_buffer[0] == '\0')
-    {
-
-        printf(RED "[-] File Name is Empty" RESET);
-        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n"RESET );
-        remove_timeout(sd);
-        return -1;
-    }
-
-    snprintf(whole_filename, sizeof(whole_filename), "./Downloads/%s", recieve_buffer);
-    printf("Recieve buffer %s\n", whole_filename);
-    
-
-    size_t file_size;
-    DIR *dp;
-    struct dirent *ep;
-    int total_bytes;
-    int seq_num = 0;
-    int retry_count = 0;
-
-    char transmit_buffer[TRANSMIT_SIZE];
-    printf("%s\n", whole_filename);
-    int fd = open(whole_filename, O_RDONLY);
-    if (fd < 0)
-    {
-        printf(RED "[-] Error Opening File \n" RESET);
-        printf(RED "[-] Going Manual: enter your buffer through stdin(command line:) \n"RESET );
-        remove_timeout(sd);
-        return -1;
-    }
-
-    bzero(transmit_buffer, TRANSMIT_SIZE);
-    bzero(recieve_buffer, RECIEVE_SIZE);
-    uint8_t crc = crc8(0, NULL, 0);
-    while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
-    {
-        if (seq_num >= 0xFFFF)
-        {
-            break;
-        }
-    retry:;
-        transmit_buffer[0] = (total_bytes & 0x00FF);
-        transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
-        transmit_buffer[2] = (seq_num & 0x00FF);
-        transmit_buffer[3] = (seq_num & 0xFF00) >> 8;
-        crc = crc8(crc, &transmit_buffer[HEADERSIZE], total_bytes); // crc
-        transmit_buffer[4] = crc;
-
-        printf("\nSending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
-        printf(MAG "> %s" RESET, transmit_buffer + HEADERSIZE);
-        _send(sd, total_bytes + HEADERSIZE, transmit_buffer);
-
-        bzero(recieve_buffer, RECIEVE_SIZE);
-        _recv(sd, RECIEVE_SIZE, recieve_buffer);
-
-        if (strncmp(recieve_buffer, ACK, 7) == 0)
-        {
-            bzero(transmit_buffer, TRANSMIT_SIZE);
-            seq_num++;
-            continue;
-        }
-        else
-        {
-            retry_count++;
-            if (retry_count >= 3)
-            {
-                retry_count = 0;
-                printf(RED "[-] Max retries reached. Aborting.\n" RESET);
-                break;
-            }
-            printf(RED "[-]  NACK -> Retry sending the packet \n\r" RESET);
-            goto retry;
-        }
-    }
-
-    printf(GRN "\n\n-- End Of File --\n\n" RESET);
-    _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
-
-    close(fd);
-    remove_timeout(sd);
-    return 0;
-}
 void put_file(sockdetails_t *sd)
 {
     set_timeout(sd, 100);
-    // printf("\n\nPUT\n\n");
+    printf("\n\nPUT\n\n");
     char recieve_buffer[RECIEVE_SIZE];
     char transmit_buffer[TRANSMIT_SIZE];
     int write_pointer = HEADERSIZE; // 0, 1, 2 are filled
@@ -597,7 +506,7 @@ void cleanup_resources(sockdetails_t *sd)
     _recv(sd, RECIEVE_SIZE, recieve_buffer);
     if (strncmp(recieve_buffer, ACK, strlen(ACK)) == 0)
     {
-        printf(GRN "[+] ACK recieved exiting \n" RESET);
+        printf(GRN"[+] ACK recieved exiting \n"RESET);
         // done
         close(sd->sockfd);
         exit(EXIT_SUCCESS);
@@ -715,11 +624,8 @@ int main(int argc, char *argv[])
         case PUT:
             bzero(transmit_buffer, sizeof transmit_buffer);
             snprintf(transmit_buffer, sizeof transmit_buffer, "put %s", filename);
-            printf("put %s\n", filename);
             _send(&sd, sizeof transmit_buffer, transmit_buffer);
-            if(put_file_file(&sd, filename) == -1){
-                put_file(&sd);
-            }
+            put_file(&sd);
             break;
 
         case DELETE:
@@ -778,7 +684,7 @@ commands_t print_menu(char *filename)
     printf("%s\n", cmd);
 
 #else
-
+    
     char cmd[256];
     bzero(cmd, sizeof cmd);
     printf("Enter one of the comamnds ! \n>");

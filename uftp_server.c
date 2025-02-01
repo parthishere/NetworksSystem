@@ -392,7 +392,6 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
         uint8_t crc_server = recieve_buffer[4];
         crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
-        printf("CRC %d %d\n", crc_server, crc);
         bzero(transmit_buffer, TRANSMIT_SIZE);
 
         if ((unsigned)crc_server == (unsigned)crc && seq_num == current_count)
@@ -491,6 +490,7 @@ void recieve_and_send(int sockfd)
     sd.sockfd = sockfd;
     sd.addr_len = sizeof(sd.their_addr);
 
+    bzero(recieve_buffer, RECIEVE_SIZE);
     _recv(&sd, RECIEVE_SIZE, recieve_buffer);
 
     char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
@@ -646,24 +646,24 @@ int main(int argc, char *argv[])
 
 commands_t whichcmd(char *cmd)
 {
-    if (strncmp(cmd, "ls", strlen("ls")) == 0)
+    if (strncmp(cmd, "ls\n", strlen(cmd)) == 0)
     {
         return LS;
     }
-    else if (strncmp(cmd, "get", strlen("get")) == 0)
+    else if (strncmp(cmd, "get ", strlen("get ")) == 0)
     {
         return GET;
     }
-    else if (strncmp(cmd, "put", strlen("put")) == 0)
+    else if (strncmp(cmd, "put ", strlen("put ")) == 0)
     {
         return PUT;
     }
-    else if (strncmp(cmd, "exit", strlen("exit")) == 0)
+    else if (strncmp(cmd, "exit\n", strlen(cmd)) == 0)
     {
         printf("exit");
         return EXIT;
     }
-    else if (strncmp(cmd, "delete", strlen("delete")) == 0)
+    else if (strncmp(cmd, "delete ", strlen("delete ")) == 0)
     {
         return DELETE;
     }
