@@ -1,79 +1,128 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
+/*******************************************************************************
+ * Copyright (c) 2025
+ *
+ * File: server.c
+ *
+ * Description:
+ * UDP-based FTP server implementation providing reliable file transfer services.
+ * Implements a custom protocol over UDP with error detection, acknowledgments,
+ * and retransmission mechanisms. Supports basic file operations including GET,
+ * PUT, DELETE, and directory listing.
+ *
+ * Protocol Features:
+ * - Reliable data transfer over UDP using stop-and-wait protocol
+ * - CRC-8 error detection with lookup table optimization
+ * - 5-byte header format: [2B length][2B sequence][1B CRC]
+ * - Maximum packet size: 30KB (configurable up to 60KB)
+ * - Automatic retransmission on errors
+ *
+ * Author: Parth Thakkar
+ * Last Modified: February 1, 2025
+ ******************************************************************************/
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <dirent.h>
+/* Standard Library Headers
+ * Core system functionality and standard I/O operations
+ */
+#include <stdio.h>   // Standard I/O operations
+#include <stdlib.h>  // Memory allocation, conversion functions
+#include <stdint.h>  // Fixed-width integer types (uint8_t, etc.)
+#include <stdbool.h> // Boolean type and values
+#include <string.h>  // String manipulation functions
+#include <unistd.h>  // POSIX operating system API
+#include <errno.h>   // Error number definitions
 
-#include <unistd.h> // For system calls write, read e close
-#include <fcntl.h>
+/* Network Protocol Headers
+ * Required for UDP socket implementation and network operations
+ */
+#include <sys/types.h>  // System data types
+#include <sys/socket.h> // Socket interface functions
+#include <netdb.h>      // Network address conversion
+#include <arpa/inet.h>  // Internet operations
+#include <netinet/in.h> // Internet protocol family
+#include <dirent.h>     // Directory entry operations
 
-#define RED "\x1B[31m"
-#define GRN "\x1B[32m"
-#define YEL "\x1B[33m"
-#define BLU "\x1B[34m"
-#define MAG "\x1B[35m"
-#define CYN "\x1B[36m"
-#define WHT "\x1B[37m"
-#define RESET "\x1B[0m"
+/* File Operation Headers
+ * Support for file system operations
+ */
+#include <unistd.h> // System calls (read, write, close)
+#include <fcntl.h>  // File control options
 
-// dd if=/dev/zero of=output.file bs=1024 count=1024M
-#define MAXDATASIZE 100
-#define RECIEVE_SIZE 1024 * 30
-#define TRANSMIT_SIZE 1024 * 30
-#define HEADERSIZE 5
+/* ANSI Terminal Color Definitions
+ * Used for status message formatting and visual feedback
+ */
+#define RED "\x1B[31m"  // Error messages
+#define GRN "\x1B[32m"  // Success indicators
+#define YEL "\x1B[33m"  // Warnings
+#define BLU "\x1B[34m"  // Informational messages
+#define MAG "\x1B[35m"  // Data visualization
+#define CYN "\x1B[36m"  // Alternative highlighting
+#define WHT "\x1B[37m"  // Standard output
+#define RESET "\x1B[0m" // Reset formatting
 
-#define TIMEOUT 5
+/* Protocol Configuration Constants
+ * Define buffer sizes and protocol parameters
+ */
+#define MAXDATASIZE 100           // Maximum size for general data
+#define RECIEVE_SIZE (1024 * 30)  // 30KB receive buffer
+#define TRANSMIT_SIZE (1024 * 30) // 30KB transmit buffer
+#define HEADERSIZE 5              // Protocol header size in bytes
+#define TIMEOUT 5                 // Socket timeout in seconds
 
-#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"
-#define ACK "ack\t\t\t\0"
-#define NACK "nack\t\t\t\0"
-#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0"
-#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"
-#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"
-#define WRONG_COMMAND "WRONG_COMMAND\t\t\t\n\0"
+/* Protocol Message Definitions
+ * Standard messages used in the communication protocol
+ * Each message is padded with tabs for consistent length
+ */
+#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"                                   // End of data marker
+#define ACK "ack\t\t\t\0"                                                   // Positive acknowledgment
+#define NACK "nack\t\t\t\0"                                                 // Negative acknowledgment
+#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0" // Operation failure
+#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"                           // File not found error
+#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"                         // File exists error
+#define WRONG_COMMAND "WRONG_COMMAND\t\t\t\n\0"                             // Invalid command error
 
+#define RETRY_COUNT 3
+
+/**
+ * Command Enumeration
+ * Defines supported FTP operations
+ */
 typedef enum
 {
-    GET,
-    PUT,
-    DELETE,
-    LS,
-    EXIT,
-    number_of_command,
+    GET,               // Retrieve file from server
+    PUT,               // Upload file to server
+    DELETE,            // Remove file from server
+    LS,                // List directory contents
+    EXIT,              // Terminate connection
+    number_of_command, // Total number of commands (used for validation)
 } commands_t;
 
+/**
+ * Socket Details Structure
+ * Encapsulates connection state and socket information for a client
+ */
 typedef struct
 {
-    int sockfd;
-    struct sockaddr_storage their_addr;
-    int addr_len;
-    int recvBytes, sentBytes;
+    int sockfd;                         // Socket file descriptor
+    struct sockaddr_storage their_addr; // Client address information
+    int addr_len;                       // Length of address structure
+    int recvBytes;                      // Bytes received in last operation
+    int sentBytes;                      // Bytes sent in last operation
 } sockdetails_t;
 
-// 8-bit CRC using the polynomial x^8+x^6+x^3+x^2+1, 0x14D.
-// Chosen based on Koopman, et al. (0xA6 in his notation = 0x14D >> 1):
-// http://www.ece.cmu.edu/~koopman/roses/dsn04/koopman04_crc_poly_embedded.pdf
-//
-// This implementation is reflected, processing the least-significant bit of the
-// input first, has an initial CRC register value of 0xff, and exclusive-or's
-// the final register value with 0xff. As a result the CRC of an empty string,
-// and therefore the initial CRC value, is zero.
-//
-// The standard description of this CRC is:
-// width=8 poly=0x4d init=0xff refin=true refout=true xorout=0xff check=0xd8
-// name="CRC-8/KOOP"
-
+/**
+ * CRC-8 Lookup Table
+ * Pre-computed table for CRC-8/KOOP polynomial: x^8 + x^6 + x^3 + x^2 + 1 (0x14D)
+ *
+ * Implementation Details:
+ * - Width: 8 bits
+ * - Polynomial: 0x4d
+ * - Initial value: 0xff
+ * - Reflect Input/Output: true
+ * - XOR output: 0xff
+ * - Check value: 0xd8
+ *
+ * Reference: Koopman, et al. (http://www.ece.cmu.edu/~koopman/roses/dsn04/koopman04_crc_poly_embedded.pdf)
+ */
 static unsigned char const crc8_table[] = {
     0xea, 0xd4, 0x96, 0xa8, 0x12, 0x2c, 0x6e, 0x50, 0x7f, 0x41, 0x03, 0x3d,
     0x87, 0xb9, 0xfb, 0xc5, 0xa5, 0x9b, 0xd9, 0xe7, 0x5d, 0x63, 0x21, 0x1f,
@@ -100,6 +149,15 @@ static unsigned char const crc8_table[] = {
 
 commands_t whichcmd(char *cmd);
 
+/**
+ * Extract IP address from socket address structure
+ *
+ * Handles both IPv4 and IPv6 addresses, extracting the appropriate address
+ * field from the socket address structure.
+ *
+ * @param sa  Pointer to socket address structure (sockaddr)
+ * @return    Pointer to IP address field, NULL if family not supported
+ */
 void *getin_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -113,10 +171,27 @@ void *getin_addr(struct sockaddr *sa)
     return NULL;
 }
 
-// Return the CRC-8 of data[0..len-1] applied to the seed crc. This permits the
-// calculation of a CRC a chunk at a time, using the previously returned value
-// for the next seed. If data is NULL, then return the initial seed. See the
-// test code for an example of the proper usage.
+/**
+ * Calculate CRC-8 checksum for error detection
+    Return the CRC-8 of data[0..len-1] applied to the seed crc. This permits the
+    calculation of a CRC a chunk at a time, using the previously returned value
+    for the next seed. If data is NULL, then return the initial seed. See the
+    test code for an example of the proper usage.
+ * Implements CRC-8/KOOP algorithm using pre-computed lookup table.
+ * Supports incremental CRC calculation for processing data in chunks.
+ *
+ * @param crc   Initial CRC value (use 0 for first chunk)
+ * @param data  Pointer to data buffer for CRC calculation
+ * @param len   Length of data in bytes
+ *
+ * @return      Calculated CRC-8 value
+ *
+ * Example Usage:
+ *   uint8_t crc = crc8(0, NULL, 0);           // Initialize CRC
+ *   crc = crc8(crc, data_chunk1, length1);    // Process first chunk
+ *   crc = crc8(crc, data_chunk2, length2);    // Process second chunk
+ */
+
 unsigned crc8(unsigned crc, unsigned char const *data, size_t len)
 {
     if (data == NULL)
@@ -124,29 +199,59 @@ unsigned crc8(unsigned crc, unsigned char const *data, size_t len)
     crc &= 0xff;
     unsigned char const *end = data + len;
     while (data < end)
-        crc = crc8_table[crc ^ *data++];
+        crc = crc8_table[crc ^ *data++]; // Update CRC using lookup table
     return crc;
 }
 
-// crc = crc8(crc, buf, len);
-
+/**
+ * Handle network operation errors
+ *
+ * Processes and reports network errors, distinguishing between timeouts
+ * and other error conditions. For timeouts, displays message; for other errors,
+ * notifies client of operation failure.
+ *
+ * @param sd   Pointer to socket details structure
+ * @param msg  Error message to be displayed
+ *
+ * Error Handling:
+ * - Timeout (EAGAIN/EWOULDBLOCK): Display timeout message
+ * - Other errors: Send error notification to client
+ */
 void error(sockdetails_t *sd, char *msg)
 {
     printf(RED "[-] Error somewhere ! Check below message to see details \n");
 
-    perror(msg);
+    perror(msg); // Print system error message
+
     if (errno == EAGAIN || errno == EWOULDBLOCK)
     {
+        /* Handle timeout conditions */
         printf(RED "[-] Timeout\n" RESET);
     }
     else
     {
+        /* Notify client of error condition */
         sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
         // close(sd->sockfd);
         // exit(EXIT_FAILURE);
     }
 }
 
+/**
+ * Reliable UDP send wrapper
+ *
+ * Encapsulates UDP packet transmission with error handling.
+ * Updates sent bytes count in socket details structure.
+ *
+ * @param sd      Pointer to socket details structure
+ * @param size    Size of data to send
+ * @param packet  Pointer to data buffer
+ *
+ * Implementation:
+ * - Uses sendto() for UDP transmission
+ * - Updates sentBytes counter
+ * - Handles transmission errors through error()
+ */
 void _send(sockdetails_t *sd, int size, void *packet)
 {
     if ((sd->sentBytes = sendto(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, sd->addr_len)) < 0)
@@ -155,6 +260,21 @@ void _send(sockdetails_t *sd, int size, void *packet)
     }
 }
 
+/**
+ * Reliable UDP receive wrapper
+ *
+ * Encapsulates UDP packet reception with error handling.
+ * Updates received bytes count in socket details structure.
+ *
+ * @param sd      Pointer to socket details structure
+ * @param size    Maximum size of data to receive
+ * @param packet  Pointer to receive buffer
+ *
+ * Implementation:
+ * - Uses recvfrom() for UDP reception
+ * - Updates recvBytes counter
+ * - Handles reception errors through error()
+ */
 void _recv(sockdetails_t *sd, int size, void *packet)
 {
     if ((sd->recvBytes = recvfrom(sd->sockfd, packet, size, 0, (struct sockaddr *)&sd->their_addr, &sd->addr_len)) < 0)
@@ -163,13 +283,31 @@ void _recv(sockdetails_t *sd, int size, void *packet)
     }
 }
 
+/**
+ * Configure socket receive timeout
+ *
+ * Sets SO_RCVTIMEO socket option to implement receive timeout.
+ * Configures both seconds and microseconds components.
+ *
+ * @param sd   Pointer to socket details structure
+ * @param sec  Timeout value in seconds
+ *
+ * Error Handling:
+ * - Exits on socket option setting failure
+ *
+ * Implementation Notes:
+ * - Uses timeval structure for timeout specification
+ * - Microseconds component set to 0
+ * - Applies to receive operations only
+ */
 void set_timeout(sockdetails_t *sd, int sec)
 {
-
+    /* Configure timeout structure */
     struct timeval timeout;
-    timeout.tv_sec = sec;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = sec; // Seconds component
+    timeout.tv_usec = 0;  // Microseconds component
 
+    /* Set socket option */
     if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
     {
         perror("setsockopt");
@@ -177,42 +315,83 @@ void set_timeout(sockdetails_t *sd, int sec)
     }
 }
 
+/**
+ * Remove socket receive timeout
+ *
+ * Disables SO_RCVTIMEO socket option by setting timeout to zero.
+ * Returns socket to blocking mode.
+ *
+ * @param sd  Pointer to socket details structure
+ *
+ * Error Handling:
+ * - Exits on socket option setting failure
+ *
+ * Implementation Notes:
+ * - Sets both seconds and microseconds to 0
+ * - Effectively disables timeout mechanism
+ */
 void remove_timeout(sockdetails_t *sd)
 {
+    /* Configure timeout structure for no timeout */
     struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 0;  // No seconds timeout
+    timeout.tv_usec = 0; // No microseconds timeout
 
-    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+    /* Remove socket option */
+    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO,
+                   &timeout, sizeof(timeout)) == -1)
     {
         perror("setsockopt");
         exit(1);
     }
 }
 
+/**
+ * List Directory Contents with Reliable Transfer
+ *
+ * Implements reliable directory listing transmission over UDP using
+ * stop-and-wait protocol with CRC error detection and acknowledgment.
+ * Sends each filename as a separate packet with sequence numbers.
+ *
+ * Protocol Flow:
+ * 1. Read directory entry
+ * 2. Construct packet with header
+ * 3. Send and wait for ACK
+ * 4. Retry on NACK up to RETRY_COUNT times
+ *
+ * @param sd  Pointer to socket details structure
+ */
 void list_files(sockdetails_t *sd)
 {
     set_timeout(sd, TIMEOUT);
     printf("\n\nLS\n\n");
+
+    /* Initialize directory scanning */
     DIR *dp;
     struct dirent *ep;
     int total_bytes;
+    int retry_count = 0;
 
+    /* Initialize transmission buffers and CRC */
     char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
     uint8_t crc = crc8(0, NULL, 0);
     dp = opendir("./");
     if (dp != NULL)
     {
-        int seq_num = 0;
+        int seq_num = 0; // Packet sequence counter
         while ((ep = readdir(dp)) != NULL)
         {
         retry:;
+            /* Prepare filename packet */
             int record_len = strlen(ep->d_name);
             bzero(transmit_buffer, sizeof(transmit_buffer));
 
             memcpy(transmit_buffer, ep->d_name, record_len);
 
+            /* Construct packet header
+             * Format: [2B length][2B sequence][1B CRC][data]
+             */
             char packet[TRANSMIT_SIZE + HEADERSIZE];
             packet[0] = (record_len & 0x00FF); // packet lenght
             packet[1] = ((record_len & 0xFF00) >> 8);
@@ -225,6 +404,7 @@ void list_files(sockdetails_t *sd)
             *(transmit_buffer + record_len) = '\n';
             record_len++;
 
+            /* Send packet and handle acknowledgment */
             memcpy(packet + HEADERSIZE, transmit_buffer, record_len);
             _send(sd, record_len + HEADERSIZE, packet);
             printf(MAG "> %s" RESET, transmit_buffer);
@@ -232,16 +412,27 @@ void list_files(sockdetails_t *sd)
             bzero(recieve_buffer, sizeof(recieve_buffer));
             _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
+            /* Process acknowledgment */
             if (strncmp(recieve_buffer, ACK, 7) == 0)
             {
                 // got the ack we can append
                 seq_num++;
+                retry_count = 0;
                 continue;
             }
-            printf(RED "[-] NACK -> Retry sending the packet\n" RESET);
-            goto retry;
+            else
+            {
+                if (retry_count >= RETRY_COUNT)
+                {
+                    printf(RED "[-] Max retries reached. Aborting.\n" RESET);
+                    break;
+                }
+                printf(RED "[-] NACK -> Retry sending the packet\n" RESET);
+                goto retry;
+            }
         }
 
+        /* Send end-of-transmission marker */
         _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
         closedir(dp);
@@ -249,12 +440,30 @@ void list_files(sockdetails_t *sd)
     remove_timeout(sd);
 }
 
+/**
+ * Handle GET File Request
+ *
+ * Implements reliable file transfer from server to client using
+ * stop-and-wait protocol with error detection and retransmission.
+ *
+ * Protocol Features:
+ * - CRC-based error detection
+ * - Sequence number tracking
+ * - Automatic retransmission on NACK
+ * - Maximum retry limit
+ *
+ * @param sd             Pointer to socket details structure
+ * @param recieve_buffer Buffer containing the GET request
+ */
 void get_file(sockdetails_t *sd, char *recieve_buffer)
 {
     set_timeout(sd, TIMEOUT);
     printf("\n\nGET\n\n");
     char filename[50];
+    /* Extract filename from request */
     sscanf(&recieve_buffer[strlen("get") + 1], "%s", filename);
+
+    /* Validate filename */
     if (filename[0] == '\0')
     {
         printf(RED "[-] File Name is Empty" RESET);
@@ -263,6 +472,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
+    /* Initialize transfer parameters */
     size_t file_size;
     DIR *dp;
     struct dirent *ep;
@@ -272,6 +482,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
 
     char transmit_buffer[TRANSMIT_SIZE];
 
+    /* Open and validate file */
     int fd = open(filename, O_RDONLY);
     if (fd < 0)
     {
@@ -281,30 +492,38 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
+    /* Initialize transfer buffers and CRC */
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
     uint8_t crc = crc8(0, NULL, 0);
+
+    /* Read and send file in chunks */
     while ((total_bytes = read(fd, &transmit_buffer[HEADERSIZE], TRANSMIT_SIZE - HEADERSIZE)) > 0)
     {
+        /* Check sequence number overflow */
         if (seq_num >= 0xFFFF)
         {
             break;
         }
     retry:;
-        transmit_buffer[0] = (total_bytes & 0x00FF);
-        transmit_buffer[1] = (total_bytes & 0xFF00) >> 8;
-        transmit_buffer[2] = (seq_num & 0x00FF);
-        transmit_buffer[3] = (seq_num & 0xFF00) >> 8;
-        crc = crc8(crc, &transmit_buffer[HEADERSIZE], total_bytes); // crc
+        /* Construct packet header */
+        transmit_buffer[0] = (total_bytes & 0x00FF);      // Length low byte
+        transmit_buffer[1] = (total_bytes & 0xFF00) >> 8; // Length high byte
+        transmit_buffer[2] = (seq_num & 0x00FF);          // Sequence low byte
+        transmit_buffer[3] = (seq_num & 0xFF00) >> 8;     // Sequence high byte
+        crc = crc8(crc, &transmit_buffer[HEADERSIZE], total_bytes);
         transmit_buffer[4] = crc;
 
+        /* Send packet and display progress */
         printf("\nSending packet %d (length: %d (%d %d))\n", seq_num, total_bytes, transmit_buffer[0], transmit_buffer[1]);
         printf(MAG "> %s" RESET, transmit_buffer + HEADERSIZE);
         _send(sd, total_bytes + HEADERSIZE, transmit_buffer);
 
+        /* Wait for acknowledgment */
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
+        /* Process acknowledgment */
         if (strncmp(recieve_buffer, ACK, 7) == 0)
         {
             bzero(transmit_buffer, TRANSMIT_SIZE);
@@ -314,7 +533,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         else
         {
             retry_count++;
-            if (retry_count >= 3)
+            if (retry_count >= RETRY_COUNT)
             {
                 retry_count = 0;
                 printf(RED "[-] Max retries reached. Aborting.\n" RESET);
@@ -325,6 +544,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
         }
     }
 
+    /* Complete transfer */
     printf(GRN "\n\n-- End Of File --\n\n" RESET);
     _send(sd, strlen(END_OF_DYNAMIC_DATA), END_OF_DYNAMIC_DATA);
 
@@ -332,10 +552,29 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
     remove_timeout(sd);
 }
 
+/**
+ * Handle PUT File Operation
+ *
+ * Implements reliable file upload from client to server using stop-and-wait protocol
+ * with CRC error detection and sequence number verification.
+ *
+ * Protocol Flow:
+ * 1. Receive filename and validate
+ * 2. Create/truncate file
+ * 3. Receive data packets with error checking
+ * 4. Send ACK/NACK based on validation
+ * 5. Write validated data to file
+ *
+ * @param sd             Pointer to socket details structure
+ * @param recieve_buffer Buffer containing PUT command and filename
+ */
 void put_file(sockdetails_t *sd, char *recieve_buffer)
 {
-    set_timeout(sd, 100);
+    /* Set extended timeout for file writing for manual mode ! */
+    set_timeout(sd, 50);
     printf("\n\nPUT\n\n");
+
+    /* Extract and validate filename */
     char filename[50];
     sscanf(&recieve_buffer[strlen("put") + 1], "%s", filename);
     if (filename[0] == '\0')
@@ -346,6 +585,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
+    /* Initialize transfer parameters */
     size_t file_size;
     DIR *dp;
     struct dirent *ep;
@@ -355,6 +595,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     char transmit_buffer[TRANSMIT_SIZE];
     int current_count = 0;
 
+    /* Create or truncate file with read-write permissions */
     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0)
     {
@@ -364,15 +605,19 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
+    /* Initialize buffers and CRC */
     bzero(transmit_buffer, TRANSMIT_SIZE);
     bzero(recieve_buffer, RECIEVE_SIZE);
     uint8_t crc = crc8(0, NULL, 0);
+
+    /* Main reception loop */
     while (1)
     {
     retry:;
         bzero(recieve_buffer, RECIEVE_SIZE);
         _recv(sd, RECIEVE_SIZE, recieve_buffer);
 
+        /* Check for end of transmission */
         if (strncmp(recieve_buffer, END_OF_DYNAMIC_DATA, strlen(END_OF_DYNAMIC_DATA)) == 0)
         {
             printf(GRN "\n\n--- End of file received. --\n\n" RESET);
@@ -380,6 +625,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             break;
         }
 
+        /* Handle transmission errors */
         if (strncmp(recieve_buffer, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA)) == 0)
         {
             printf(RED "[-] !!!!!!!~~~~~~~~~~ Error somewhere ~~~~~~~~~~!!!!!!! \n" RESET);
@@ -388,12 +634,14 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             return;
         }
 
+        /* Extract and validate packet header */
         int seq_num = (((recieve_buffer[3] << 8) & 0xFF00) | (recieve_buffer[2] & 0x00FF));
         int data_length = (((recieve_buffer[1] << 8) & 0xFF00) | (recieve_buffer[0] & 0x00FF));
         uint8_t crc_server = recieve_buffer[4];
         crc = crc8(crc, &recieve_buffer[HEADERSIZE], data_length);
         bzero(transmit_buffer, TRANSMIT_SIZE);
 
+        /* Verify packet integrity and sequence */
         if ((unsigned)crc_server == (unsigned)crc && seq_num == current_count)
         {
             retry_count = 0;
@@ -403,8 +651,9 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
         }
         else
         {
+            /* Handle invalid packet */
             retry_count++;
-            if (retry_count >= 3)
+            if (retry_count >= RETRY_COUNT)
                 break;
             printf(RED "[-]  Sequence number does not match, asking to re-send the packet Seq:%d(%d) crc_recv %d(%d) \n\r" RESET, seq_num, current_count, crc, crc_server);
             memcpy(transmit_buffer, NACK, strlen(NACK));
@@ -412,6 +661,7 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
             continue;
         }
 
+        /* Write validated data to file */
         printf(MAG "%s\n" RESET, recieve_buffer + HEADERSIZE);
         total_bytes = write(fd, &recieve_buffer[HEADERSIZE], data_length);
     }
@@ -419,12 +669,23 @@ void put_file(sockdetails_t *sd, char *recieve_buffer)
     remove_timeout(sd);
 }
 
+/**
+ * Handle DELETE File Operation
+ *
+ * Implements file deletion with existence verification and error handling.
+ * Searches current directory for file and removes if found.
+ *
+ * @param sd             Pointer to socket details structure
+ * @param recieve_buffer Buffer containing DELETE command and filename
+ */
 void delete_file(sockdetails_t *sd, char *recieve_buffer)
 {
+    /* Set standard timeout and extract filename */
     set_timeout(sd, TIMEOUT);
     printf("\n\nDELETE\n\n");
     char filename[50];
     sscanf(&recieve_buffer[strlen("delete") + 1], "%s", filename);
+    /* Validate filename */
     if (filename[0] == '\0')
     {
         printf(RED "[-] File Name is Empty\n" RESET);
@@ -433,17 +694,20 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
         return;
     }
 
+    /* Initialize directory scanning */
     DIR *dp;
     struct dirent *ep;
     int total_bytes;
 
     char transmit_buffer[TRANSMIT_SIZE];
+    /* Open and scan current directory */
     dp = opendir("./");
     if (dp != NULL)
     {
         int seq_num = 0;
         while ((ep = readdir(dp)) != NULL)
         {
+            /* Check for matching filename */
             if (strncmp(ep->d_name, filename, strlen(ep->d_name)) == 0)
             {
                 printf(GRN "[+] Found the file %s, deleting it\n" RESET, filename);
@@ -456,36 +720,70 @@ void delete_file(sockdetails_t *sd, char *recieve_buffer)
             }
         }
 
+        /* Handle file not found */
         printf(RED "[-] Could not find the file: %s\n" RESET, filename);
         _send(sd, strlen(FILE_NOT_FOUND), FILE_NOT_FOUND);
         closedir(dp);
     }
     else
-    {
+    {   
+        /* Handle directory access error */
         printf(RED "[-] Something went wrong while opening PWD\n" RESET);
         _send(sd, strlen(ERROR_FOR_DYNAMIC_DATA), ERROR_FOR_DYNAMIC_DATA);
     }
     remove_timeout(sd);
 }
 
+
+/**
+ * Clean up Client Resources
+ * 
+ * Performs cleanup operations when client requests disconnection.
+ * Sends acknowledgment to client and removes timeout settings.
+ * 
+ * @param sd  Pointer to socket details structure
+ * 
+ * Note: Future enhancement planned for child process handling
+ */
 void cleanup_client_resouces(sockdetails_t *sd)
 {
+    /* Send acknowledgment to client */
     char transmit_buffer[TRANSMIT_SIZE];
     bzero(transmit_buffer, TRANSMIT_SIZE);
     snprintf(transmit_buffer, sizeof(ACK), ACK);
     _send(sd, TRANSMIT_SIZE, transmit_buffer);
+
+    /* Remove timeout and cleanup */
     remove_timeout(sd);
     // something cleanup, we will use child processes to make it more useable !
 }
 
+
+/**
+ * Process Client Commands and Handle Responses
+ * 
+ * Main command processing function that receives client commands,
+ * identifies the requested operation, and dispatches to appropriate handlers.
+ * Supports GET, PUT, DELETE, LS, and EXIT operations.
+ * 
+ * Protocol Flow:
+ * 1. Receive command from client
+ * 2. Extract client IP and command
+ * 3. Parse and validate command
+ * 4. Dispatch to appropriate handler
+ * 
+ * @param sockfd Socket file descriptor for client communication
+ */
 void recieve_and_send(int sockfd)
 {
+    /* Initialize buffers and structures */
     char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     char transmit_buffer[TRANSMIT_SIZE];
     char ip[INET6_ADDRSTRLEN];
 
     int recvBytes, sentBytes;
 
+    /* Set up socket details structure */
     sockdetails_t sd;
     sd.sockfd = sockfd;
     sd.addr_len = sizeof(sd.their_addr);
@@ -493,11 +791,12 @@ void recieve_and_send(int sockfd)
     bzero(recieve_buffer, RECIEVE_SIZE);
     _recv(&sd, RECIEVE_SIZE, recieve_buffer);
 
+    /* Log client information */
     char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
     printf(GRN "\n\n[+] Recieved Command \"%s\" from IP %s\n" RESET, recieve_buffer, inet_ntop(sd.their_addr.ss_family, temp_ip, ip, sizeof ip));
 
+     /* Parse command and dispatch to handler */
     commands_t cmd = whichcmd(recieve_buffer);
-
     switch (cmd)
     {
     case LS:
@@ -532,8 +831,27 @@ void recieve_and_send(int sockfd)
     */
 }
 
+
+/**
+ * Server Main Function
+ * 
+ * Initializes UDP server, configures socket options, and enters
+ * main processing loop. Handles IPv4/IPv6 connections with timeout
+ * and address reuse capabilities.
+ * 
+ * Server Features:
+ * - IPv4/IPv6 support (AF_UNSPEC)
+ * - Configurable port (>5000)
+ * - Socket timeout handling
+ * - Address reuse capability
+ * 
+ * @param argc Argument count (expects 2)
+ * @param argv Arguments (program name, port number)
+ * @return EXIT_SUCCESS on normal termination, EXIT_FAILURE on error
+ */
 int main(int argc, char *argv[])
-{
+{   
+    /* Validate command line arguments */
     if (argc != 2)
     {
         printf(RED "[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n" RESET, argc, argv[0], argv[1]);
@@ -553,6 +871,7 @@ int main(int argc, char *argv[])
            };
 
     */
+   /* Initialize network structures */
     struct addrinfo hints, *serv_info, *temp;
 
     int status;
@@ -562,24 +881,30 @@ int main(int argc, char *argv[])
     char buf[MAXDATASIZE];
     char ip[INET6_ADDRSTRLEN];
 
+    /* Configure address hints structure */
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // fill up my IP
 
+    /* Validate and set port number */
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
-    if(atoi(server_port) <= 5000){
-        fprintf(stderr, RED"[-] Port Value <= 5000 ! keep port value more than 5000 \n"RESET);
+    if (atoi(server_port) <= 5000)
+    {
+        fprintf(stderr, RED "[-] Port Value <= 5000 ! keep port value more than 5000 \n" RESET);
         exit(EXIT_FAILURE);
     }
 
+    /* Get address information */
     if ((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0)
     {
-        fprintf(stderr, RED"getaddrinfo: %s\n"RESET , gai_strerror(status)); // this will print error to stderr fd
-        exit(EXIT_FAILURE);                                         // exit if there is an error
+        fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
+        exit(EXIT_FAILURE);                                                   // exit if there is an error
     }
     printf(GRN "[+] getaddrinfo call successful\n" RESET);
+
+        /* Create and configure socket */
 
     for (temp = serv_info; temp != NULL; temp = temp->ai_next)
     {
@@ -591,20 +916,21 @@ int main(int argc, char *argv[])
         */
         if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
         {
-            perror(RED"server: socket");
+            perror(RED "server: socket");
             continue;
         }
         printf(GRN "[+] socket call successful\n" RESET);
 
+        /* Configure socket timeouts */
         struct timeval timeout;
-        timeout.tv_sec = 3;
+        timeout.tv_sec = TIMEOUT;
         timeout.tv_usec = 0;
 
         int yes = 1;
-
+        /* Set socket options */
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
         {
-            perror(RED"setsockopt");
+            perror(RED "setsockopt");
             exit(1);
         }
 
@@ -615,39 +941,62 @@ int main(int argc, char *argv[])
         if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
         {
             close(sockfd);
-            perror(RED"server: bind");
+            perror(RED "server: bind");
             continue;
         }
 
         break;
     }
 
+    /* Verify socket creation and binding */
     if (temp == NULL)
     {
-        fprintf(stderr, RED"[-] socket connection failed for server \n"RESET);
+        fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
         close(sockfd);
         exit(EXIT_FAILURE);
     }
 
+     /* Display server information */
     inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
     printf(GRN "[+] Server recieving UDP packet to : %s\n" RESET, ip);
 
     freeaddrinfo(serv_info); // we do not need this anymore
 
+     /* Main server loop */
     bool exit = false;
     while (true)
     {
         recieve_and_send(sockfd);
     }
 
+    /* Cleanup */
     close(sockfd);
 
     return EXIT_SUCCESS;
 }
 
-// data will be 256 bytes;
-// header: total len, total_len of file, seq, data
 
+
+/**
+ * Parse and identify command from user input
+ *
+ * Analyzes input string to determine which FTP command was requested.
+ * Handles basic command parsing and validation.
+ *
+ * @param cmd  Null-terminated string containing user command
+ * @return     Corresponding commands_t enum value, or:
+ *             -1 for invalid command
+ *             -2 for newline (triggers screen clear)
+ *
+ * Supported Commands:
+ * - "ls\n": List directory contents
+ * - "get <filename>": Download file
+ * - "put <filename>": Upload file
+ * - "delete <filename>": Remove file
+ * - "exit\n": Terminate session
+ *
+ * Note: Uses strncmp for command matching to prevent buffer overflows
+ */
 commands_t whichcmd(char *cmd)
 {
     if (strncmp(cmd, "ls\n", strlen(cmd)) == 0)

@@ -4,7 +4,8 @@
         "netdb.h": "c",
         "in.h": "c",
         "inet.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "stdio.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
