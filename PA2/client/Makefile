@@ -1,12 +1,14 @@
 CC=gcc
 CFLAGS= -g -o2  
-LFLAGS = -lpthread 
+LFLAGS = -lpthread s
 INC=src/
 
 OUTPUT = build/
 SRCS = $(wildcard *.c) $(wildcard $(INC)*.c)
 OBJS = $(SRCS:.c=.o)
 TARGET = client
+
+all: $(TARGET)
 
 $(OUPUT)$(TARGET): $(OBJS)
 	@echo "Creating folder "$(OUTPUT)

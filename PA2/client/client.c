@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include "src/setup.h"
+
+#include "../common.h"
+
 
 int main(){
-    hehe();
+
     return 0;
 }

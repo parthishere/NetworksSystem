@@ -1,18 +1,23 @@
 CC=gcc
 CFLAGS= -g -o2  
 LFLAGS = -lpthread 
-INC=src/
+INC_SRC = src/
+INC_GLOBAL = ../
+INC=-Isrc/ -I../
 
 OUTPUT = build/
-SRCS = $(wildcard *.c) $(wildcard $(INC)*.c)
+SRCS = $(wildcard *.c) $(wildcard $(INC_SRC)*.c) $(wildcard $(INC_GLOBAL)*.c)
 OBJS = $(SRCS:.c=.o)
 TARGET = server
 
-$(OUPUT)$(TARGET): $(OBJS)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
 	@echo "Creating folder "$(OUTPUT)
 	
 	@mkdir -p $(OUTPUT)
-	@$(CC) $(CFLAGS) -I$(INC) $(LDFLAGS) $^ -o $(OUTPUT)$@
+	@$(CC) $(CFLAGS) $(INC) $(LDFLAGS) $^ -o $(OUTPUT)$@
 	@rm $(OBJS)
 	@echo "Binary saved to output folder"
 
