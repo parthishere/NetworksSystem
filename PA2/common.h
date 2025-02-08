@@ -38,6 +38,12 @@
 #define NUM_THREADS (4)
 #define NUM_CPUS (1)
 
+#define USE_FORK 1
+
+#if USE_FORK == 0
+#define USE_PTHREAD 1
+#endif
+
 /* Terminal Color Definitions
  * ANSI escape sequences for colored output
  * Used to enhance user interface and error reporting

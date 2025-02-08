@@ -2,7 +2,6 @@
 #include "../common.h"
 #include "src/queue.h"
 
-
 void *server_thread_serve(void *args)
 {
     int sockfd = *(int *)args;
@@ -34,7 +33,7 @@ void init_threads()
 
         pthread_create(&threads[i],               // pointer to thread descriptor
                        (void *)0,                 // use default attributes
-                       server_thread_serve,             // thread function entry point
+                       server_thread_serve,       // thread function entry point
                        (void *)&(threadParams[i]) // parameters to pass in
         );
     }
@@ -129,12 +128,50 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
     }
 }
 
-void * handle_req(void *args){
-    
+void *handle_req(void *args)
+{
+
     printf("withing handle req\n");
     sleep(10);
     printf("Fininshed handle req\n");
     return NULL;
+}
+
+void use_fork(sockdetails_t *sd)
+{
+    int numbytes;
+    char buf[TRANSMIT_SIZE];
+    // fork implementation
+    if (fork() == 0)
+    {
+
+        printf("in child fd");
+        close(sd->sockfd);
+
+        // we are in the child process now
+        if ((numbytes = recv(sd->client_sock_fd, buf, sizeof(buf), 0)) < 0)
+        {
+            perror("read");
+            exit(-1);
+        }
+        printf("%s", buf);
+        bzero(buf, sizeof(buf));
+        snprintf(buf, sizeof(buf), "parth is here\n");
+
+        if ((numbytes = send(sd->client_sock_fd, buf, sizeof(buf), 0)) < 0)
+        {
+            perror("write");
+            exit(-1);
+        }
+        close(sd->client_sock_fd);
+        exit(0);
+    }
+    else
+    {
+
+        close(sd->client_sock_fd);
+        wait(NULL);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -149,13 +186,13 @@ int main(int argc, char *argv[])
     sockdetails_t sd;
     sd.addr_len = sizeof(sd.client_info);
 
-    int numbytes;
-    char buf[TRANSMIT_SIZE];
-
     init_server_side_socket(&sd, argv);
 
-    threadpool tp = create_threadpool(1);
-    if(tp == NULL) exit(1);
+#if USE_FORK == 0
+    threadpool tp = create_threadpool(10);
+    if (tp == NULL)
+        exit(1);
+#endif
 
     while (1)
     {
@@ -164,38 +201,12 @@ int main(int argc, char *argv[])
             perror("accept");
             exit(1);
         }
+
+#if USE_FORK == 1
+        use_fork(&sd);
+#else
         dispatch(tp, handle_req, NULL);
-        //fork implementation
-        // if (fork() == 0)
-        // {
-
-        //     printf("in child fd");
-        //     close(sd.sockfd);
-
-        //     // we are in the child process now
-        //     if ((numbytes = recv(sd.client_sock_fd, buf, sizeof(buf), 0)) < 0)
-        //     {
-        //         perror("read");
-        //         exit(-1);
-        //     }
-        //     printf("%s", buf);
-        //     bzero(buf, sizeof(buf));
-        //     snprintf(buf, sizeof(buf), "parth is here\n");
-
-        //     if ((numbytes = send(sd.client_sock_fd, buf, sizeof(buf), 0)) < 0)
-        //     {
-        //         perror("write");
-        //         exit(-1);
-        //     }
-        //     close(sd.client_sock_fd);
-        //     exit(0);
-        // }
-        // else
-        // {
-
-        //     close(sd.client_sock_fd);
-        //     wait(NULL);
-        // }
+#endif
     }
 
     freeaddrinfo(sd.server_info); // we do not need this anymore
