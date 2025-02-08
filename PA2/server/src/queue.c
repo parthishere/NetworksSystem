@@ -75,7 +75,7 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
     current_thread->next_thread = NULL;
 
 
-    if (tp->thread_tail == NULL)
+    if (tp->thread_tail == NULL || tp->thread_head == NULL)
     {
         tp->thread_head = current_thread;
         tp->thread_tail = current_thread;
