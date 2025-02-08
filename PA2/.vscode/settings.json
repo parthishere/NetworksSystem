@@ -3,6 +3,9 @@
         "common.h": "c",
         "cstdlib": "c",
         "stdlib.h": "c",
-        "queue.h": "c"
+        "queue.h": "c",
+        "fork.h": "c",
+        "handle_req.h": "c",
+        "setup.h": "c"
     }
 }

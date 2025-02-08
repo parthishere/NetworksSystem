@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
 /* System Headers
  * Core system functionality for memory, I/O, and string operations
@@ -38,10 +39,10 @@
 #define NUM_THREADS (4)
 #define NUM_CPUS (1)
 
-#define USE_FORK 1
+#define USE_FORK 0
 
 #if USE_FORK == 0
-#define USE_PTHREAD 1
+#define USE_THREADPOOL 1
 #endif
 
 /* Terminal Color Definitions
@@ -72,6 +73,15 @@ typedef struct
     int sentBytes;                       // Bytes sent in last operation
 } sockdetails_t;
 
+
+
+typedef struct
+{
+    int threadIdx;
+} threadParams_t;
+
+
+
 /**
  * Extract IP address from socket address structure
  *
@@ -81,33 +91,9 @@ typedef struct
  * @param sa  Pointer to socket address structure (sockaddr)
  * @return    Pointer to IP address field, NULL if family not supported
  */
-void *getin_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET)
-    {
-        return (&(((struct sockaddr_in *)(sa))->sin_addr));
-    }
-    else if (sa->sa_family == AF_INET6)
-    {
-        return (&(((struct sockaddr_in6 *)(sa))->sin6_addr));
-    }
-    return NULL;
-}
-
-typedef struct
-{
-    int threadIdx;
-} threadParams_t;
+void *getin_addr(struct sockaddr *sa);
 
 
-
-pthread_t threads[NUM_THREADS];
-threadParams_t threadParams[NUM_THREADS];
-pthread_attr_t rt_sched_attr[NUM_THREADS];
-struct sched_param rt_param[NUM_THREADS];
-struct sched_param main_param;
-pthread_attr_t main_attr;
-pid_t mainpid;
 
 // /**
 //  * Handle network operation errors
@@ -142,3 +128,4 @@ pid_t mainpid;
 //         // exit(EXIT_FAILURE);
 //     }
 // }
+#endif
