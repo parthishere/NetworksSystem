@@ -2,6 +2,11 @@
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 
+// char *header200 = "HTTP/1.0 200 OK\nServer:  v0.1\nContent-Type: text/html\n\n";
+// char *header400 = "HTTP/1.0 400 Bad Request\nServer:  v0.1\nContent-Type: text/html\n\n";
+// char *header404 = "HTTP/1.0 404 Not Found\nServer:  v0.1\nContent-Type: text/html\n\n";
+
+
 typedef enum
 {
     HTTP1_0,
@@ -71,10 +76,7 @@ char *contentType[total_content_types] = {
     "image/png",
     "image/x-icon",
 };
-
-// \r\n
-// \r\n\r\n
-
+ 
 typedef struct req_header_s
 {
     httpType_t http_version;
@@ -93,6 +95,17 @@ typedef struct req_header_s
 
 } HttpHeader_t;
 
+// \r\n
+// \r\n\r\n
+
+
+
+typedef struct filedata_s
+{
+    char *content;
+    int size;
+} filesize_t;
+
 // command parser
 int get_http_thing_to_do(HttpHeader_t *header)
 {
@@ -106,13 +119,13 @@ int parse_request_line(char *request, HttpHeader_t *header)
     char *lines[MAX_LINE_TO_TOKENIZE_IN_HTTP + 1];
     int index = -1;
     lines[++index] = strtok(entire_req, "\r\n");
+
     // printf("tokenized line: %s, header line %s\n", lines[index], entire_req);
-    while (((lines[++index] = strtok(NULL, "\r\n")) != NULL) && (index < MAX_LINE_TO_TOKENIZE_IN_HTTP))
-    {
-        // printf("tokenized line: %d) %s\n",index, lines[index]);
-    }
+
+    while (((lines[++index] = strtok(NULL, "\r\n")) != NULL) && (index < MAX_LINE_TO_TOKENIZE_IN_HTTP));
+
     index = -1;
-    char *line;
+    char *line = lines[0];
     while (index < MAX_LINE_TO_TOKENIZE_IN_HTTP && line != NULL && *line != '\0')
     {
         line = lines[++index];
@@ -121,36 +134,32 @@ int parse_request_line(char *request, HttpHeader_t *header)
         if (token_index == 0)
         {
             // printf("tokenized token: %s\n", token);
-            if (strcmp(token, reqMethod[GET]) == 0)
+            if (token != NULL && strcmp(token, reqMethod[GET]) == 0)
             {
-                printf("GET\n");
+                // printf("GET\n");
                 header->method_str = reqMethod[GET];
                 header->method = GET;
             }
-            // GET, post, delete, stuff
-            /* code */
         }
         token_index++;
         while ((token = strtok(NULL, " ")) != NULL)
         {
             if (index == 0)
             {
-                // line number one we will have get / and other stuff
-
                 if (token_index == 1)
                 {
                     // filename
-                    printf("Filename: %s\n", token);
+                    // printf("Filename: %s\n", token);
                     header->uri_str = token;
                 }
 
                 if (token_index == 2)
                 {
                     // http type
-                    printf("HTTP Version: %s\n", token);
-                    if (strcmp(token, http_type[HTTP1_1]))
+                    // printf("HTTP Version: %s\n", token);
+                    if (strcmp(token, http_type[HTTP1_1])==0)
                     {
-                        printf("1.1\n");
+                        // printf("1.1\n");
                         header->http_version_str = http_type[HTTP1_1];
                         header->http_version = HTTP1_1;
                     }
@@ -160,113 +169,144 @@ int parse_request_line(char *request, HttpHeader_t *header)
             {
                 // line number 2,
                 // Host: localhost:8888
-                if(token_index == 1){
-                    printf("Hostname : %s\n", token);
+                if (token_index == 1)
+                {
+                    // printf("Hostname : %s\n", token);
                 }
             }
             if (index == 2)
             {
                 // Connection: Keep-alive
-                if(token_index == 1){
-                    printf("what the fuck is connection %s\n", token);
+                if (token_index == 1)
+                {
+                    // printf("what the fuck is connection %s\n", token);
                 }
             }
             token_index++;
         }
     }
 
-    // char *token = strtok(temp_line, " ");
-    //     printf("tokenized token: %s\n", token);
-    //     while((token = strtok(NULL, " ")) != NULL){
-    //         printf("tokenized token: %s\n", token);
-    //     }
-    //     line = strtok();
-
-    // while(line != NULL){
-    //     printf("tokenized line: %s\n", line);
-    //     char *token = strtok(line, " ");
-    //     printf("tokenized token: %s\n", token);
-    //     while((token = strtok(NULL, " ")) != NULL){
-    //         printf("tokenized token: %s\n", token);
-    //     }
-
-    // }
-    printf("Exiting\n\r");
-
-    return 0;
-
-    /*
-    GET / HTTP/1.1
-    Host: localhost:8888
-    Connection: keep-alive
-    sec-ch-ua: "Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"
-    sec-ch-ua-mobile: ?0
-    sec-ch-ua-platform: "Linux"
-    Upgrade-Insecure-Requests: 1
-    User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
-    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*\/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-    Sec-Fetch-Site: none
-    Sec-Fetch-Mode: navigate
-    Sec-Fetch-User: ?1
-    Sec-Fetch-Dest: document
-    Accept-Encoding: gzip, deflate, br, zstd
-    Accept-Language: en-GB,en-US;q=0.9,en;q=0.8,ja;q=0.7
-    Cookie: username-localhost-8888=2|1:0|10:1738574629|23:username-localhost-8888|196:eyJ1c2VybmFtZSI6ICI2Y2I3OGU0ODE1MjY0NTNlOTE1NzQ2YzkzNDYzMTA4YyIsICJuYW1lIjogIkFub255bW91cyBIaW1hbGlhIiwgImRpc3BsYXlfbmFtZSI6ICJBbm9ueW1vdXMgSGltYWxpYSIsICJpbml0aWFscyI6ICJBSCIsICJjb2xvciI6IG51bGx9|3623a8db5bef1c503d71af0cb73df5a314ef3537fbbaebc1f770eeda187bc9a6; _xsrf=2|89fc6454|6ddc179b7b6b4c51269d96c086edd18a|1738574629
-    */
-
-    // char *token;
-    // token = strtok(line, " ");
-    // if (token)
-    // header->method_str = strdup(token);
-    // token = strtok(NULL, " ");
-    // if (token)
-    // header->uri_str = strdup(token);
-    // token = strtok(NULL, "\r\n");
-    // if (token)
-    // header->http_version_str = strdup(token);
-
-    // if (!header->method_str || !header->uri_str || !header->http_version_str)
-    //     return -1;
-
+    // printf("Exiting\n\r");
     return 0;
 }
 
-void build_request_header(char *header)
+filesize_t *get_file_data()
 {
+    return NULL;
+}
+
+void build_header(HttpHeader_t *request_header, char **return_request)
+{
+    // if(request_header->method == GET){
+    //     // request_header->uri_str;
+    // }
+    char *filename = "./www/index.html";
+    // char *filename = "/home/parth/Work/All_data/university/Network\ System/Assignments/PA2/server/www/index.html";
+    size_t current_size = 1;
+    struct stat *st;
+    FILE *file = fopen(filename, "rb");
+    size_t size;
+    char * file_buffer;
+    char *ext;
+    char *content_type;
+    int header_size;
+    if (request_header->method == GET)
+    {
+        if (file == NULL)
+        {
+            // HTTP/1.0 400 Bad Request
+            perror("file open");
+            asprintf(return_request, "%s %s\r\n", request_header->http_version_str, status_codes[BAD_REQ]);
+            return;
+        }
+
+        fseeko(file, 0, SEEK_END);
+        size = ftello(file);
+        fseeko(file, 0, SEEK_SET);
+
+        file_buffer = malloc(size + 1);
+
+        fread(file_buffer, size, 1, file);
+
+        ext = strrchr(filename, '.');
+        ext++;
+
+        content_type = contentType[TEXT_HTML];
+        if (strncmp(ext, "html", sizeof(ext)) == 0)
+        {
+            
+        }
+
+        header_size = asprintf(return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n%s", request_header->http_version_str, status_codes[OK], content_type, size, file_buffer);
+
+        if (strncmp(ext, "txt", sizeof(ext)) == 0)
+            ;
+        if (strncmp(ext, "css", sizeof(ext)) == 0)
+            ;
+
+        // printf("header: \n\r%s %d", return_request, header_size);
+    }
+
+    // Content-Type: text/html
+
+    // HTTP/1.0 200 OK
+    //
+    // getline()    //
+    //     fgets(); //
+
+    // struct stat *st;
+    // (file);
 }
 
 // request builder
 
+// GET / HTTP/1.1\r\nPostman-Token: 23464349-ae43-4094-8db2-e58c7bbf77b1\r\nHost: localhost:8888
+
 void *handle_req(void *args)
 {
     int numbytes;
-    char buf[TRANSMIT_SIZE];
+    char recieved_buf[TRANSMIT_SIZE];
+    char *send_buf = NULL;
     sockdetails_t *sd = (sockdetails_t *)args;
+    int client_sock_fd;
+    HttpHeader_t header;
     while (1)
     {
         printf("withing handle req\n");
-        // we are in the child process now
-        if ((numbytes = recv(sd->client_sock_fd, buf, sizeof(buf), 0)) < 0)
+        if ((client_sock_fd = accept(sd->sockfd, (struct sockaddr *)&sd->client_info, &sd->addr_len)) < 0)
         {
-            perror("read");
-            // exit(-1);
-            return NULL;
+            perror("accept");
+            exit(1);
         }
 
-        printf("got string \n: %s\n\n\n\n ---- \n\n", buf);
-
-        HttpHeader_t header;
-        parse_request_line(buf, &header);
-
-        bzero(buf, sizeof(buf));
-        snprintf(buf, sizeof(buf), "parth is here\n");
-
-        if ((numbytes = send(sd->client_sock_fd, buf, sizeof(buf), 0)) < 0)
+        // we are in the child process now
+        if ((numbytes = recv(client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
         {
+            perror("read");
+            exit(1);
+        }
+
+        printf("got string :\n%s\n\n\n\n ---- \n\n", recieved_buf);
+
+
+        parse_request_line(recieved_buf, &header);
+        build_header(&header, &send_buf);
+        if(send_buf == NULL) return NULL;
+        printf("built header \n%s\n", send_buf);
+        // bzero(buf, sizeof(buf));
+        // snprintf(buf, sizeof(buf), "parth is here\n");
+        size_t send_len = strlen(send_buf);
+        if ((numbytes = send(client_sock_fd, send_buf, send_len, 0)) < 0)
+        {
+        
+        // if ((numbytes = send(client_sock_fd, send2, sizeof(send2), 0)) < 0)
+        // {
             perror("write");
             return NULL;
             // exit(-1);
         }
+        free(send_buf);
+        close(client_sock_fd);
     }
     return NULL;
 }

@@ -34,14 +34,14 @@ void *default_thread_func(threadpool args)
     _threadpool_t *tp = (_threadpool_t *)args;
     printf("New thread was created \n");
     pthread_mutex_lock(&(tp->mutex));
-    printf("locked mutex from the thread \n");
     while (1)
     {
-        printf("thread waiting to be signaled again \n");
-        pthread_cond_wait(&(tp->queue_not_empty), &(tp->mutex));
-        printf("thread was signaled \n");
+        // printf("thread waiting to be signaled again \n");
+        while (tp->current_thread_number == 0)
+            pthread_cond_wait(&(tp->queue_not_empty), &(tp->mutex));
+            // printf("thread was signaled \n");
         // here mutex will be unlocked
-
+        
         _thread_t *current_thread = tp->thread_head;
         tp->current_thread_number--;
         if (tp->thread_head == NULL)
@@ -52,11 +52,10 @@ void *default_thread_func(threadpool args)
             tp->thread_head = current_thread->next_thread;
         }
 
-        // pthread_mutex_unlock(tp->mutex);
+
         pthread_mutex_unlock(&(tp->mutex));
 
         (current_thread->function_to_run)(current_thread->args);
-
 
         free(current_thread); // we do not need it anymore;
     }
@@ -67,13 +66,13 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
     
     _threadpool_t *tp = from_me;
     if(tp == NULL || dispatch_to_here == NULL) return;
-
+    
     _thread_t *current_thread = malloc(sizeof(_thread_t));
     if(current_thread == NULL) return;
     current_thread->function_to_run = dispatch_to_here;
     current_thread->args = arg;
     current_thread->next_thread = NULL;
-
+    
 
     if (tp->thread_tail == NULL || tp->thread_head == NULL)
     {
@@ -87,8 +86,9 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
         tp->thread_tail = current_thread;
         tp->current_thread_number++;
     }
-    // pthread_cond_signal(tp->queue_not_empty);
+    
     pthread_cond_signal(&(tp->queue_not_empty));
+
 }
 
 threadpool create_threadpool(int num_of_threads_in_pool)
@@ -109,17 +109,14 @@ threadpool create_threadpool(int num_of_threads_in_pool)
     tp->pthreads = malloc(sizeof(pthread_t) * num_of_threads_in_pool);
     tp->pthreads_attr = malloc(sizeof(pthread_attr_t) * num_of_threads_in_pool);
 
-    // pthread_mutex_init(tp->mutex, NULL);
     pthread_mutex_init(&(tp->mutex), NULL);
-    // pthread_cond_init(tp->queue_empty, NULL);
     pthread_cond_init(&(tp->queue_empty), NULL);
-    // pthread_cond_init(tp->queue_not_empty, NULL);
     pthread_cond_init(&(tp->queue_not_empty), NULL);
 
     for (int i = 0; i < num_of_threads_in_pool; i++)
     {
         // we dont need thread_attribute
-        // pthread_attr_init(&(tp->pthreads_attr[i]));
+        pthread_attr_init(&(tp->pthreads_attr[i]));
         // pthread_attr_setinheritsched(, PTHREAD_EXPLICIT_SCHED)
         // pthread_attr_setschedpolicy(&(tp->pthread_attr[i]), SCHED_FIFO);
         // pthread_attr_setaffinity_np(&(tp->pthread_attr[i]), sizeof(cpu_set_t), &threadcpu);
@@ -130,11 +127,8 @@ threadpool create_threadpool(int num_of_threads_in_pool)
 
             pthread_attr_destroy(&(tp->pthreads_attr[i]));
             pthread_attr_destroy(&(tp->pthreads_attr[i]));
-            // pthread_mutex_destroy(tp->mutex);
             pthread_mutex_destroy(&(tp->mutex));
-            // pthread_cond_destroy(tp->queue_empty);
             pthread_cond_destroy(&(tp->queue_empty));
-            // pthread_cond_destroy(tp->queue_not_empty);
             pthread_cond_destroy(&(tp->queue_not_empty));
             free(tp->pthreads);
             free(tp->pthreads_attr);

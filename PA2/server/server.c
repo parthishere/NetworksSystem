@@ -31,17 +31,12 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        if ((sd.client_sock_fd = accept(sd.sockfd, (struct sockaddr *)&sd.client_info, &sd.addr_len)) < 0)
-        {
-            perror("accept");
-            exit(1);
-        }
-
 #if USE_FORK == 1
-        use_fork(&sd);
+        // use_fork(&sd);
 #else
-        dispatch(tp, handle_req, &sd);
+        // dispatch(tp, handle_req, &sd);
 #endif
+    handle_req(&sd);
     }
 
     freeaddrinfo(sd.server_info); // we do not need this anymore
