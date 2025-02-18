@@ -3,11 +3,13 @@
 
 #define MAX_THREAD_IN_POOL 200
 
+#include "common.h"
+
 typedef void *threadpool;
-typedef void *(*dispatch_fn)(void *);
+typedef void *(*dispatch_fn)(sockdetails_t);
 
 
-void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg);
+void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd);
 threadpool create_threadpool(int num_of_threads_in_pool);
 
 #endif

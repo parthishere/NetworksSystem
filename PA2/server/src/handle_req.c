@@ -252,19 +252,18 @@ void build_header(HttpHeader_t *request_header, char **return_request)
 
 // GET / HTTP/1.1\r\nPostman-Token: 23464349-ae43-4094-8db2-e58c7bbf77b1\r\nHost: localhost:8888
 
-void *handle_req(void *args)
+void *handle_req(sockdetails_t sd)
 {
     int numbytes;
     char recieved_buf[TRANSMIT_SIZE];
     char *send_buf = NULL;
-    sockdetails_t *sd = (sockdetails_t *)args;
     HttpHeader_t header;
     // while (1)
     // {
         
 
         // we are in the child process now
-        if ((numbytes = recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
+        if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
         {
             perror("read");
             exit(1);
@@ -278,13 +277,13 @@ void *handle_req(void *args)
         printf("sending heade: \n%s\n --- \n\n", send_buf);
 
         size_t send_len = strlen(send_buf);
-        if ((numbytes = send(sd->client_sock_fd, send_buf, send_len, 0)) < 0)
+        if ((numbytes = send(sd.client_sock_fd, send_buf, send_len, 0)) < 0)
         {
             perror("write");
             return NULL;
         }
         free(send_buf);
-        close(sd->client_sock_fd);
+        close(sd.client_sock_fd);
     // }
     return NULL;
 }

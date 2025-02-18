@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 #if USE_FORK == 1
         use_fork(&sd);
 #else
-        dispatch(tp, handle_req, &sd);
+        dispatch(tp, handle_req, sd);
 #endif
     // handle_req(&sd);
     }

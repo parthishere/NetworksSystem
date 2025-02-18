@@ -8,11 +8,12 @@
 
 
 
+
 typedef struct thread_s
 {
     struct thread_s *next_thread;
-    void *(*function_to_run)(void *);
-    void *args;
+    void *(*function_to_run)(sockdetails_t);
+    sockdetails_t sd;
 } _thread_t;
 
 typedef struct _threadpool
@@ -55,13 +56,13 @@ void *default_thread_func(threadpool args)
 
         // pthread_mutex_unlock(&(tp->mutex));
 
-        (current_thread->function_to_run)(current_thread->args);
+        (current_thread->function_to_run)(current_thread->sd);
 
         free(current_thread); // we do not need it anymore;
     }
 }
 
-void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
+void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd)
 {
     
     _threadpool_t *tp = from_me;
@@ -70,7 +71,7 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
     _thread_t *current_thread = malloc(sizeof(_thread_t));
     if(current_thread == NULL) return;
     current_thread->function_to_run = dispatch_to_here;
-    current_thread->args = arg;
+    current_thread->sd = sd;
     current_thread->next_thread = NULL;
     
     pthread_mutex_lock(&(tp->mutex));
