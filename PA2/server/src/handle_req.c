@@ -244,18 +244,8 @@ void build_header(HttpHeader_t *request_header, char **return_request)
         if (strncmp(ext, "css", sizeof(ext)) == 0)
             ;
 
-        // printf("header: \n\r%s %d", return_request, header_size);
+        
     }
-
-    // Content-Type: text/html
-
-    // HTTP/1.0 200 OK
-    //
-    // getline()    //
-    //     fgets(); //
-
-    // struct stat *st;
-    // (file);
 }
 
 // request builder
@@ -268,45 +258,33 @@ void *handle_req(void *args)
     char recieved_buf[TRANSMIT_SIZE];
     char *send_buf = NULL;
     sockdetails_t *sd = (sockdetails_t *)args;
-    int client_sock_fd;
     HttpHeader_t header;
-    while (1)
-    {
-        printf("withing handle req\n");
-        if ((client_sock_fd = accept(sd->sockfd, (struct sockaddr *)&sd->client_info, &sd->addr_len)) < 0)
-        {
-            perror("accept");
-            exit(1);
-        }
+    // while (1)
+    // {
+        
 
         // we are in the child process now
-        if ((numbytes = recv(client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
+        if ((numbytes = recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
         {
             perror("read");
             exit(1);
         }
 
-        printf("got string :\n%s\n\n\n\n ---- \n\n", recieved_buf);
-
-
+        printf("recieved header :\n%s\n ---- \n\n", recieved_buf);
+ 
         parse_request_line(recieved_buf, &header);
         build_header(&header, &send_buf);
         if(send_buf == NULL) return NULL;
-        printf("built header \n%s\n", send_buf);
-        // bzero(buf, sizeof(buf));
-        // snprintf(buf, sizeof(buf), "parth is here\n");
+        printf("sending heade: \n%s\n --- \n\n", send_buf);
+
         size_t send_len = strlen(send_buf);
-        if ((numbytes = send(client_sock_fd, send_buf, send_len, 0)) < 0)
+        if ((numbytes = send(sd->client_sock_fd, send_buf, send_len, 0)) < 0)
         {
-        
-        // if ((numbytes = send(client_sock_fd, send2, sizeof(send2), 0)) < 0)
-        // {
             perror("write");
             return NULL;
-            // exit(-1);
         }
         free(send_buf);
-        close(client_sock_fd);
-    }
+        close(sd->client_sock_fd);
+    // }
     return NULL;
 }

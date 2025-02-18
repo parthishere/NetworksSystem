@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <semaphore.h>
 
 
 
@@ -23,6 +24,7 @@ typedef struct _threadpool
     pthread_mutex_t mutex;
     pthread_cond_t queue_empty;
     pthread_cond_t queue_not_empty;
+    sem_t sync_sem;
     _thread_t *thread_head;
     _thread_t *thread_tail;
 } _threadpool_t;
@@ -33,14 +35,12 @@ void *default_thread_func(threadpool args)
 {
     _threadpool_t *tp = (_threadpool_t *)args;
     printf("New thread was created \n");
-    pthread_mutex_lock(&(tp->mutex));
+    // pthread_mutex_lock(&(tp->mutex));
     while (1)
     {
-        // printf("thread waiting to be signaled again \n");
-        while (tp->current_thread_number == 0)
-            pthread_cond_wait(&(tp->queue_not_empty), &(tp->mutex));
-            // printf("thread was signaled \n");
-        // here mutex will be unlocked
+        printf("Waiting for semaphore to release\n");
+        sem_wait(&(tp->sync_sem));
+        printf("semaphore released\n");
         
         _thread_t *current_thread = tp->thread_head;
         tp->current_thread_number--;
@@ -53,7 +53,7 @@ void *default_thread_func(threadpool args)
         }
 
 
-        pthread_mutex_unlock(&(tp->mutex));
+        // pthread_mutex_unlock(&(tp->mutex));
 
         (current_thread->function_to_run)(current_thread->args);
 
@@ -73,7 +73,7 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
     current_thread->args = arg;
     current_thread->next_thread = NULL;
     
-
+    pthread_mutex_lock(&(tp->mutex));
     if (tp->thread_tail == NULL || tp->thread_head == NULL)
     {
         tp->thread_head = current_thread;
@@ -87,7 +87,9 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, void *arg)
         tp->current_thread_number++;
     }
     
-    pthread_cond_signal(&(tp->queue_not_empty));
+    // pthread_cond_signal(&(tp->queue_not_empty));
+    sem_post(&(tp->sync_sem));
+    pthread_mutex_unlock(&(tp->mutex));
 
 }
 
@@ -112,6 +114,7 @@ threadpool create_threadpool(int num_of_threads_in_pool)
     pthread_mutex_init(&(tp->mutex), NULL);
     pthread_cond_init(&(tp->queue_empty), NULL);
     pthread_cond_init(&(tp->queue_not_empty), NULL);
+    sem_init(&(tp->sync_sem), 0, 0);
 
     for (int i = 0; i < num_of_threads_in_pool; i++)
     {
