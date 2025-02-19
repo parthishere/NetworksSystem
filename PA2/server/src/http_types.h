@@ -1,0 +1,74 @@
+#pragma once
+
+
+
+
+typedef enum httpType_s
+{
+    HTTP1_0,
+    HTTP1_1,
+    ERROR_VERSION,
+    supported_http_protocols
+} httpType_t;
+
+
+
+typedef enum statusCode_s
+{
+    OK,
+    BAD_REQ,
+    FORBIDDEN,
+    NOT_FOUND,
+    METHOD_NOT_ALLOWED,
+    VERSION_NOT_SUPPORTED,
+    total_status_codes,
+} statusCode_t;
+
+
+
+typedef enum method_s
+{
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    total_req_methods,
+} method_t;
+
+
+typedef enum contentType_s
+{
+    TEXT_HTML,
+    TEXT_CSS,
+    TEXT_PLAIN,
+    APPLICATION_JAVASCRIPT,
+    IMAGE_PNG,
+    IMAGE_GIF,
+    IMAGE_JPG,
+    IMAGE_X_ICON,
+    total_content_types
+} contentType_t;
+
+
+ 
+typedef struct req_header_s
+{
+    httpType_t http_version;
+    char *http_version_str;
+
+    char *uri_str;
+    char *hostname_str;
+
+    contentType_t content_type;
+    char *content_type_str;
+
+    method_t *method;
+    char *method_str;
+
+    statusCode_t *status_code;
+    char *status_code_str;
+
+    int connection_keep_alive;
+
+} HttpHeader_t;
