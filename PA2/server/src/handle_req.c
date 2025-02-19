@@ -149,7 +149,7 @@ int parse_request_line(char *request, HttpHeader_t *header)
                 if (token_index == 1)
                 {
                     // filename
-                    // printf("Filename: %s\n", token);
+                    printf("Filename: %s\n", token);
                     header->uri_str = token;
                 }
 
@@ -195,15 +195,21 @@ filesize_t *get_file_data()
     return NULL;
 }
 
-void build_header(HttpHeader_t *request_header, char **return_request)
+void build_header(HttpHeader_t *request_header, char **return_request, int *return_size)
 {
-    // if(request_header->method == GET){
-    //     // request_header->uri_str;
-    // }
-    char *filename = "./www/index.html";
-    // char *filename = "/home/parth/Work/All_data/university/Network\ System/Assignments/PA2/server/www/index.html";
-    size_t current_size = 1;
-    struct stat *st;
+    char *filename;
+    if(strstr(request_header->uri_str, "..") != NULL){
+        printf("filename you asked %s\n", request_header->uri_str);
+        printf("You are trying to access files above in directory\n");
+        return;
+    }
+    else if(strncmp(request_header->uri_str, "/", sizeof(request_header->uri_str)) == 0){
+        asprintf(&filename, "./www/index.html");
+    } 
+    else{
+        asprintf(&filename, "./www%s", request_header->uri_str);
+    }
+
     FILE *file = fopen(filename, "rb");
     size_t size;
     char * file_buffer;
@@ -216,7 +222,13 @@ void build_header(HttpHeader_t *request_header, char **return_request)
         {
             // HTTP/1.0 400 Bad Request
             perror("file open");
-            asprintf(return_request, "%s %s\r\n", request_header->http_version_str, status_codes[BAD_REQ]);
+            asprintf(return_request, 
+                "%s %s\r\n"
+                "Content-Type: text/plain\r\n"
+                "\r\n"
+                "404 File Not Found", 
+                request_header->http_version_str, 
+                status_codes[NOT_FOUND]);
             return;
         }
 
@@ -226,25 +238,50 @@ void build_header(HttpHeader_t *request_header, char **return_request)
 
         file_buffer = malloc(size + 1);
 
-        fread(file_buffer, size, 1, file);
-
-        ext = strrchr(filename, '.');
-        ext++;
-
-        content_type = contentType[TEXT_HTML];
-        if (strncmp(ext, "html", sizeof(ext)) == 0)
-        {
-            
+        if(fread(file_buffer, 1, size, file) != size){
+            printf("size mismatches \n");
+            free(file_buffer);
+            fclose(file);
+            free(filename);
         }
 
-        header_size = asprintf(return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n%s", request_header->http_version_str, status_codes[OK], content_type, size, file_buffer);
+        ext = strrchr(filename, '.');
+        if (ext) {
+            ext++;
+            if (strcmp(ext, "html") == 0) content_type = contentType[TEXT_HTML];
+            else if (strcmp(ext, "css") == 0) content_type = contentType[TEXT_CSS];
+            else if (strcmp(ext, "txt") == 0) content_type = contentType[TEXT_PLAIN];
+            else if (strcmp(ext, "js") == 0) content_type = contentType[APPLICATION_JAVASCRIPT];
+            else if (strcmp(ext, "png") == 0) content_type = contentType[IMAGE_PNG];
+            else if (strcmp(ext, "gif") == 0) content_type = contentType[IMAGE_GIF];
+            else if (strcmp(ext, "jpg") == 0) content_type = contentType[IMAGE_JPG];
+            else if (strcmp(ext, "ico") == 0) content_type = contentType[IMAGE_X_ICON];
+        }
 
-        if (strncmp(ext, "txt", sizeof(ext)) == 0)
-            ;
-        if (strncmp(ext, "css", sizeof(ext)) == 0)
-            ;
 
+        header_size = asprintf(return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n", request_header->http_version_str, status_codes[OK], content_type, size);
+
+        if (header_size < 0) {
+            free(file_buffer);
+            fclose(file);
+            free(filename);
+            return;
+        }
+
+    
+        *return_request = realloc(*return_request, header_size+size); 
+        if(*return_request == NULL){
+            free(file_buffer);
+            fclose(file);
+            free(filename);
+            return;
+        }
+        memcpy(*return_request+header_size, file_buffer, size);
+        *return_size = header_size+size;
         
+
+        free(file_buffer);
+        free(filename);
     }
 }
 
@@ -270,14 +307,14 @@ void *handle_req(sockdetails_t sd)
         }
 
         printf("recieved header :\n%s\n ---- \n\n", recieved_buf);
- 
+        int return_size;
         parse_request_line(recieved_buf, &header);
-        build_header(&header, &send_buf);
+        build_header(&header, &send_buf, &return_size);
         if(send_buf == NULL) return NULL;
+        
+    
         printf("sending heade: \n%s\n --- \n\n", send_buf);
-
-        size_t send_len = strlen(send_buf);
-        if ((numbytes = send(sd.client_sock_fd, send_buf, send_len, 0)) < 0)
+        if ((numbytes = send(sd.client_sock_fd, send_buf, return_size, 0)) < 0)
         {
             perror("write");
             return NULL;
