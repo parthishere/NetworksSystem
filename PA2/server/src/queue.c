@@ -6,9 +6,6 @@
 #include <semaphore.h>
 
 
-
-
-
 typedef struct thread_s
 {
     struct thread_s *next_thread;
@@ -28,6 +25,7 @@ typedef struct _threadpool
     sem_t sync_sem;
     _thread_t *thread_head;
     _thread_t *thread_tail;
+    int shutdown;
 } _threadpool_t;
 
 
@@ -36,29 +34,33 @@ void *default_thread_func(threadpool args)
 {
     _threadpool_t *tp = (_threadpool_t *)args;
     printf("New thread was created \n");
-    // pthread_mutex_lock(&(tp->mutex));
-    while (1)
+    while (!tp->shutdown)
     {
         printf("Waiting for semaphore to release\n");
         sem_wait(&(tp->sync_sem));
         printf("semaphore released\n");
         
+        pthread_mutex_lock(&(tp->mutex));
         _thread_t *current_thread = tp->thread_head;
-        tp->current_thread_number--;
-        if (tp->thread_head == NULL)
+        
+        
+        if (current_thread != NULL)
         {
+            tp->current_thread_number--;
+            tp->thread_head = current_thread->next_thread;
+            if(tp->thread_head == NULL){
+                tp->thread_tail = NULL;
+            }
+            pthread_mutex_unlock(&(tp->mutex));
+            (current_thread->function_to_run)(current_thread->sd);
+
+            free(current_thread);
+        }
+        else {
+            pthread_mutex_unlock(&(tp->mutex));
             tp->thread_tail = NULL;
             tp->current_thread_number = 0;
-        }else{
-            tp->thread_head = current_thread->next_thread;
         }
-
-
-        // pthread_mutex_unlock(&(tp->mutex));
-
-        (current_thread->function_to_run)(current_thread->sd);
-
-        free(current_thread); // we do not need it anymore;
     }
 }
 
@@ -69,6 +71,7 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd
     if(tp == NULL || dispatch_to_here == NULL) return;
     
     _thread_t *current_thread = malloc(sizeof(_thread_t));
+
     if(current_thread == NULL) return;
     current_thread->function_to_run = dispatch_to_here;
     current_thread->sd = sd;
@@ -88,7 +91,7 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd
         tp->current_thread_number++;
     }
     
-    // pthread_cond_signal(&(tp->queue_not_empty));
+
     sem_post(&(tp->sync_sem));
     pthread_mutex_unlock(&(tp->mutex));
 
@@ -111,6 +114,7 @@ threadpool create_threadpool(int num_of_threads_in_pool)
     tp->thread_tail = NULL;
     tp->pthreads = malloc(sizeof(pthread_t) * num_of_threads_in_pool);
     tp->pthreads_attr = malloc(sizeof(pthread_attr_t) * num_of_threads_in_pool);
+    tp->shutdown = 0;
 
     pthread_mutex_init(&(tp->mutex), NULL);
     pthread_cond_init(&(tp->queue_empty), NULL);
@@ -129,14 +133,7 @@ threadpool create_threadpool(int num_of_threads_in_pool)
         {
             fprintf(stderr, "Error during threadpool creation!\n");
 
-            pthread_attr_destroy(&(tp->pthreads_attr[i]));
-            pthread_attr_destroy(&(tp->pthreads_attr[i]));
-            pthread_mutex_destroy(&(tp->mutex));
-            pthread_cond_destroy(&(tp->queue_empty));
-            pthread_cond_destroy(&(tp->queue_not_empty));
-            free(tp->pthreads);
-            free(tp->pthreads_attr);
-            free(tp);
+            destroy_threadpool(tp);
 
             exit(EXIT_FAILURE);
         }
@@ -146,6 +143,36 @@ threadpool create_threadpool(int num_of_threads_in_pool)
 }
 
 
+void destroy_threadpool(threadpool tp){
+    
+    _threadpool_t *_tp = (_threadpool_t *)tp;
+
+    pthread_mutex_lock(&(_tp->mutex));
+    _tp->shutdown = 1;
+    pthread_mutex_unlock(&(_tp->mutex));
+
+    for(int i=0; i<TOTAL_THREADS; i++){
+        sem_post(&(_tp->sync_sem));
+        pthread_join(_tp->pthreads[i], NULL);
+        pthread_attr_destroy(&(_tp->pthreads_attr[i]));
+    }
+
+    _thread_t *current = _tp->thread_head;
+    while(current != NULL){
+        _thread_t *next = current->next_thread;
+        free(current);
+        current = next;
+    }
+    
+    pthread_mutex_destroy(&(_tp->mutex));
+    pthread_cond_destroy(&(_tp->queue_empty));
+    pthread_cond_destroy(&(_tp->queue_not_empty));
+    sem_destroy(&(_tp->sync_sem));
+
+    free(_tp->pthreads);
+    free(_tp->pthreads_attr);
+    free(_tp);
+}
 
 // queue_t *init_queue(int max_size);
 // void enqueue(queue_t *q, int *client_sockfd);

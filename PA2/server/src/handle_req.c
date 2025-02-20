@@ -1,13 +1,7 @@
 #include "handle_req.h"
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
-
-// char *header200 = "HTTP/1.0 200 OK\nServer:  v0.1\nContent-Type: text/html\n\n";
-// char *header400 = "HTTP/1.0 400 Bad Request\nServer:  v0.1\nContent-Type: text/html\n\n";
-// char *header404 = "HTTP/1.0 404 Not Found\nServer:  v0.1\nContent-Type: text/html\n\n";
-
-// \r\n
-// \r\n\r\n
+#define NSEC_PER_SEC 1000000000
 
 char *http_type[supported_http_protocols] = {
     "HTTP/1.0",
@@ -134,7 +128,8 @@ int parse_request_line(char *request, HttpHeader_t *header)
             if (index == 2)
             {
                 // Connection: Keep-alive
-                if (token_index == 1)
+                
+                if (token_index == 1 && strncmp(token, "Keep-alive", sizeof(token)))
                 {
                     header->connection_keep_alive = 1;
                     // printf("what the fuck is connection %s\n", token);
@@ -185,7 +180,7 @@ void build_header(HttpHeader_t *request_header, char **return_request, int *retu
             // HTTP/1.0 400 Bad Request
             perror("file open");
             send_(return_request, request_header, return_size, "Webpage do not exists", NOT_FOUND);
-
+            free(filename);
             return;
         }
 
@@ -234,6 +229,7 @@ void build_header(HttpHeader_t *request_header, char **return_request, int *retu
             free(file_buffer);
             fclose(file);
             free(filename);
+            free(*return_request);
             // error
             return;
         }
@@ -244,6 +240,7 @@ void build_header(HttpHeader_t *request_header, char **return_request, int *retu
             free(file_buffer);
             fclose(file);
             free(filename);
+            free(*return_request);
             // error
             return;
         }
@@ -252,6 +249,7 @@ void build_header(HttpHeader_t *request_header, char **return_request, int *retu
 
         free(file_buffer);
         free(filename);
+        fclose(file);
     }
     else
     {
@@ -263,35 +261,94 @@ void build_header(HttpHeader_t *request_header, char **return_request, int *retu
 
 // GET / HTTP/1.1\r\nPostman-Token: 23464349-ae43-4094-8db2-e58c7bbf77b1\r\nHost: localhost:8888
 
+int delta_t(struct timespec *start, struct timespec *stop, struct timespec *delta_t)
+{
+    int dt_sec = stop->tv_sec - start->tv_sec;
+    int dt_nsec = stop->tv_nsec - start->tv_nsec;
+
+    if (dt_sec >= 0)
+    {
+        if (dt_nsec >= 0)
+        {
+            delta_t->tv_sec = dt_sec;
+            delta_t->tv_nsec = dt_nsec;
+        }
+        else
+        {
+            delta_t->tv_sec = ((dt_sec == 0) ? 0 : (dt_sec - 1));
+            delta_t->tv_nsec = NSEC_PER_SEC + dt_nsec;
+        }
+    }
+    else
+    {
+        if (dt_nsec >= 0)
+        {
+            delta_t->tv_sec = dt_sec;
+            delta_t->tv_nsec = dt_nsec;
+        }
+        else
+        {
+            delta_t->tv_sec = dt_sec - 1;
+            delta_t->tv_nsec = NSEC_PER_SEC + dt_nsec;
+        }
+    }
+    return (delta_t->tv_nsec / NSEC_PER_SEC) + delta_t->tv_sec;
+
+}
+
 void *handle_req(sockdetails_t sd)
 {
     int numbytes;
     char recieved_buf[TRANSMIT_SIZE];
     char *send_buf = NULL;
     HttpHeader_t header;
+    struct timespec start_time = {0, 0};
+    struct timespec end_time = {0, 0};
+    struct timespec delta_time = {0, 0};
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    clock_gettime(CLOCK_REALTIME, &end_time);
+    
+    // delta_t(&start_time, &end_time, &delta_time);
+
+    // while (delta_time.tv_sec <= TIMEOUT_HTTP_SEC)
+    // {
     // while (1)
     // {
+        // we are in the child process now
+        if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
+        {
+            perror("read");
+            exit(1);
+        }
+        
+        int return_size;
+        memset(&header, 0, sizeof(HttpHeader_t));
+        parse_request_line(recieved_buf, &header);
+        build_header(&header, &send_buf, &return_size);
+        
+        if(header.connection_keep_alive == 1){
+            clock_gettime(CLOCK_REALTIME, &start_time);
+        }
+        
+        if ((numbytes = send(sd.client_sock_fd, send_buf, return_size, 0)) < 0)
+        {
+            perror("write");
+            return NULL;
+        }
+        free(send_buf);
+        
+        
+        clock_gettime(CLOCK_REALTIME, &end_time);
+        
+        int total_sec;
+        
+        if(total_sec = delta_t(&start_time, &end_time, &delta_time) >= TIMEOUT_HTTP_SEC){
+            printf("Timeout !!!\n", total_sec);
+            // break;
+        }
 
-    bzero(recieved_buf, sizeof(recieved_buf));
-    // we are in the child process now
-    if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
-    {
-        perror("read");
-        exit(1);
-    }
-
-    int return_size;
-
-    parse_request_line(recieved_buf, &header);
-    build_header(&header, &send_buf, &return_size);
-
-    if ((numbytes = send(sd.client_sock_fd, send_buf, return_size, 0)) < 0)
-    {
-        perror("write");
-        return NULL;
-    }
-    free(send_buf);
-    close(sd.client_sock_fd);
     // }
+    close(sd.client_sock_fd);
+
     return NULL;
 }

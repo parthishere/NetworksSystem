@@ -83,6 +83,8 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
     inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
     printf(GRN "[+] Server recieving TCP/HTTP1.0 packet to : %s\n" RESET, ip);
 
+    freeaddrinfo(temp);
+    
     if (listen(sockfd, 5) < 0)
     {
         perror("listen");
