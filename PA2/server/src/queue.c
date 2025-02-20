@@ -36,9 +36,9 @@ void *default_thread_func(threadpool args)
     printf("New thread was created \n");
     while (!tp->shutdown)
     {
-        printf("Waiting for semaphore to release\n");
+        // printf("Waiting for semaphore to release\n");
         sem_wait(&(tp->sync_sem));
-        printf("semaphore released\n");
+        // printf("semaphore released\n");
         
         pthread_mutex_lock(&(tp->mutex));
         _thread_t *current_thread = tp->thread_head;
