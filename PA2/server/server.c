@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     sa.sa_flags = 0;   
     sa.sa_handler = sig_handler;
 
-    sigaction(SIGINT, &sa, NULL);
+    // sigaction(SIGINT, &sa, NULL);
 
     if (argc != 2)
     {
