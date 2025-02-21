@@ -10,7 +10,7 @@ static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void sig_handler(int num) {
-    char *data = "Fuck you\n";
+    char *data = "hehe\n";
     write(STDOUT_FILENO, data, sizeof(data));
     shutdown_flag = 1;
 }

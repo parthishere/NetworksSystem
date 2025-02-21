@@ -1,5 +1,9 @@
 #include "handle_req.h"
 
+#include <sys/sendfile.h>
+
+
+
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 #define NSEC_PER_SEC 1000000000
 
@@ -11,11 +15,11 @@
 #define WWW_ROOT "./www"
 #define USE_SENDFILE 1
 
-char *http_type[supported_http_protocols] = {
+char *http_type[supported_http_protocols+1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
 
-char *status_codes[total_status_codes] = {
+char *status_codes[total_status_codes+1] = {
     "200 OK",
     "400 Bad Request",
     "403 Forbidden",
@@ -23,23 +27,22 @@ char *status_codes[total_status_codes] = {
     "405 Method Not Allowed",
     "505 HTTP Version Not Supported"};
 
-char *reqMethod[total_req_methods] = {
+char *reqMethod[total_req_methods+1] = {
     "GET",
     "POST",
     "DELETE",
     "PATCH"};
 
-char *contentType[total_content_types] = {
+char *contentType[total_content_types+1] = {
     "text/html",
     "text/css",
     "text/plain",
     "application/javascript"
     "image/png",
     "image/gif",
-    "image/png",
+    "image/jpg",
     "image/x-icon",
-    "ERROR"
-};
+    "ERROR"};
 
 typedef struct filedata_s
 {
@@ -316,30 +319,45 @@ void parse_request_line(char *request, HttpHeader_t *header)
 //     }
 // }
 
-// 
+//
 
 // GET / HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
 // GET /style.css HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
 // GET /script.js HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
 
-static contentType_t get_content_type(const char *ext) {
-    if (!ext) return TEXT_PLAIN;
-    if (!strcmp(ext, "html")) return TEXT_HTML;
-    if (!strcmp(ext, "css")) return TEXT_CSS;
-    if (!strcmp(ext, "txt")) return TEXT_PLAIN;
-    if (!strcmp(ext, "js")) return APPLICATION_JAVASCRIPT;
-    if (!strcmp(ext, "png")) return IMAGE_PNG;
-    if (!strcmp(ext, "gif")) return IMAGE_GIF;
-    if (!strcmp(ext, "jpg")) return IMAGE_JPG;
-    if (!strcmp(ext, "ico")) return IMAGE_X_ICON;
-    else return total_content_types;
+static contentType_t get_content_type(const char *ext)
+{
+    if (!ext)
+        return TEXT_PLAIN;
+    if (!strcmp(ext, "html"))
+        return TEXT_HTML;
+    if (!strcmp(ext, "css"))
+        return TEXT_CSS;
+    if (!strcmp(ext, "txt"))
+        return TEXT_PLAIN;
+    if (!strcmp(ext, "js"))
+        return APPLICATION_JAVASCRIPT;
+    if (!strcmp(ext, "png"))
+        return IMAGE_PNG;
+    if (!strcmp(ext, "gif"))
+        return IMAGE_GIF;
+    if (!strcmp(ext, "jpg"))
+        return IMAGE_JPG;
+    if (!strncmp(ext, "ico", 3))
+        return IMAGE_X_ICON;
+    else
+        return total_content_types;
 }
 
-static char *construct_filepath(const char *uri) {
+static char *construct_filepath(const char *uri)
+{
     char *filename;
-    if (!strcmp(uri, "/")) {
+    if (!strcmp(uri, "/"))
+    {
         asprintf(&filename, "%s/index.html", ROOT_DIR);
-    } else {
+    }
+    else
+    {
         asprintf(&filename, "%s%s", ROOT_DIR, uri);
     }
     return filename;
@@ -388,10 +406,11 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         lseek(fd, 0, SEEK_SET);
 
         ext = strrchr(filename, '.');
-        content_type = contentType[get_content_type(ext ? ext + 1 : NULL)];
+        content_type = contentType[get_content_type(ext ? ext + 1 : NULL) - 1];
 
-        if(strcmp(content_type, "ERROR") == 0)
+        if (strncmp(content_type, "ERROR", 5) == 0)
         {
+            printf("EXT %s\n", ext);
             send_(&return_request, request_header, &return_size, "not working", 2);
             send(sd->client_sock_fd, return_request, return_size, 0);
             return;
@@ -403,7 +422,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         {
             close(fd);
             free(filename);
-           
+
             return;
         }
 
@@ -416,6 +435,17 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         }
         printf("sent header, size %d\n", numbytes);
 
+#if USE_SENDFILE
+        /* Try sendfile first - zero copy */
+        numbytes = sendfile(sd->client_sock_fd, fd, NULL, size);
+        if (numbytes > 0)
+        {
+            printf("sent file %d\n", numbytes);
+            close(fd);
+            return;
+        }
+
+#else
         while ((numbytes = read(fd, file_buffer, RECIEVE_SIZE)) > 0 && temp_size > 0)
         {
 
@@ -427,6 +457,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             printf("sent file %d\n", numbytes);
             temp_size -= numbytes;
         }
+#endif
 
         free(filename);
         close(fd);
@@ -442,9 +473,8 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
 
 // GET / HTTP/1.1\r\nPostman-Token: 23464349-ae43-4094-8db2-e58c7bbf77b1\r\nHost: localhost:8888
 
-
 static int delta_t(struct timespec *start, struct timespec *stop,
-                                struct timespec *delta)
+                   struct timespec *delta)
 {
     int dt_sec = stop->tv_sec - start->tv_sec;
     int dt_nsec = stop->tv_nsec - start->tv_nsec;
