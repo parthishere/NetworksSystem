@@ -32,6 +32,9 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 
+
+#define ROOT_DIR "./www"
+
 #define MAX_SIZE (1024 * 30)   // 30KB
 #define RECIEVE_SIZE MAX_SIZE  // 30KB receive buffer
 #define TRANSMIT_SIZE MAX_SIZE // 30KB transmit buffer

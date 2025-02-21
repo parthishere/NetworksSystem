@@ -33,6 +33,7 @@ typedef enum method_s
     PUT,
     DELETE,
     PATCH,
+    HEAD,
     total_req_methods,
 } method_t;
 

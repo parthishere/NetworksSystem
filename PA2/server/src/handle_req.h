@@ -4,7 +4,7 @@
 #include "http_types.h"
 
 
-int parse_request_line(char *request, HttpHeader_t *header);
-void build_header(HttpHeader_t *request_header, char **return_request, int *return_size);
+void parse_request_line(char *request, HttpHeader_t *header);
+void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd);    
 void *handle_req(sockdetails_t sd);
 

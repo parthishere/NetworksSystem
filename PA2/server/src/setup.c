@@ -18,9 +18,9 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
     /* Validate and set port number */
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
-    if (atoi(server_port) != 8888)
+    if (atoi(server_port) <= 4000)
     {
-        fprintf(stderr, RED "[-] Port Value != 8888 ! keep port value equal to 8888 \n" RESET);
+        fprintf(stderr, RED "[-] Port Value < 4000 ! keep port value higher than that \n" RESET);
         exit(EXIT_FAILURE);
     }
 
