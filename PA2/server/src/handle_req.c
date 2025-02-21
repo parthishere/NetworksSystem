@@ -37,7 +37,7 @@ char *contentType[total_content_types+1] = {
     "text/html",
     "text/css",
     "text/plain",
-    "application/javascript"
+    "application/javascript",
     "image/png",
     "image/gif",
     "image/jpg",
@@ -223,7 +223,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         lseek(fd, 0, SEEK_SET);
 
         ext = strrchr(filename, '.');
-        content_type = contentType[get_content_type(ext ? ext + 1 : NULL) - 1];
+        content_type = contentType[get_content_type(ext ? ext + 1 : NULL)];
 
         if (strncmp(content_type, "ERROR", 5) == 0)
         {
@@ -286,9 +286,6 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     }
 }
 
-// request builder
-
-// GET / HTTP/1.1\r\nPostman-Token: 23464349-ae43-4094-8db2-e58c7bbf77b1\r\nHost: localhost:8888
 
 static int delta_t(struct timespec *start, struct timespec *stop,
                    struct timespec *delta)
