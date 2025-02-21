@@ -10,8 +10,8 @@ static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void sig_handler(int num) {
-    char *data = "hehe\n";
-    write(STDOUT_FILENO, data, sizeof(data));
+    char *data = "\n\nCleaning up resources...\n";
+    write(STDOUT_FILENO, data, strlen(data));
     shutdown_flag = 1;
 }
 
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     sa.sa_flags = 0;   
     sa.sa_handler = sig_handler;
 
-    // sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
 
     if (argc != 2)
     {
