@@ -2,8 +2,6 @@
 
 #include <sys/sendfile.h>
 
-
-
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 #define NSEC_PER_SEC 1000000000
 
@@ -15,11 +13,11 @@
 #define WWW_ROOT "./www"
 #define USE_SENDFILE 1
 
-char *http_type[supported_http_protocols+1] = {
+char *http_type[supported_http_protocols + 1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
 
-char *status_codes[total_status_codes+1] = {
+char *status_codes[total_status_codes + 1] = {
     "200 OK",
     "400 Bad Request",
     "403 Forbidden",
@@ -27,13 +25,13 @@ char *status_codes[total_status_codes+1] = {
     "405 Method Not Allowed",
     "505 HTTP Version Not Supported"};
 
-char *reqMethod[total_req_methods+1] = {
+char *reqMethod[total_req_methods + 1] = {
     "GET",
     "POST",
     "DELETE",
     "PATCH"};
 
-char *contentType[total_content_types+1] = {
+char *contentType[total_content_types + 1] = {
     "text/html",
     "text/css",
     "text/plain",
@@ -98,7 +96,6 @@ void parse_request_line(char *request, HttpHeader_t *header)
             {
                 if (word_number == 1)
                 {
-                    printf("Filename: %s\n", token);
                     header->uri_str = token;
                 }
 
@@ -250,14 +247,14 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             perror("Send");
             return;
         }
-        printf("sent header, size %d\n", numbytes);
+        // printf("sent header, size %d\n", numbytes);
 
 #if USE_SENDFILE
         /* Try sendfile first - zero copy */
         numbytes = sendfile(sd->client_sock_fd, fd, NULL, size);
         if (numbytes > 0)
         {
-            printf("sent file %d\n", numbytes);
+            printf("[+] Sent file %s(%d)\n", filename, numbytes);
             close(fd);
             return;
         }
@@ -286,7 +283,6 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     }
 }
 
-
 static int delta_t(struct timespec *start, struct timespec *stop,
                    struct timespec *delta)
 {
@@ -306,34 +302,49 @@ void *handle_req(sockdetails_t sd)
     int numbytes;
     char recieved_buf[TRANSMIT_SIZE];
     HttpHeader_t header;
-    struct timespec start_time = {0, 0};
-    struct timespec end_time = {0, 0};
-    struct timespec delta_time = {10, 0};
-    clock_gettime(CLOCK_REALTIME, &start_time);
-    clock_gettime(CLOCK_REALTIME, &end_time);
-
+    
     fd_set readfds, writefds, exceptfds;
-    struct timespec timeout = {10, 0};
+    
+    while (1)
+    {
 
-    FD_ZERO(&readfds);
-    FD_SET(sd.client_sock_fd, &readfds);
+        FD_ZERO(&readfds);
+        FD_SET(sd.client_sock_fd, &readfds);
+        struct timeval timeout = {10, 0};
+        // aria2
+        // hping3
+        // nc
+        // sendfile - 0 copy
+        // sendmessage
 
-    // aria2
-    // hping3
-    // nc
-    // sendfile - 0 copy
-    // sendmessage
+        int select_status = select(sd.client_sock_fd + 1, &readfds, NULL, NULL, &timeout);
+        if (select_status < 0)
+        {
+            perror("select error");
+            break;
+        }
 
-    // int select_status = select(sd.client_sock_fd+1, &readfds, NULL, NULL, &timeout);
-    // switch(select_status){
-    //     case 0:
-    //         // timeout
-    //         break;
-    //     case -1:
-    //         break;
-    //     default:
-    //         // something was ready torread
-    // }
+        if (select_status == 0)
+        {
+            printf("Connection timed out\n");
+            break;
+        }
+
+        if (FD_ISSET(sd.client_sock_fd, &readfds))
+        {
+            if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
+            {
+                perror("read");
+                return NULL;
+            }
+
+            memset(&header, 0, sizeof(HttpHeader_t));
+            parse_request_line(recieved_buf, &header);
+
+            build_and_send_header(&header, &sd);
+        }
+        // something was ready torread
+    }
     // delta_t(&start_time, &end_time, &delta_time);
 
     // while (delta_time.tv_sec <= TIMEOUT_HTTP_SEC)
@@ -341,41 +352,17 @@ void *handle_req(sockdetails_t sd)
     // while (1)
     // {
     // we are in the child process now
-    if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
-    {
-        perror("read");
-        return NULL;
-    }
 
-    int return_size;
-    memset(&header, 0, sizeof(HttpHeader_t));
-    parse_request_line(recieved_buf, &header);
+    // clock_gettime(CLOCK_REALTIME, &end_time);
 
-    build_and_send_header(&header, &sd);
+    // int total_sec;
 
-    // build_header(&header, &send_buf, &return_size);
-
-    // if(header.connection_keep_alive == 1){
-    //     clock_gettime(CLOCK_REALTIME, &start_time);
-    // }
-
-    // if ((numbytes = send(sd.client_sock_fd, send_buf, return_size, 0)) < 0)
+    // if (total_sec = delta_t(&start_time, &end_time, &delta_time) >= TIMEOUT_HTTP_SEC)
     // {
-    //     perror("write");
-    //     return NULL;
+    //     printf("Timeout !!!\n");
+    //     // break;
     // }
-
-    clock_gettime(CLOCK_REALTIME, &end_time);
-
-    int total_sec;
-
-    if (total_sec = delta_t(&start_time, &end_time, &delta_time) >= TIMEOUT_HTTP_SEC)
-    {
-        printf("Timeout !!!\n");
-        // break;
-    }
-
-    // }
+    printf("whoooooo timeout !!!\n");
     close(sd.client_sock_fd);
 
     return NULL;
