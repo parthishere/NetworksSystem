@@ -13,16 +13,16 @@ typedef enum httpType_s
 
 
 
-typedef enum statusCode_s
-{
-    OK,
-    BAD_REQ,
-    FORBIDDEN,
-    NOT_FOUND,
-    METHOD_NOT_ALLOWED,
-    VERSION_NOT_SUPPORTED,
-    total_status_codes,
-} statusCode_t;
+    typedef enum statusCode_s
+    {
+        OK,
+        BAD_REQ,
+        FORBIDDEN,
+        NOT_FOUND,
+        METHOD_NOT_ALLOWED,
+        VERSION_NOT_SUPPORTED,
+        total_status_codes,
+    } statusCode_t;
 
 
 
@@ -64,12 +64,13 @@ typedef struct req_header_s
     contentType_t content_type;
     char *content_type_str;
 
-    method_t *method;
+    method_t method;
     char *method_str;
 
     statusCode_t *status_code;
     char *status_code_str;
 
     int connection_keep_alive;
+    int connection_close;
 
 } HttpHeader_t;

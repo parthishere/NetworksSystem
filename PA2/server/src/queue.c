@@ -33,12 +33,12 @@ typedef struct _threadpool
 void *default_thread_func(threadpool args)
 {
     _threadpool_t *tp = (_threadpool_t *)args;
-    printf("New thread was created \n");
+    printf("Thread was created : %d \n", gettid());
     while (!tp->shutdown)
     {
-        // printf("Waiting for semaphore to release\n");
+        printf("Waiting for semaphore to release\n");
         sem_wait(&(tp->sync_sem));
-        // printf("semaphore released\n");
+        printf("semaphore released\n");
         
         pthread_mutex_lock(&(tp->mutex));
         _thread_t *current_thread = tp->thread_head;
@@ -62,6 +62,7 @@ void *default_thread_func(threadpool args)
             tp->current_thread_number = 0;
         }
     }
+    return NULL;
 }
 
 void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd)
@@ -152,11 +153,18 @@ void destroy_threadpool(threadpool tp){
     pthread_mutex_unlock(&(_tp->mutex));
 
     for(int i=0; i<TOTAL_THREADS; i++){
+        // pthread_join(_tp->pthreads[i], NULL);
+    }
+    for(int i=0; i<TOTAL_THREADS; i++){
+        
+        usleep(1000);
         sem_post(&(_tp->sync_sem));
-        pthread_join(_tp->pthreads[i], NULL);
+        int sem_value;
+        sem_getvalue(&(_tp->sync_sem), &sem_value);
+        printf("sem value: %d \n", sem_value);
         pthread_attr_destroy(&(_tp->pthreads_attr[i]));
     }
-
+    
     _thread_t *current = _tp->thread_head;
     while(current != NULL){
         _thread_t *next = current->next_thread;

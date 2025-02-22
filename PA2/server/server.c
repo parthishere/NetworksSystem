@@ -15,6 +15,9 @@ void sig_handler(int num) {
     shutdown_flag = 1;
 }
 
+void sig_handler_pipe(int number){
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -23,8 +26,10 @@ int main(int argc, char *argv[])
     sigemptyset(&sa.sa_mask);    // Clear signal mask
     sa.sa_flags = 0;   
     sa.sa_handler = sig_handler;
-
+    
     sigaction(SIGINT, &sa, NULL);
+    signal(SIGPIPE, SIG_IGN);
+
 
     if (argc != 2)
     {
@@ -43,9 +48,8 @@ int main(int argc, char *argv[])
         goto cleanup;
 #endif
 
-    while (1)
+    while (!shutdown_flag)
     {
-        // printf(" handle req\n");
         if ((sd.client_sock_fd = accept(sd.sockfd, (struct sockaddr *)&sd.client_info, &sd.addr_len)) < 0 && errno != EINTR)
         {
             perror("accept");
@@ -68,7 +72,7 @@ int main(int argc, char *argv[])
 cleanup:;
 
     close(sd.client_sock_fd);
-    close(sd.sockfd);
+    close(sd.sockfd);;
     destroy_threadpool(tp);
 
     return 0;

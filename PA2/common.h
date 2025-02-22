@@ -33,6 +33,7 @@
 #include <sys/sysinfo.h>
 
 
+#define USE_SENDFILE 0
 #define ROOT_DIR "./www"
 
 #define MAX_SIZE (1024 * 30)   // 30KB
@@ -44,8 +45,8 @@
 
 #define USE_FORK 0
 
-#define TOTAL_THREADS 1
-#define TIMEOUT_HTTP_SEC 10 // sec
+#define TOTAL_THREADS 100
+#define TIMEOUT_HTTP_SEC 1 // sec
 
 #if USE_FORK == 0
 #define USE_THREADPOOL 1

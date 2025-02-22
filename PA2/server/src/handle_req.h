@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "http_types.h"
+#include "parser.h"
 
 
 void parse_request_line(char *request, HttpHeader_t *header);
