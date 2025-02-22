@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     {
         if ((sd.client_sock_fd = accept(sd.sockfd, (struct sockaddr *)&sd.client_info, &sd.addr_len)) < 0 && errno != EINTR)
         {
-            perror("accept");
+            perror(RED"accept"RESET);
             goto cleanup;
         }
 #if USE_FORK == 1

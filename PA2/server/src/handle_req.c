@@ -8,7 +8,6 @@
 #define DEFAULT_PORT "8080"
 #define WWW_ROOT "./www"
 
-
 static char *http_type[supported_http_protocols + 1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
@@ -38,7 +37,6 @@ static char *contentType[total_content_types + 1] = {
     "image/x-icon",
     "ERROR"};
 
-
 void send_(HttpHeader_t *request_header, char *message, statusCode_t code, sockdetails_t *sd)
 {
     char *return_request;
@@ -64,7 +62,8 @@ int str_equals(char *a, char *b, int size)
 void parse_request_line(char *request, HttpHeader_t *header)
 {
 
-    if(request == NULL || header == NULL) return; 
+    if (request == NULL || header == NULL)
+        return;
 
     // just get the header
     char *entire_req = request;
@@ -126,10 +125,12 @@ void parse_request_line(char *request, HttpHeader_t *header)
             }
             if (line_number == 2 && word_number == 1)
             {
-                if(strncmp(token, "Keep-alive", sizeof(token))){
+                if (strncmp(token, "Keep-alive", sizeof(token)))
+                {
                     header->connection_keep_alive = 1;
                 }
-                else if(strncmp(token, "Close", sizeof(token))){
+                else if (strncmp(token, "Close", sizeof(token)))
+                {
                     header->connection_close = 1;
                 }
             }
@@ -187,12 +188,14 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
 
     if (request_header->http_version == ERROR_VERSION)
     {
+        printf(RED "[-] (%d) WRONG HTTP VERSION" RESET, gettid());
         send_(request_header, "WRONG HTTP VERSION", VERSION_NOT_SUPPORTED, sd);
         return;
     }
 
     if (strstr(request_header->uri_str, "..") != NULL)
     {
+        printf(RED "[-] (%d) Trying to access files above in directory" RESET, gettid());
         send_(request_header, "You are trying to access files above in directory", FORBIDDEN, sd);
         return;
     }
@@ -210,48 +213,53 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     {
         if (fd < 0)
         {
-            switch (errno) {
-                case EACCES:
-                    send_(request_header, "Access denied", FORBIDDEN, sd);
-                    break;
-                case ENOENT:
-                    send_(request_header, "File not found", NOT_FOUND, sd);
-                    break;
-                default:
-                    send_(request_header, "Bad request", BAD_REQ, sd);
+            switch (errno)
+            {
+            case EACCES:
+                printf(RED "[-] (%d) Access denied" RESET, gettid());
+                send_(request_header, "Access denied", FORBIDDEN, sd);
+                break;
+            case ENOENT:
+                printf(RED "[-] (%d) File not found" RESET, gettid());
+                send_(request_header, "File not found", NOT_FOUND, sd);
+                break;
+            default:
+                printf(RED "[-] (%d) Bad request" RESET, gettid());
+                send_(request_header, "Bad request", BAD_REQ, sd);
             }
             // HTTP/1.0 400 Bad Request
             free(filename);
-            perror("file open");
+            perror(RED "[-] file open" RESET);
             return;
         }
-
+        
         size = lseek(fd, 0, SEEK_END);
         lseek(fd, 0, SEEK_SET);
-
+        
         ext = strrchr(filename, '.');
         content_type = contentType[get_content_type(ext ? ext + 1 : NULL)];
-
+        
         if (strncmp(content_type, "ERROR", 5) == 0)
         {
             free(filename);
-            printf("EXT %s\n", ext);
-            send_(request_header, "not working", 2, sd);
+            printf(RED "[-] (%d) Bad Extension" RESET, gettid());
+            send_(request_header, "Bad Extension", BAD_REQ, sd);
             return;
         }
-
+        
         header_size = asprintf(&return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n", request_header->http_version_str, status_codes[OK], content_type, size);
-
+        
         if (header_size < 0)
         {
             close(fd);
             free(filename);
-            send_(request_header, "not working", 2, sd);
-            if(return_request != NULL)
-                free(return_request);
+            printf(RED "[-] (%d) Bad request" RESET, gettid());
+            send_(request_header, "Bad request", BAD_REQ, sd);
+            if (return_request != NULL)
+            free(return_request);
             return;
         }
-
+        
         int numbytes = 0, temp_size = size;
         if ((numbytes = send(sd->client_sock_fd, return_request, header_size, MSG_NOSIGNAL)) < 0)
         {
@@ -262,27 +270,27 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         }
         // printf("sent header, size %d\n", numbytes);
 
-#if USE_SENDFILE
+        #if USE_SENDFILE
         /* Try sendfile first - zero copy */
         numbytes = sendfile(sd->client_sock_fd, fd, NULL, size);
         if (numbytes > 0)
         {
-            printf("[+] Sent file %s(%d)\n", filename, numbytes);
+            printf(GRN"[+] (%d) Sent file %s, size: %d\n"RESET, gettid(), filename, numbytes);
             close(fd);
             return;
         }
-
-#else
+        
+        #else
         while ((numbytes = read(fd, file_buffer, RECIEVE_SIZE)) > 0 && temp_size > 0)
         {
-
+            
             if (send(sd->client_sock_fd, file_buffer, numbytes, MSG_NOSIGNAL) < 0)
             {
                 perror("Send file");
                 close(sd->client_sock_fd);
                 return;
             }
-            printf("sent file %d\n", numbytes);
+            printf(MAG"[+] (%d) Sent file %s ,size: %d\n\n"RESET, gettid(), filename, numbytes);
             temp_size -= numbytes;
         }
 #endif
@@ -292,6 +300,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     }
     else
     {
+        printf(RED"[-] (%d) Method not allowed \n"RESET, gettid());
         send_(request_header, "Method not allowed !", METHOD_NOT_ALLOWED, sd);
         send(sd->client_sock_fd, return_request, return_size, 0);
     }
@@ -334,13 +343,13 @@ void *handle_req(sockdetails_t sd)
         int select_status = select(sd.client_sock_fd + 1, &readfds, NULL, NULL, &timeout);
         if (select_status < 0)
         {
-            perror("select error");
+            perror(RED "select error");
             break;
         }
 
         if (select_status == 0)
         {
-            printf("Connection timed out in Thread %d\n", gettid());
+            printf(YEL "[-] (%d) Connection timed out\n" RESET, gettid());
             break;
         }
 
@@ -348,14 +357,15 @@ void *handle_req(sockdetails_t sd)
         {
             if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
             {
-                perror("read");
+                perror(RED "[-] read");
                 return NULL;
             }
 
             memset(&header, 0, sizeof(HttpHeader_t));
             // parse_request_line(recieved_buf, &header);
             parse_request_line2(recieved_buf, &header);
-            if(header.connection_close == 1){
+            if (header.connection_close == 1)
+            {
                 close(sd.client_sock_fd);
                 return NULL;
             }

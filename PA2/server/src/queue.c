@@ -33,12 +33,12 @@ typedef struct _threadpool
 void *default_thread_func(threadpool args)
 {
     _threadpool_t *tp = (_threadpool_t *)args;
-    printf("Thread was created : %d \n", gettid());
+    printf(GRN"[+] (%d) Thread was created \n"RESET, gettid());
     while (!tp->shutdown)
     {
-        printf("Waiting for semaphore to release\n");
+        printf(GRN"[+] (%d) Thread waiting for Connection\n\n"RESET, gettid());
         sem_wait(&(tp->sync_sem));
-        printf("semaphore released\n");
+        // printf()
         
         pthread_mutex_lock(&(tp->mutex));
         _thread_t *current_thread = tp->thread_head;
@@ -53,7 +53,7 @@ void *default_thread_func(threadpool args)
             }
             pthread_mutex_unlock(&(tp->mutex));
             (current_thread->function_to_run)(current_thread->sd);
-
+            
             free(current_thread);
         }
         else {
@@ -62,6 +62,7 @@ void *default_thread_func(threadpool args)
             tp->current_thread_number = 0;
         }
     }
+    printf(GRN"[+] (%d) Thread exiting\n\n"RESET, gettid());
     return NULL;
 }
 
@@ -132,7 +133,7 @@ threadpool create_threadpool(int num_of_threads_in_pool)
         // pthread_attr_setschedparam(&rt_sched_attr[i], &rt_param[i]);
         if (pthread_create(&(tp->pthreads[i]), NULL, default_thread_func, tp) != 0)
         {
-            fprintf(stderr, "Error during threadpool creation!\n");
+            fprintf(stderr, RED"Error during threadpool creation!\n"RESET);
 
             destroy_threadpool(tp);
 
@@ -161,7 +162,6 @@ void destroy_threadpool(threadpool tp){
         sem_post(&(_tp->sync_sem));
         int sem_value;
         sem_getvalue(&(_tp->sync_sem), &sem_value);
-        printf("sem value: %d \n", sem_value);
         pthread_attr_destroy(&(_tp->pthreads_attr[i]));
     }
     
