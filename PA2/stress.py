@@ -4,6 +4,7 @@ import threading
 import time
 
 
+
 request = { "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
     "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
     "GET /404 HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
@@ -15,8 +16,8 @@ request = { "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\
     "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
     "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
     "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n"}
-def make_request(host, port): 
-    for i in range(10):
+def make_request(host, port, loops=10): 
+    for i in range(loops):
         try:
             # Create socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,7 +28,7 @@ def make_request(host, port):
             
             # Send HTTP request
             request = (
-                "GET / HTTP/1.1\r\n"
+                "GET /inex.html HTTP/1.1\r\n"
                 f"Host: {host}:{port}\r\n"
                 # "Connection: keep-alive\r\n"
                 "\r\n"
@@ -50,12 +51,12 @@ def make_request(host, port):
                 
     sock.close()
 
-def run_test(num_connections, host='localhost', port=8000):
+def run_test(num_connections, host='localhost', port=8000, loops=10):
     threads = []
     
     # Create and start threads
     for i in range(num_connections):
-        t = threading.Thread(target=make_request, args=(host, port))
+        t = threading.Thread(target=make_request, args=(host, port, loops))
         threads.append(t)
         t.start()
         print(f"Started connection {i+1}")
@@ -68,10 +69,11 @@ def run_test(num_connections, host='localhost', port=8000):
 if __name__ == "__main__":
     HOST = 'localhost'
     PORT = 8000
-    CONNECTIONS = 100 # Number of simultaneous connections
+    CONNECTIONS = 1 # Number of simultaneous connections
+    LOOPS = 1
     
     print(f"Starting load test with {CONNECTIONS} connections")
     print(f"Target: {HOST}:{PORT}")
     
-    run_test(CONNECTIONS, HOST, PORT)
+    run_test(CONNECTIONS, HOST, PORT, LOOPS)
     print("Test completed")

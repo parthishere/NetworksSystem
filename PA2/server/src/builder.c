@@ -59,7 +59,7 @@ static contentType_t get_content_type(const char *ext)
 {
     if (!ext)
         return TEXT_PLAIN;
-    if (!strcmp(ext, "html"))
+    if (!strcmp(ext, "html") || !strcmp(ext, "htm")) 
         return TEXT_HTML;
     if (!strcmp(ext, "css"))
         return TEXT_CSS;
@@ -93,9 +93,96 @@ static char *construct_filepath(const char *uri)
     return filename;
 }
 
+
+// Helper function to try alternative HTML extensions
+int try_alternative_html(const char *original_filename, char **final_filename) {
+    if (!original_filename || !final_filename) return -1;
+    
+    int fd = -1;
+    size_t len = strlen(original_filename);
+    
+    // If ends with .html, try .htm
+    if (len > 5 && strcmp(original_filename + len - 5, ".html") == 0) {
+        *final_filename = strdup(original_filename);
+        if (!*final_filename) return -1;
+        
+        (*final_filename)[len - 1] = '\0';  // Remove 'l' to make it .htm
+        fd = open(*final_filename, O_RDONLY);
+        if (fd < 0) {
+            free(*final_filename);
+            *final_filename = NULL;
+        }
+    }
+    // If ends with .htm, try .html
+    else if (len > 4 && strcmp(original_filename + len - 4, ".htm") == 0) {
+        if (asprintf(final_filename, "%sl", original_filename) < 0) {
+            return -1;
+        }
+        fd = open(*final_filename, O_RDONLY);
+        if (fd < 0) {
+            free(*final_filename);
+            *final_filename = NULL;
+        }
+    }
+    
+    return fd;
+}
+
+// Main file handling function
+int handle_file_request(HttpHeader_t *request_header, sockdetails_t *sd, 
+                       const char *filename, char **final_filename) {
+    int fd = open(filename, O_RDONLY);
+    *final_filename = strdup(filename);  // Store original filename
+    
+    if (fd < 0) {
+        const char *ext = strrchr(filename, '.');
+        
+        switch (errno) {
+            case EACCES:
+                printf(RED "[-] (%d) Access denied\n" RESET, gettid());
+                send_(request_header, "Access denied", FORBIDDEN, sd);
+                break;
+                
+            case ENOENT:
+                // Only try alternative extensions for HTML files
+                if (ext && (*final_filename != NULL) && 
+                    (strcmp(ext, ".html") == 0 || strcmp(ext, ".htm") == 0)) {
+                    
+                    free(*final_filename);  // Free original filename
+                    fd = try_alternative_html(filename, final_filename);
+                    
+                    if (fd < 0) {
+                        printf(RED "[-] (%d) File not found (tried both .html and .htm)\n" RESET, gettid());
+                        send_(request_header, "File not found", NOT_FOUND, sd);
+                    } else {
+                        printf(GRN "[+] (%d) Found alternative HTML file\n" RESET, gettid());
+                        return fd;  // Successfully found alternative
+                    }
+                } else {
+                    printf(RED "[-] (%d) File not found\n" RESET, gettid());
+                    send_(request_header, "File not found", NOT_FOUND, sd);
+                }
+                break;
+                
+            default:
+                printf(RED "[-] (%d) Bad request\n" RESET, gettid());
+                send_(request_header, "Bad request", BAD_REQ, sd);
+                break;
+        }
+        
+        free(*final_filename);
+        *final_filename = NULL;
+        return -1;
+    }
+    
+    return fd;
+}
+
+
+
 void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
 {
-    char *filename, *return_request;
+    char *filename, *final_filename, *return_request;
     int return_size;
 
     if(request_header == NULL) return;
@@ -127,8 +214,16 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     }
 
     filename = construct_filepath(request_header->uri_str);
+    if (!filename) {
+        send_(request_header, "Internal server error", FORBIDDEN, sd);
+        return;
+    }
 
-    int fd = open(filename, O_RDONLY);
+    int fd = handle_file_request(request_header, sd, filename, &final_filename);
+    if (fd < 0) {
+        free(filename);
+        return;
+    }
 
     size_t size;
     char *ext;
@@ -137,31 +232,6 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     char file_buffer[RECIEVE_SIZE];
     if (request_header->method == GET)
     {
-        if (fd < 0)
-        {
-            switch (errno)
-            {
-            case EACCES:
-                printf(RED "[-] (%d) Access denied\n" RESET, gettid());
-                send_(request_header, "Access denied", FORBIDDEN, sd);
-                break;
-            case ENOENT:
-                printf(RED "[-] (%d) File not found\n" RESET, gettid());
-                send_(request_header, "File not found", NOT_FOUND, sd);
-                break;
-            default:
-                printf(RED "[-] (%d) Bad request\n" RESET, gettid());
-                send_(request_header, "Bad request", BAD_REQ, sd);
-            }
-            // HTTP/1.0 400 Bad Request
-            free(filename);
-            perror(RED "[-] file open\n" RESET);
-            return;
-        }
-        
-        size = lseek(fd, 0, SEEK_END);
-        lseek(fd, 0, SEEK_SET);
-        
         ext = strrchr(filename, '.');
         content_type = contentType[get_content_type(ext ? ext + 1 : NULL)];
         
@@ -172,6 +242,12 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             send_(request_header, "Bad Extension", BAD_REQ, sd);
             return;
         }
+
+        
+        size = lseek(fd, 0, SEEK_END);
+        lseek(fd, 0, SEEK_SET);
+        
+        
         
         const char *connection_type = request_header->connection_keep_alive ? 
                                     "Connection: Keep-alive" : 
