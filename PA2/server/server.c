@@ -15,10 +15,6 @@ void sig_handler(int num) {
     shutdown_flag = 1;
 }
 
-void sig_handler_pipe(int number){
-
-}
-
 int main(int argc, char *argv[])
 {
     struct sigaction sa;

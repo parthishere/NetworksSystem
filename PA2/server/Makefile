@@ -28,3 +28,8 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	-rm -rf $(TARGET) $(OBJS) $(OUTPUT)
+
+
+.PHONY: test
+test:
+	python3 stress.py

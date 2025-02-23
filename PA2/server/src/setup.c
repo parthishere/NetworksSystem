@@ -1,5 +1,29 @@
+/**
+ * @file setup.c
+ * @brief Network Socket Setup Implementation
+ * @copyright (c) 2025 Parth Thakkar
+ *
+ * This file implements socket initialization and configuration functions for
+ * a network server. It handles both IPv4 and IPv6 address families and
+ * provides TCP stream socket setup with proper error handling.
+ */
+
+
 #include "setup.h"
 
+
+/**
+ * @function getin_addr
+ * @brief Extracts the IP address structure from a sockaddr structure
+ * 
+ * @param sa Pointer to generic socket address structure
+ * @return void* Pointer to the IP address structure (IPv4 or IPv6)
+ * 
+ * This function handles both IPv4 and IPv6 addresses by:
+ * 1. Checking the address family
+ * 2. Performing appropriate structure casting
+ * 3. Returning pointer to the correct address field
+ */
 void *getin_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -13,6 +37,23 @@ void *getin_addr(struct sockaddr *sa)
     return NULL;
 }
 
+
+/**
+ * @function init_server_side_socket
+ * @brief Initializes and configures a server-side TCP socket
+ * 
+ * @param sd Pointer to socket details structure
+ * @param argv Command line arguments array containing port number
+ * 
+ * This function performs complete server socket setup:
+ * 1. Configures address parameters
+ * 2. Creates and binds socket
+ * 3. Sets socket options
+ * 4. Prepares for listening
+ * 
+ * @note Port number must be > 1024 (non-privileged ports)
+ * @note Supports both IPv4 and IPv6
+ */
 void init_server_side_socket(sockdetails_t *sd, char *argv[])
 {
     struct addrinfo hints, *temp;
@@ -30,9 +71,9 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
     /* Validate and set port number */
     char *server_port = argv[1];
     printf("Passed Server Port %s\n", server_port);
-    if (atoi(server_port) <= 4000)
+    if (atoi(server_port) <= 1024)
     {
-        fprintf(stderr, RED "[-] Port Value < 4000 ! keep port value higher than that \n" RESET);
+        fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
         exit(EXIT_FAILURE);
     }
 
@@ -97,6 +138,7 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
 
     freeaddrinfo(temp);
     
+    /* Start listening for connections */
     if (listen(sockfd, TOTAL_THREADS*2) < 0)
     {
         perror("listen");

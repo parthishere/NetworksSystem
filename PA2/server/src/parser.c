@@ -1,17 +1,58 @@
+/**
+ * @file parser.c
+ * @brief HTTP Request Parser Implementation
+ * @copyright (c) 2025 Parth Thakkar
+ *
+ * This file implements an HTTP request parser that supports HTTP/1.0 and HTTP/1.1
+ * protocols. It provides both thread-safe and thread-unsafe parsing methods with
+ * comprehensive error checking and security validations.
+ */
 #include "parser.h"
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 
+/**
+ * @brief Array of supported HTTP request methods
+ *
+ * Ordered array of supported HTTP methods matching the enum
+ * defined in the header file
+ */
 static char *reqMethod[total_req_methods + 1] = {
     "GET",
     "POST",
     "DELETE",
     "PATCH"};
 
+/**
+ * @brief Array of supported HTTP protocol versions
+ *
+ * Maps protocol enum values to their string representations
+ */
 static char *http_type[supported_http_protocols + 1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
 
+/**
+ * @function parse_request_line_thread_safe
+ * @brief Thread-safe HTTP request parser
+ *
+ * @param request Raw HTTP request string to parse
+ * @param header Pointer to header structure to populate
+ * @return int Parse status code (PARSE_OK or error code)
+ *
+ * This function performs thread-safe parsing of HTTP requests by:
+ * 1. Validating input parameters
+ * 2. Creating a safe copy of the request
+ * 3. Parsing request line components
+ * 4. Validating HTTP method, URI, and version
+ * 5. Processing additional headers
+ *
+ * Security features:
+ * - Buffer overflow prevention
+ * - Path traversal detection
+ * - Input validation
+ * - Memory safety checks
+ */
 int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 {
     if (!request || !header)
@@ -24,7 +65,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     char request_copy[MAX_SIZE];
     if (strlen(request) >= MAX_SIZE)
     {
- 
+
         header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
         return PARSE_ERROR_BUFFER_OVERFLOW;
     }
@@ -54,7 +95,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
     if (line_count == 0)
     {
-   
+
         header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED;
     }
@@ -157,22 +198,22 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         header->parser_error = PARSE_ERROR_INVALID_VERSION;
         return PARSE_ERROR_INVALID_VERSION;
     }
-    
+
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
     {
         char *key = strtok_r(lines[i], ":", &token_ctx);
         char *value = strtok_r(NULL, " ", &token_ctx);
-        
+
         if (!key || !value)
         {
             continue;
         }
-        
+
         // Trim whitespace
         while (*value == ' ')
-        value++;
-        
+            value++;
+
         if (strcasecmp(key, "Host") == 0)
         {
             header->hostname_str = strdup(value);
@@ -184,7 +225,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         }
         // Add more header parsing as needed
     }
-    
+
     // Validate required headers for HTTP/1.1
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
@@ -195,7 +236,15 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     return PARSE_OK;
 }
 
-// Helper function to clean up header memory
+/**
+ * @function cleanup_header
+ * @brief Frees all dynamically allocated memory in header structure
+ * 
+ * @param header Pointer to header structure to clean up
+ * 
+ * This function safely releases all dynamically allocated memory
+ * in the header structure and zeros out the structure.
+ */
 void cleanup_header(HttpHeader_t *header)
 {
     if (header)
@@ -207,13 +256,34 @@ void cleanup_header(HttpHeader_t *header)
     }
 }
 
-
-
+/**
+ * @function str_equals
+ * @brief Safely compares two strings up to specified size
+ * 
+ * @param a First string to compare
+ * @param b Second string to compare
+ * @param size Maximum number of characters to compare
+ * @return int 1 if strings are equal, 0 otherwise
+ */
 int str_equals(char *a, char *b, int size)
 {
     return (strncmp(a, b, size) == 0);
 }
 
+
+/**
+ * @function parse_request_line_thread_unsafe
+ * @brief Legacy thread-unsafe HTTP request parser
+ * 
+ * @param request Raw HTTP request string to parse
+ * @param header Pointer to header structure to populate
+ * 
+ * @warning This function is not thread-safe and should be used with caution
+ * @deprecated Use parse_request_line_thread_safe instead
+ * 
+ * This function provides basic HTTP request parsing without thread safety
+ * or comprehensive error checking. Maintained for backward compatibility.
+ */
 void parse_request_line_thread_unsafe(char *request, HttpHeader_t *header)
 {
 
@@ -274,6 +344,7 @@ void parse_request_line_thread_unsafe(char *request, HttpHeader_t *header)
                     }
                 }
             }
+            /* Process additional headers */
             if (line_number == 1 && word_number == 1)
             {
                 header->hostname_str = token;
