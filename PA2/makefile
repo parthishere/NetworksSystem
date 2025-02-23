@@ -3,7 +3,7 @@ BUILD_DIR = $(SERVER_DIR)/build
 SERVER_BIN = $(BUILD_DIR)/server
 
 
-all: $(SERVER_BIN) run
+all: clean $(SERVER_BIN) run
 
 $(SERVER_BIN): 
 	@echo "Building server in $(SERVER_DIR)..."
