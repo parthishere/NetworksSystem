@@ -17,12 +17,12 @@ $(TARGET): $(OBJS)
 	@echo "Creating folder "$(OUTPUT)
 	
 	@mkdir -p $(OUTPUT)
-	@$(CC) $(CFLAGS) $(INC) $(LDFLAGS) $^ -o $(OUTPUT)$@
+	@$(CC) $(CFLAGS) $(INC) $^ -o $(OUTPUT)$@ $(LDFLAGS)
 	@rm $(OBJS)
 	@echo "Binary saved to output folder"
 
 %.o: %.c
-	@$(CC) $(CFLAGS) -I$(INC) $(LDFLAGS) -c $^ -o $@
+	@$(CC) $(CFLAGS) -I$(INC)  -c $^ -o $@ $(LDFLAGS)
 
 
 .PHONY: clean
