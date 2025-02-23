@@ -11,7 +11,7 @@ OBJS = $(SRCS:.c=.o)
 TARGET = server
 
 
-all: $(TARGET)
+all: $(TARGET) run
 
 $(TARGET): $(OBJS)
 	@echo "Creating folder "$(OUTPUT)
