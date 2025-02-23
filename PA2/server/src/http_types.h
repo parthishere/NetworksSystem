@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-
 typedef enum httpType_s
 {
     HTTP1_0,
@@ -11,20 +8,16 @@ typedef enum httpType_s
     supported_http_protocols
 } httpType_t;
 
-
-
-    typedef enum statusCode_s
-    {
-        OK,
-        BAD_REQ,
-        FORBIDDEN,
-        NOT_FOUND,
-        METHOD_NOT_ALLOWED,
-        VERSION_NOT_SUPPORTED,
-        total_status_codes,
-    } statusCode_t;
-
-
+typedef enum statusCode_s
+{
+    OK,
+    BAD_REQ,
+    FORBIDDEN,
+    NOT_FOUND,
+    METHOD_NOT_ALLOWED,
+    VERSION_NOT_SUPPORTED,
+    total_status_codes,
+} statusCode_t;
 
 typedef enum method_s
 {
@@ -36,7 +29,6 @@ typedef enum method_s
     HEAD,
     total_req_methods,
 } method_t;
-
 
 typedef enum contentType_s
 {
@@ -52,7 +44,16 @@ typedef enum contentType_s
 } contentType_t;
 
 
- 
+typedef enum
+{
+    PARSE_OK = 0,
+    PARSE_ERROR_INVALID_METHOD = -1,
+    PARSE_ERROR_INVALID_URI = -2,
+    PARSE_ERROR_INVALID_VERSION = -3,
+    PARSE_ERROR_MALFORMED = -4,
+    PARSE_ERROR_BUFFER_OVERFLOW = -5
+} parse_result_t;
+
 typedef struct req_header_s
 {
     httpType_t http_version;
@@ -73,4 +74,5 @@ typedef struct req_header_s
     int connection_keep_alive;
     int connection_close;
 
+    int parser_error;
 } HttpHeader_t;

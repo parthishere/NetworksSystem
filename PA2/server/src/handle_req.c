@@ -186,17 +186,30 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     char *filename, *return_request;
     int return_size;
 
-    if (request_header->http_version == ERROR_VERSION)
+    if(request_header == NULL) return;
+
+    switch(request_header->parser_error){
+        case PARSE_ERROR_INVALID_METHOD:
+        case PARSE_ERROR_INVALID_URI:
+        case PARSE_ERROR_MALFORMED:
+        case PARSE_ERROR_BUFFER_OVERFLOW:
+            send_(request_header, "SOMETHING WENT WRONG", VERSION_NOT_SUPPORTED, sd);
+            return;
+        default:
+        break;
+    }
+
+    if (request_header->http_version == ERROR_VERSION || request_header->parser_error == PARSE_ERROR_INVALID_METHOD)
     {
-        printf(RED "[-] (%d) WRONG HTTP VERSION" RESET, gettid());
+        printf(RED "[-] (%d) WRONG HTTP VERSION\n" RESET, gettid());
         send_(request_header, "WRONG HTTP VERSION", VERSION_NOT_SUPPORTED, sd);
         return;
     }
 
     if (strstr(request_header->uri_str, "..") != NULL)
     {
-        printf(RED "[-] (%d) Trying to access files above in directory" RESET, gettid());
-        send_(request_header, "You are trying to access files above in directory", FORBIDDEN, sd);
+        printf(RED "[-] (%d) Trying to access files above in directory\n" RESET, gettid());
+        send_(request_header, "You are trying to access files above in directory\n", FORBIDDEN, sd);
         return;
     }
 
@@ -216,20 +229,20 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             switch (errno)
             {
             case EACCES:
-                printf(RED "[-] (%d) Access denied" RESET, gettid());
+                printf(RED "[-] (%d) Access denied\n" RESET, gettid());
                 send_(request_header, "Access denied", FORBIDDEN, sd);
                 break;
             case ENOENT:
-                printf(RED "[-] (%d) File not found" RESET, gettid());
+                printf(RED "[-] (%d) File not found\n" RESET, gettid());
                 send_(request_header, "File not found", NOT_FOUND, sd);
                 break;
             default:
-                printf(RED "[-] (%d) Bad request" RESET, gettid());
+                printf(RED "[-] (%d) Bad request\n" RESET, gettid());
                 send_(request_header, "Bad request", BAD_REQ, sd);
             }
             // HTTP/1.0 400 Bad Request
             free(filename);
-            perror(RED "[-] file open" RESET);
+            perror(RED "[-] file open\n" RESET);
             return;
         }
         
@@ -242,7 +255,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         if (strncmp(content_type, "ERROR", 5) == 0)
         {
             free(filename);
-            printf(RED "[-] (%d) Bad Extension" RESET, gettid());
+            printf(RED "[-] (%d) Bad Extension\n" RESET, gettid());
             send_(request_header, "Bad Extension", BAD_REQ, sd);
             return;
         }
@@ -253,7 +266,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         {
             close(fd);
             free(filename);
-            printf(RED "[-] (%d) Bad request" RESET, gettid());
+            printf(RED "[-] (%d) Bad request\n" RESET, gettid());
             send_(request_header, "Bad request", BAD_REQ, sd);
             if (return_request != NULL)
             free(return_request);
@@ -268,7 +281,6 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             perror("Send header");
             return;
         }
-        // printf("sent header, size %d\n", numbytes);
 
         #if USE_SENDFILE
         /* Try sendfile first - zero copy */
@@ -298,7 +310,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         free(filename);
         close(fd);
     }
-    else
+    else if(request_header->method != POST || request_header->method != HEAD || request_header->method != PATCH)
     {
         printf(RED"[-] (%d) Method not allowed \n"RESET, gettid());
         send_(request_header, "Method not allowed !", METHOD_NOT_ALLOWED, sd);
@@ -364,13 +376,15 @@ void *handle_req(sockdetails_t sd)
             memset(&header, 0, sizeof(HttpHeader_t));
             // parse_request_line(recieved_buf, &header);
             parse_request_line2(recieved_buf, &header);
+            
+            build_and_send_header(&header, &sd);
+
             if (header.connection_close == 1)
             {
                 close(sd.client_sock_fd);
                 return NULL;
             }
-
-            build_and_send_header(&header, &sd);
+            memset(&header, 0, sizeof(header));
         }
     }
 

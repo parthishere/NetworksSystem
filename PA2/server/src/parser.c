@@ -2,15 +2,7 @@
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 
-typedef enum
-{
-    PARSE_OK = 0,
-    PARSE_ERROR_INVALID_METHOD = -1,
-    PARSE_ERROR_INVALID_URI = -2,
-    PARSE_ERROR_INVALID_VERSION = -3,
-    PARSE_ERROR_MALFORMED = -4,
-    PARSE_ERROR_BUFFER_OVERFLOW = -5
-} parse_result_t;
+
 
 static char *reqMethod[total_req_methods + 1] = {
     "GET",
@@ -33,6 +25,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     char request_copy[MAX_SIZE];
     if (strlen(request) >= MAX_SIZE)
     {
+        header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
         return PARSE_ERROR_BUFFER_OVERFLOW;
     }
     strncpy(request_copy, request, MAX_SIZE - 1);
@@ -61,6 +54,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
 
     if (line_count == 0)
     {
+        header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED;
     }
 
@@ -72,6 +66,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     method = strtok_r(lines[0], " ", &token_ctx);
     if (!method)
     {
+        header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED;
     }
 
@@ -89,6 +84,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     }
     if (!valid_method)
     {
+        header->parser_error = PARSE_ERROR_INVALID_METHOD;
         return PARSE_ERROR_INVALID_METHOD;
     }
 
@@ -96,6 +92,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     uri = strtok_r(NULL, " ", &token_ctx);
     if (!uri)
     {
+        header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
 
@@ -103,12 +100,14 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     size_t uri_len = strlen(uri);
     if (uri_len == 0)
     {
+        header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
 
     // Check for path traversal attempts
     if (strstr(uri, "..") != NULL)
     {
+        header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
 
@@ -116,6 +115,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     header->uri_str = strdup(uri); // Remember to free this later
     if (!header->uri_str)
     {
+        header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
         return PARSE_ERROR_BUFFER_OVERFLOW;
     }
 
@@ -123,12 +123,14 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     version = strtok_r(NULL, " ", &token_ctx);
     if (!version)
     {
+        header->parser_error = PARSE_ERROR_INVALID_VERSION;
         return PARSE_ERROR_INVALID_VERSION;
     }
 
     // Validate HTTP version
     if (strncmp(version, "HTTP/1.", 7) != 0)
     {
+        header->parser_error = PARSE_ERROR_INVALID_VERSION;
         header->http_version = ERROR_VERSION;
         return PARSE_ERROR_INVALID_VERSION;
     }
@@ -145,15 +147,16 @@ int parse_request_line2(char *request, HttpHeader_t *header)
         break;
     default:
         header->http_version = ERROR_VERSION;
+        header->parser_error = PARSE_ERROR_INVALID_VERSION;
         return PARSE_ERROR_INVALID_VERSION;
     }
-
+    
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
     {
         char *key = strtok_r(lines[i], ":", &token_ctx);
         char *value = strtok_r(NULL, " ", &token_ctx);
-
+        
         if (!key || !value)
         {
             continue;
@@ -161,7 +164,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
 
         // Trim whitespace
         while (*value == ' ')
-            value++;
+        value++;
 
         if (strcasecmp(key, "Host") == 0)
         {
@@ -174,12 +177,14 @@ int parse_request_line2(char *request, HttpHeader_t *header)
         }
         // Add more header parsing as needed
     }
-
+    
     // Validate required headers for HTTP/1.1
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
+        header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED; // Host is required for HTTP/1.1
     }
+
 
     return PARSE_OK;
 }

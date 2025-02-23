@@ -46,7 +46,7 @@
 #define USE_FORK 0
 
 #define TOTAL_THREADS 100
-#define TIMEOUT_HTTP_SEC 1 // sec
+#define TIMEOUT_HTTP_SEC 2 // sec
 
 #if USE_FORK == 0
 #define USE_THREADPOOL 1
