@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS= -g -o2  
-LFLAGS = -lpthread 
+LDFLAGS = -lpthread -lrt
 INC_SRC = src/
 INC_GLOBAL = ../
 INC=-Isrc/ -I./ -Iincludes/
