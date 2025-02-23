@@ -5,4 +5,5 @@
 #include "handle_req.h"
 
  
-void use_fork(sockdetails_t sd);
+void use_fork(sockdetails_t *sd);
+void cleanup_zombie_processes();

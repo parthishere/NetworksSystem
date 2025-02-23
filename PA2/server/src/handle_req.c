@@ -193,13 +193,14 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         case PARSE_ERROR_INVALID_URI:
         case PARSE_ERROR_MALFORMED:
         case PARSE_ERROR_BUFFER_OVERFLOW:
+            printf(RED "[-] (%d) SOMETHING WENT WRONG\n" RESET, gettid());
             send_(request_header, "SOMETHING WENT WRONG", VERSION_NOT_SUPPORTED, sd);
             return;
         default:
         break;
     }
 
-    if (request_header->http_version == ERROR_VERSION || request_header->parser_error == PARSE_ERROR_INVALID_METHOD)
+    if (request_header->http_version == ERROR_VERSION || request_header->parser_error == PARSE_ERROR_INVALID_VERSION)
     {
         printf(RED "[-] (%d) WRONG HTTP VERSION\n" RESET, gettid());
         send_(request_header, "WRONG HTTP VERSION", VERSION_NOT_SUPPORTED, sd);

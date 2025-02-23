@@ -16,6 +16,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
 {
     if (!request || !header)
     {
+
         return PARSE_ERROR_MALFORMED;
     }
 
@@ -23,6 +24,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     char request_copy[MAX_SIZE];
     if (strlen(request) >= MAX_SIZE)
     {
+ 
         header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
         return PARSE_ERROR_BUFFER_OVERFLOW;
     }
@@ -52,6 +54,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
 
     if (line_count == 0)
     {
+   
         header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED;
     }
@@ -64,6 +67,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     method = strtok_r(lines[0], " ", &token_ctx);
     if (!method)
     {
+
         header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED;
     }
@@ -82,6 +86,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     }
     if (!valid_method)
     {
+
         header->parser_error = PARSE_ERROR_INVALID_METHOD;
         return PARSE_ERROR_INVALID_METHOD;
     }
@@ -90,6 +95,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     uri = strtok_r(NULL, " ", &token_ctx);
     if (!uri)
     {
+
         header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
@@ -98,6 +104,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     size_t uri_len = strlen(uri);
     if (uri_len == 0)
     {
+
         header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
@@ -105,6 +112,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     // Check for path traversal attempts
     if (strstr(uri, "..") != NULL)
     {
+
         header->parser_error = PARSE_ERROR_INVALID_URI;
         return PARSE_ERROR_INVALID_URI;
     }
@@ -113,6 +121,7 @@ int parse_request_line2(char *request, HttpHeader_t *header)
     header->uri_str = strdup(uri); // Remember to free this later
     if (!header->uri_str)
     {
+
         header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
         return PARSE_ERROR_BUFFER_OVERFLOW;
     }
@@ -159,11 +168,11 @@ int parse_request_line2(char *request, HttpHeader_t *header)
         {
             continue;
         }
-
+        
         // Trim whitespace
         while (*value == ' ')
         value++;
-
+        
         if (strcasecmp(key, "Host") == 0)
         {
             header->hostname_str = strdup(value);
@@ -182,7 +191,6 @@ int parse_request_line2(char *request, HttpHeader_t *header)
         header->parser_error = PARSE_ERROR_MALFORMED;
         return PARSE_ERROR_MALFORMED; // Host is required for HTTP/1.1
     }
-
 
     return PARSE_OK;
 }

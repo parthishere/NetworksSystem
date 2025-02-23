@@ -43,10 +43,10 @@
 #define NUM_THREADS (4)
 #define NUM_CPUS (1)
 
-#define USE_FORK 0
+#define USE_FORK 1
 
 #define TOTAL_THREADS 100
-#define TIMEOUT_HTTP_SEC 10 // sec
+#define TIMEOUT_HTTP_SEC 2 // sec
 
 #if USE_FORK == 0
 #define USE_THREADPOOL 1
