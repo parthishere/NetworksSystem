@@ -287,7 +287,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         numbytes = sendfile(sd->client_sock_fd, fd, NULL, size);
         if (numbytes > 0)
         {
-            printf(GRN"[+] (%d) Sent file %s, size: %d\n"RESET, gettid(), filename, numbytes);
+            printf(MAG"[+] (%d) Sent file %s, size: %d\n"RESET, gettid(), filename, numbytes);
             close(fd);
             return;
         }

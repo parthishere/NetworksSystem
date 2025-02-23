@@ -154,12 +154,12 @@ void destroy_threadpool(threadpool tp){
     pthread_mutex_unlock(&(_tp->mutex));
 
     for(int i=0; i<TOTAL_THREADS; i++){
-        // pthread_join(_tp->pthreads[i], NULL);
+        sem_post(&(_tp->sync_sem));
     }
     for(int i=0; i<TOTAL_THREADS; i++){
-        
+    
         usleep(1000);
-        sem_post(&(_tp->sync_sem));
+        pthread_join(_tp->pthreads[i], NULL);
         int sem_value;
         sem_getvalue(&(_tp->sync_sem), &sem_value);
         pthread_attr_destroy(&(_tp->pthreads_attr[i]));

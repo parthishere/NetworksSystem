@@ -27,7 +27,7 @@ def make_request(host, port):
             
             # Send HTTP request
             request = (
-                "GET / HTTP/0.1\r\n"
+                "GET / HTTP/1.1\r\n"
                 f"Host: {host}:{port}\r\n"
                 "Connection: keep-alive\r\n"
                 "\r\n"
@@ -68,7 +68,7 @@ def run_test(num_connections, host='localhost', port=8000):
 if __name__ == "__main__":
     HOST = 'localhost'
     PORT = 8000
-    CONNECTIONS = 5  # Number of simultaneous connections
+    CONNECTIONS = 100 # Number of simultaneous connections
     
     print(f"Starting load test with {CONNECTIONS} connections")
     print(f"Target: {HOST}:{PORT}")

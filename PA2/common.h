@@ -33,7 +33,7 @@
 #include <sys/sysinfo.h>
 
 
-#define USE_SENDFILE 0
+#define USE_SENDFILE 1
 #define ROOT_DIR "./www"
 
 #define MAX_SIZE (1024 * 30)   // 30KB
