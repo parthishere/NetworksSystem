@@ -33,3 +33,8 @@ clean:
 .PHONY: test
 test:
 	python3 stress.py
+
+
+.PHONY: run
+run: 
+	./$(OUTPUT)/$(TARGET) 8000
