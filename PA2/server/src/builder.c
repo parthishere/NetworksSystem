@@ -298,7 +298,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     case PARSE_ERROR_MALFORMED:
     case PARSE_ERROR_BUFFER_OVERFLOW:
         printf(RED "[-] (%d) SOMETHING WENT WRONG\n" RESET, gettid());
-        send_(request_header, "SOMETHING WENT WRONG", VERSION_NOT_SUPPORTED, sd);
+        send_(request_header, "SOMETHING WENT WRONG", BAD_REQ, sd);
         return;
     default:
         break;
