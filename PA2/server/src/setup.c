@@ -85,7 +85,7 @@ void init_server_side_socket(sockdetails_t *sd, char *argv[])
 
     freeaddrinfo(temp);
     
-    if (listen(sockfd, 100) < 0)
+    if (listen(sockfd, TOTAL_THREADS*2) < 0)
     {
         perror("listen");
         exit(1);

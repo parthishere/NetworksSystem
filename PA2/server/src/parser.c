@@ -2,8 +2,6 @@
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 
-
-
 static char *reqMethod[total_req_methods + 1] = {
     "GET",
     "POST",

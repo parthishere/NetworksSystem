@@ -260,7 +260,11 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
             return;
         }
         
-        header_size = asprintf(&return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n", request_header->http_version_str, status_codes[OK], content_type, size);
+        const char *connection_type = request_header->connection_keep_alive ? 
+                                    "Connection: Keep-alive" : 
+                                    "Connection: close";
+
+        header_size = asprintf(&return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\n\r\n", request_header->http_version_str, status_codes[OK], content_type, size, connection_type);
         
         if (header_size < 0)
         {
@@ -379,7 +383,7 @@ void *handle_req(sockdetails_t sd)
             
             build_and_send_header(&header, &sd);
 
-            if (header.connection_close == 1)
+            if (header.connection_close == 1 || header.connection_keep_alive == 0)
             {
                 close(sd.client_sock_fd);
                 return NULL;
