@@ -105,6 +105,9 @@ cd http-server
 # Build the server
 make
 
+# Run the server
+make run
+
 # Run tests
 make test
 ```
