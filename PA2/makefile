@@ -1,16 +1,8 @@
 
-all:
+all: server run
+
+server:
 	-cd server && $(MAKE)
-
-run:
-	-cd server && ./build/server 8000
-
-.PHONY: run_server
-run_server:
-	-cd server && ./build/server 8000
-
-.PHONY: run_client
-run_client:
 	
 .PHONY: clean
 clean:
@@ -22,4 +14,4 @@ test:
 
 .PHONY: run
 run: 
-	-cd server && ./$(OUTPUT)/$(TARGET) 8000
+	-cd server && ./build/server 8000
