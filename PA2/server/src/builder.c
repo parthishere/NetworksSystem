@@ -418,7 +418,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         close(fd);
     }
     /* Handle unsupported methods */
-    else if (request_header->method != POST)
+    else
     {
         printf(RED "[-] (%d) Method not allowed \n" RESET, gettid());
         send_(request_header, "Method not allowed !", METHOD_NOT_ALLOWED, sd);
