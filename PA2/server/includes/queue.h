@@ -1,8 +1,6 @@
 #ifndef __THREADPOOL_H__
 #define __THREADPOOL_H__
 
-#define MAX_THREAD_IN_POOL 200
-
 #include "common.h"
 
 typedef void *threadpool;

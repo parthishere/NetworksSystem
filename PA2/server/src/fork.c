@@ -51,7 +51,7 @@ void use_fork(sockdetails_t *sd)
 
                 memset(&header, 0, sizeof(HttpHeader_t));
                 // parse_request_line(recieved_buf, &header);
-                parse_request_line2(recieved_buf, &header);
+                parse_request_line_thread_safe(recieved_buf, &header);
 
                 build_and_send_header(&header, sd);
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "http_types.h"
 #include "handle_req.h"
 
  

@@ -1,9 +1,9 @@
 
-#include "../common.h"
-#include "src/queue.h"
-#include "src/fork.h"
-#include "src/handle_req.h"
-#include "src/setup.h"
+#include "common.h"
+#include "includes/queue.h"
+#include "includes/fork.h"
+#include "includes/handle_req.h"
+#include "includes/setup.h"
 
 static volatile sig_atomic_t shutdown_flag = 0;
 static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;

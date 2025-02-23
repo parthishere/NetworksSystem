@@ -12,7 +12,7 @@ static char *http_type[supported_http_protocols + 1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
 
-int parse_request_line2(char *request, HttpHeader_t *header)
+int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 {
     if (!request || !header)
     {
@@ -204,5 +204,92 @@ void cleanup_header(HttpHeader_t *header)
         free((void *)header->hostname_str);
         // Add other fields that were dynamically allocated
         memset(header, 0, sizeof(HttpHeader_t));
+    }
+}
+
+
+
+int str_equals(char *a, char *b, int size)
+{
+    return (strncmp(a, b, size) == 0);
+}
+
+void parse_request_line_thread_unsafe(char *request, HttpHeader_t *header)
+{
+
+    if (request == NULL || header == NULL)
+        return;
+
+    // just get the header
+    char *entire_req = request;
+    char *lines[MAX_LINE_TO_TOKENIZE_IN_HTTP + 1];
+    int line_number = -1;
+    lines[++line_number] = strtok(entire_req, "\r\n");
+
+    while (((lines[++line_number] = strtok(NULL, "\r\n")) != NULL) && (line_number < MAX_LINE_TO_TOKENIZE_IN_HTTP))
+        ;
+
+    line_number = -1;
+    char *line = lines[0];
+    while (line_number < MAX_LINE_TO_TOKENIZE_IN_HTTP && line != NULL && *line != '\0')
+    {
+        line = lines[++line_number];
+        int word_number = 0;
+        char *token = strtok(line, " ");
+        if (word_number == 0 && token != NULL && strcmp(token, reqMethod[GET]) == 0)
+        {
+            header->method_str = reqMethod[GET];
+            header->method = GET;
+        }
+        word_number++;
+        while ((token = strtok(NULL, " ")) != NULL)
+        {
+            if (line_number == 0)
+            {
+                if (word_number == 1)
+                {
+                    header->uri_str = token;
+                }
+
+                else if (word_number == 2)
+                {
+                    if (strncmp(token, "HTTP/1.", 7) != 0)
+                    {
+                        header->http_version = ERROR_VERSION;
+                        continue;
+                    }
+                    if (token[7] == '1')
+                    {
+                        header->http_version_str = http_type[HTTP1_1];
+                        header->http_version = HTTP1_1;
+                    }
+                    else if (token[7] == '0')
+                    {
+                        header->http_version_str = http_type[HTTP1_0];
+                        header->http_version = HTTP1_0;
+                    }
+                    else
+                    {
+                        header->http_version = ERROR_VERSION;
+                    }
+                }
+            }
+            if (line_number == 1 && word_number == 1)
+            {
+                header->hostname_str = token;
+            }
+            if (line_number == 2 && word_number == 1)
+            {
+                if (strncmp(token, "Keep-alive", sizeof(token)))
+                {
+                    header->connection_keep_alive = 1;
+                }
+                else if (strncmp(token, "Close", sizeof(token)))
+                {
+                    header->connection_close = 1;
+                }
+            }
+            word_number++;
+        }
     }
 }

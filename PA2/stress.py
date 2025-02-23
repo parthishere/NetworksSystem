@@ -59,7 +59,7 @@ def run_test(num_connections, host='localhost', port=8000):
         threads.append(t)
         t.start()
         print(f"Started connection {i+1}")
-        time.sleep(0.1)  # Small delay between starting connections
+        # time.sleep(0.1)  # Small delay between starting connections
     
     # Wait for all threads to complete
     for t in threads:
@@ -68,7 +68,7 @@ def run_test(num_connections, host='localhost', port=8000):
 if __name__ == "__main__":
     HOST = 'localhost'
     PORT = 8000
-    CONNECTIONS = 2 # Number of simultaneous connections
+    CONNECTIONS = 100 # Number of simultaneous connections
     
     print(f"Starting load test with {CONNECTIONS} connections")
     print(f"Target: {HOST}:{PORT}")

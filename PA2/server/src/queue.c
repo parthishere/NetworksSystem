@@ -101,8 +101,9 @@ void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd
 
 threadpool create_threadpool(int num_of_threads_in_pool)
 {
-    if (num_of_threads_in_pool >= MAX_THREAD_IN_POOL || num_of_threads_in_pool <= 0)
+    if (num_of_threads_in_pool > MAX_THREAD_IN_POOL || num_of_threads_in_pool <= 0)
     {
+        printf(RED"[-] Max thread limit reached, change MAX_THREAD_IN_POOL\n"RESET);
         return NULL;
     }
 
@@ -146,7 +147,8 @@ threadpool create_threadpool(int num_of_threads_in_pool)
 
 
 void destroy_threadpool(threadpool tp){
-    
+    if(tp == NULL) return;
+
     _threadpool_t *_tp = (_threadpool_t *)tp;
 
     pthread_mutex_lock(&(_tp->mutex));

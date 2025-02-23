@@ -33,6 +33,9 @@
 #include <sys/sysinfo.h>
 
 
+#include <sys/sendfile.h>
+
+
 #define USE_SENDFILE 1
 #define ROOT_DIR "./www"
 
@@ -40,12 +43,11 @@
 #define RECIEVE_SIZE MAX_SIZE  // 30KB receive buffer
 #define TRANSMIT_SIZE MAX_SIZE // 30KB transmit buffer
 
-#define NUM_THREADS (4)
-#define NUM_CPUS (1)
+#define USE_FORK 0
 
-#define USE_FORK 1
+#define TOTAL_THREADS 150
+#define MAX_THREAD_IN_POOL 200
 
-#define TOTAL_THREADS 100
 #define TIMEOUT_HTTP_SEC 2 // sec
 
 #if USE_FORK == 0
@@ -64,6 +66,90 @@
 #define CYN "\x1B[36m"  // Alternative highlighting
 #define WHT "\x1B[37m"  // Standard output
 #define RESET "\x1B[0m" // Reset to default color
+
+
+
+typedef enum httpType_s
+{
+    HTTP1_0,
+    HTTP1_1,
+    ERROR_VERSION,
+    supported_http_protocols
+} httpType_t;
+
+typedef enum statusCode_s
+{
+    OK,
+    BAD_REQ,
+    FORBIDDEN,
+    NOT_FOUND,
+    METHOD_NOT_ALLOWED,
+    VERSION_NOT_SUPPORTED,
+    total_status_codes,
+} statusCode_t;
+
+typedef enum method_s
+{
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    HEAD,
+    total_req_methods,
+} method_t;
+
+typedef enum contentType_s
+{
+    TEXT_HTML,
+    TEXT_CSS,
+    TEXT_PLAIN,
+    APPLICATION_JAVASCRIPT,
+    IMAGE_PNG,
+    IMAGE_GIF,
+    IMAGE_JPG,
+    IMAGE_X_ICON,
+    total_content_types
+} contentType_t;
+
+
+typedef enum
+{
+    PARSE_OK = 0,
+    PARSE_ERROR_INVALID_METHOD = -1,
+    PARSE_ERROR_INVALID_URI = -2,
+    PARSE_ERROR_INVALID_VERSION = -3,
+    PARSE_ERROR_MALFORMED = -4,
+    PARSE_ERROR_BUFFER_OVERFLOW = -5
+} parse_result_t;
+
+
+
+typedef struct req_header_s
+{
+    httpType_t http_version;
+    char *http_version_str;
+
+    char *uri_str;
+    char *hostname_str;
+
+    contentType_t content_type;
+    char *content_type_str;
+
+    method_t method;
+    char *method_str;
+
+    statusCode_t *status_code;
+    char *status_code_str;
+
+    int connection_keep_alive;
+    int connection_close;
+
+    int parser_error;
+} HttpHeader_t;
+
+
+
 
 /**
  * Socket Details Structure
@@ -102,37 +188,4 @@ void *getin_addr(struct sockaddr *sa);
 
 
 
-// /**
-//  * Handle network operation errors
-//  *
-//  * Processes and reports network errors, distinguishing between timeouts
-//  * and other error conditions. For timeouts, displays message; for other errors,
-//  * notifies client of operation failure.
-//  *
-//  * @param sd   Pointer to socket details structure
-//  * @param msg  Error message to be displayed
-//  *
-//  * Error Handling:
-//  * - Timeout (EAGAIN/EWOULDBLOCK): Display timeout message
-//  * - Other errors: Send error notification to client
-//  */
-// void error(sockdetails_t *sd, char *msg)
-// {
-//     printf(RED "[-] Error somewhere ! Check below message to see details \n");
-
-//     perror(msg); // Print system error message
-
-//     if (errno == EAGAIN || errno == EWOULDBLOCK)
-//     {
-//         /* Handle timeout conditions */
-//         printf(RED "[-] Timeout\n" RESET);
-//     }
-//     else
-//     {
-//         /* Notify client of error condition */
-//         sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
-//         // close(sd->sockfd);
-//         // exit(EXIT_FAILURE);
-//     }
-// }
 #endif

@@ -3,7 +3,7 @@ CFLAGS= -g -o2
 LFLAGS = -lpthread 
 INC_SRC = src/
 INC_GLOBAL = ../
-INC=-Isrc/ -I../
+INC=-Isrc/ -I./ -Iincludes/
 
 OUTPUT = build/
 SRCS = $(wildcard *.c) $(wildcard $(INC_SRC)*.c) $(wildcard $(INC_GLOBAL)*.c)
