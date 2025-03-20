@@ -42,7 +42,7 @@ sig_handler:
 	.section	.rodata
 	.align 8
 .LC1:
-	.string	"\033[31m[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n\033[0m"
+	.string	"\033[31m[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n\033[0m"
 .LC2:
 	.string	"\033[31maccept\033[0m"
 	.text
@@ -86,12 +86,7 @@ main:
 	movl	$13, %edi
 	call	signal@PLT
 	cmpl	$2, -372(%rbp)
-	je	.L3
-	movq	-384(%rbp), %rax
-	addq	$8, %rax
-	movq	(%rax), %rcx
-	movq	-384(%rbp), %rax
-	movq	(%rax), %rdx
+	jg	.L3
 	movl	-372(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC1(%rip), %rax

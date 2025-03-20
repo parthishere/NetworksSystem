@@ -27,9 +27,9 @@ int main(int argc, char *argv[])
     signal(SIGPIPE, SIG_IGN);
 
 
-    if (argc != 2)
+    if (argc < 3)
     {
-        printf(RED "[-] You messed up, command is ./server <PORT> | current command (%d) %s %s\n" RESET, argc, argv[0], argv[1]);
+        printf(RED "[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n" RESET, argc);
         exit(EXIT_FAILURE);
     }
 

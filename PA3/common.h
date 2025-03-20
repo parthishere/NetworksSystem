@@ -1,7 +1,7 @@
 /**
  * @file common.h
  * @brief Common Definitions and Types for HTTP Server Implementation
- * @copyright (c) 2025 Your Organization
+ * @copyright (c) 2025 Parth Thakkar
  *
  * This header file defines core types, constants, and structures used throughout
  * the HTTP server implementation. It provides:

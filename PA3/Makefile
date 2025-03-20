@@ -1,7 +1,9 @@
 SRC_DIR = src
 INCLUDE_DIR = includes
+PORT ?= 8000
+TIMEOUT ?= 60
 
-OUTPUT_DIR = ./build
+OUTPUT_DIR = ./build/debug
 OBJ_DIR = $(OUTPUT_DIR)/obj $(OUTPUT_DIR)/obj/$(SRC_DIR)
 ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 
@@ -26,7 +28,10 @@ ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
 TARGET = proxy
 
 
-all: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS)
+all: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) run
+
+run: $(OUTPUT_DIR)/$(TARGET)
+	@$(OUTPUT_DIR)/$(TARGET) $(PORT) $(TIMEOUT)
 
 $(OUTPUT_DIR)/$(TARGET): $(ALL_OBJS)
 	@echo "Linking target: $@"
