@@ -8,6 +8,10 @@
 	.string	"\033[33m[-] (%d) Connection timed out\n\033[0m"
 .LC2:
 	.string	"\033[31m[-] read"
+.LC3:
+	.string	"Error !"
+.LC4:
+	.string	"80"
 	.text
 	.globl	handle_req
 	.type	handle_req, @function
@@ -26,22 +30,22 @@ handle_req:
 	orq	$0, (%rsp)
 	cmpq	%r11, %rsp
 	jne	.LPSRL0
-	subq	$2336, %rsp
+	subq	$2512, %rsp
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-.L10:
-	leaq	-30864(%rbp), %rax
-	movq	%rax, -30984(%rbp)
-	movl	$0, -30996(%rbp)
+.L13:
+	leaq	-31024(%rbp), %rax
+	movq	%rax, -31160(%rbp)
+	movl	$0, -31172(%rbp)
 	jmp	.L2
 .L3:
-	movq	-30984(%rbp), %rax
-	movl	-30996(%rbp), %edx
+	movq	-31160(%rbp), %rax
+	movl	-31172(%rbp), %edx
 	movq	$0, (%rax,%rdx,8)
-	addl	$1, -30996(%rbp)
+	addl	$1, -31172(%rbp)
 .L2:
-	cmpl	$15, -30996(%rbp)
+	cmpl	$15, -31172(%rbp)
 	jbe	.L3
 	movl	20(%rbp), %eax
 	leal	63(%rax), %edx
@@ -50,7 +54,7 @@ handle_req:
 	sarl	$6, %eax
 	movl	%eax, %esi
 	movslq	%esi, %rax
-	movq	-30864(%rbp,%rax,8), %rax
+	movq	-31024(%rbp,%rax,8), %rax
 	movl	20(%rbp), %edx
 	andl	$63, %edx
 	movl	$1, %edi
@@ -59,27 +63,27 @@ handle_req:
 	movq	%rdi, %rdx
 	orq	%rax, %rdx
 	movslq	%esi, %rax
-	movq	%rdx, -30864(%rbp,%rax,8)
-	movq	$2, -30976(%rbp)
-	movq	$0, -30968(%rbp)
+	movq	%rdx, -31024(%rbp,%rax,8)
+	movq	$2, -31152(%rbp)
+	movq	$0, -31144(%rbp)
 	movl	20(%rbp), %eax
 	leal	1(%rax), %edi
-	leaq	-30976(%rbp), %rdx
-	leaq	-30864(%rbp), %rax
+	leaq	-31152(%rbp), %rdx
+	leaq	-31024(%rbp), %rax
 	movq	%rdx, %r8
 	movl	$0, %ecx
 	movl	$0, %edx
 	movq	%rax, %rsi
 	call	select@PLT
-	movl	%eax, -30992(%rbp)
-	cmpl	$0, -30992(%rbp)
+	movl	%eax, -31168(%rbp)
+	cmpl	$0, -31168(%rbp)
 	jns	.L4
 	leaq	.LC0(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L5
 .L4:
-	cmpl	$0, -30992(%rbp)
+	cmpl	$0, -31168(%rbp)
 	jne	.L6
 	call	gettid@PLT
 	movl	%eax, %esi
@@ -95,7 +99,7 @@ handle_req:
 	cmovs	%edx, %eax
 	sarl	$6, %eax
 	cltq
-	movq	-30864(%rbp,%rax,8), %rdx
+	movq	-31024(%rbp,%rax,8), %rdx
 	movl	20(%rbp), %eax
 	andl	$63, %eax
 	movl	$1, %esi
@@ -104,59 +108,73 @@ handle_req:
 	movq	%rsi, %rax
 	andq	%rdx, %rax
 	testq	%rax, %rax
-	je	.L10
+	je	.L13
 	movl	20(%rbp), %eax
 	leaq	-30736(%rbp), %rsi
 	movl	$0, %ecx
 	movl	$30720, %edx
 	movl	%eax, %edi
 	call	recv@PLT
-	movl	%eax, -30988(%rbp)
-	cmpl	$0, -30988(%rbp)
+	movl	%eax, -31164(%rbp)
+	cmpl	$0, -31164(%rbp)
 	jns	.L8
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	movl	$0, %eax
-	jmp	.L11
+	jmp	.L14
 .L8:
-	leaq	-30960(%rbp), %rax
-	movl	$96, %edx
+	leaq	-31136(%rbp), %rax
+	movl	$104, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	leaq	-30960(%rbp), %rdx
+	leaq	-31136(%rbp), %rdx
 	leaq	-30736(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	parse_request_line_thread_safe@PLT
-	leaq	-30960(%rbp), %rax
-	leaq	16(%rbp), %rsi
+	testl	%eax, %eax
+	jns	.L10
+	leaq	.LC3(%rip), %rax
+	movq	%rax, %rdi
+	call	puts@PLT
+.L10:
+	movl	$128, -30752(%rbp)
+	leaq	-30896(%rbp), %rax
+	movl	$0, %edx
+	leaq	.LC4(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	call	init_socket@PLT
+	leaq	-30896(%rbp), %rdx
+	leaq	-31136(%rbp), %rax
+	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	build_and_send_header@PLT
-	movl	-30876(%rbp), %eax
+	movl	-31052(%rbp), %eax
 	cmpl	$1, %eax
 	je	.L5
-	movl	-30880(%rbp), %eax
+	movl	-31056(%rbp), %eax
 	testl	%eax, %eax
 	je	.L5
-	leaq	-30960(%rbp), %rax
-	movl	$96, %edx
+	leaq	-31136(%rbp), %rax
+	movl	$104, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	jmp	.L10
+	jmp	.L13
 .L5:
 	movl	20(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$0, %eax
-.L11:
+.L14:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L12
+	je	.L15
 	call	__stack_chk_fail@PLT
-.L12:
+.L15:
 	leave
 	.cfi_def_cfa 7, 8
 	ret

@@ -97,12 +97,17 @@ main:
 	call	exit@PLT
 .L3:
 	movl	$128, -48(%rbp)
-	movq	-384(%rbp), %rdx
+	movl	$1, %edi
+	call	init_cache_table@PLT
+	movq	-384(%rbp), %rax
+	addq	$8, %rax
+	movq	(%rax), %rcx
 	leaq	-192(%rbp), %rax
-	movq	%rdx, %rsi
+	movl	$0, %edx
+	movq	%rcx, %rsi
 	movq	%rax, %rdi
-	call	init_server_side_socket@PLT
-	movl	$150, %edi
+	call	init_socket@PLT
+	movl	$1, %edi
 	call	create_threadpool@PLT
 	movq	%rax, -360(%rbp)
 	cmpq	$0, -360(%rbp)

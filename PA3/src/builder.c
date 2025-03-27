@@ -290,35 +290,13 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     if (request_header == NULL)
         return;
 
-    /* Handle parser errors */
-    switch (request_header->parser_error)
-    {
-    case PARSE_ERROR_INVALID_METHOD:
-    case PARSE_ERROR_INVALID_URI:
-    case PARSE_ERROR_MALFORMED:
-    case PARSE_ERROR_BUFFER_OVERFLOW:
+    
+    if((request_header->parser_error & OK) == 0){
         printf(RED "[-] (%d) SOMETHING WENT WRONG\n" RESET, gettid());
-        send_(request_header, "SOMETHING WENT WRONG", BAD_REQ, sd);
-        return;
-    default:
-        break;
-    }
-
-    /* Validate HTTP version */
-    if (request_header->http_version == ERROR_VERSION || request_header->parser_error == PARSE_ERROR_INVALID_VERSION)
-    {
-        printf(RED "[-] (%d) WRONG HTTP VERSION\n" RESET, gettid());
-        send_(request_header, "WRONG HTTP VERSION", VERSION_NOT_SUPPORTED, sd);
+        send_(request_header, "SOMETHING WENT WRONG", request_header->parser_error, sd);
         return;
     }
-
-    /* Security check: Prevent directory traversal */
-    if (strstr(request_header->uri_str, "..") != NULL)
-    {
-        printf(RED "[-] (%d) Trying to access files above in directory\n" RESET, gettid());
-        send_(request_header, "You are trying to access files above in directory\n", FORBIDDEN, sd);
-        return;
-    }
+    
 
     /* Construct and validate filepath */
     filename = construct_filepath(request_header->uri_str);
@@ -424,4 +402,9 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         send_(request_header, "Method not allowed !", METHOD_NOT_ALLOWED, sd);
         send(sd->client_sock_fd, return_request, return_size, 0);
     }
+}
+
+void build_for_og_server(){
+    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    
 }

@@ -77,7 +77,14 @@ void *handle_req(sockdetails_t sd)
 
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
-            parse_request_line_thread_safe(recieved_buf, &header);
+            if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
+                // error
+                printf("Error !\n");
+            }
+
+            sockdetails_t sd;
+            sd.addr_len = sizeof(sd.client_info);
+            init_socket(&sd, "80", NULL);            
 
             /* Generate and send response */
             build_and_send_header(&header, &sd);

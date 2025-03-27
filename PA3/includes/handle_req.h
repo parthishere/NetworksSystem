@@ -19,6 +19,7 @@
 #include "common.h"
 #include "parser.h"
 #include "builder.h"
+#include "setup.h"
 
 /**
  * @function handle_req

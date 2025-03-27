@@ -11,6 +11,10 @@
 
 #define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
 
+
+#define SOME_ERROR -1
+#define GOOD_TO_GO 0
+
 /**
  * @brief Array of supported HTTP request methods
  *
@@ -31,6 +35,21 @@ static char *reqMethod[total_req_methods + 1] = {
 static char *http_type[supported_http_protocols + 1] = {
     "HTTP/1.0",
     "HTTP/1.1"};
+
+
+typedef enum states_s {
+    method_parse,
+    host_parse,
+    user_agent_parse,
+    accpet_parse,
+    accpet_language_parse,
+    accept_encoding_parse,
+    referer_parse,
+    accept_parse,
+    connection_parse,
+    cache_control_parse,
+}states_t;
+
 
 /**
  * @function parse_request_line_thread_safe
@@ -55,37 +74,27 @@ static char *http_type[supported_http_protocols + 1] = {
  */
 int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 {
-    if (!request || !header)
+    
+    if (!request || !header || strlen(request) > MAX_SIZE)
     {
-
-        return PARSE_ERROR_MALFORMED;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
 
-    // Make a copy of the request to avoid modifying original
-    char request_copy[MAX_SIZE];
-    if (strlen(request) >= MAX_SIZE)
-    {
+    char request_copy[strlen(request)+1];
+    strncpy(request_copy, request, strlen(request));
 
-        header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
-        return PARSE_ERROR_BUFFER_OVERFLOW;
-    }
-    strncpy(request_copy, request, MAX_SIZE - 1);
-    request_copy[MAX_SIZE - 1] = '\0';
-
-    // Initialize header structure
     memset(header, 0, sizeof(HttpHeader_t));
     header->http_version = ERROR_VERSION;
     header->method = -1;
+    header->current_state = method_parse;
 
-    // Split into lines first
     char *lines[MAX_LINE_TO_TOKENIZE_IN_HTTP + 1];
     int line_count = 0;
     char *line_ctx = NULL;
     char *line = strtok_r(request_copy, "\r\n", &line_ctx);
-
-    while (line && line_count < MAX_LINE_TO_TOKENIZE_IN_HTTP)
-    {
-        // Skip empty lines
+    
+    while (line && line_count < MAX_LINE_TO_TOKENIZE_IN_HTTP){
         if (*line != '\0')
         {
             lines[line_count++] = line;
@@ -96,91 +105,109 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (line_count == 0)
     {
 
-        header->parser_error = PARSE_ERROR_MALFORMED;
-        return PARSE_ERROR_MALFORMED;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
 
-    // Parse request line (first line)
     char *method = NULL, *uri = NULL, *version = NULL;
     char *token_ctx = NULL;
 
-    // Get method
+
     method = strtok_r(lines[0], " ", &token_ctx);
     if (!method)
     {
-
-        header->parser_error = PARSE_ERROR_MALFORMED;
-        return PARSE_ERROR_MALFORMED;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
+
 
     // Parse method
     int valid_method = 0;
+    int valid_header = 0;
     for (int i = 0; i < total_req_methods; i++)
     {
-        if (strcmp(method, reqMethod[i]) == 0)
+        if (strncmp(method, reqMethod[i], strlen(method)) == 0)
         {
-            header->method = i;
-            header->method_str = reqMethod[i];
-            valid_method = 1;
+            if(strncmp(method, reqMethod[GET], strlen(method)) == 0){
+                header->method = i;
+                header->method_str = reqMethod[i];
+                valid_method = 1;
+                valid_header = 1;
+            }
+            else{
+                valid_header = 1;
+                valid_method = 0;
+            }
             break;
         }
     }
-    if (!valid_method)
+    if (!valid_header)
     {
-
-        header->parser_error = PARSE_ERROR_INVALID_METHOD;
-        return PARSE_ERROR_INVALID_METHOD;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
+    }
+    else if(!valid_method){
+        header->parser_error += METHOD_NOT_ALLOWED;
+        return SOME_ERROR;
     }
 
+    
     // Get URI
     uri = strtok_r(NULL, " ", &token_ctx);
     if (!uri)
     {
-
-        header->parser_error = PARSE_ERROR_INVALID_URI;
-        return PARSE_ERROR_INVALID_URI;
+        
+        header->parser_error += PARSE_ERROR_INVALID_URI;
+        return SOME_ERROR;
     }
-
+    
     // Validate URI length and characters
     size_t uri_len = strlen(uri);
     if (uri_len == 0)
     {
-
-        header->parser_error = PARSE_ERROR_INVALID_URI;
-        return PARSE_ERROR_INVALID_URI;
+        
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
-
+    
     // Check for path traversal attempts
     if (strstr(uri, "..") != NULL)
     {
-
-        header->parser_error = PARSE_ERROR_INVALID_URI;
-        return PARSE_ERROR_INVALID_URI;
+        
+        header->parser_error += FORBIDDEN;
+        return SOME_ERROR;
     }
-
+    
     // Copy URI
     header->uri_str = strdup(uri); // Remember to free this later
     if (!header->uri_str)
     {
-
-        header->parser_error = PARSE_ERROR_BUFFER_OVERFLOW;
-        return PARSE_ERROR_BUFFER_OVERFLOW;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
 
     // Get HTTP version
     version = strtok_r(NULL, " ", &token_ctx);
     if (!version)
     {
-        header->parser_error = PARSE_ERROR_INVALID_VERSION;
-        return PARSE_ERROR_INVALID_VERSION;
+        header->parser_error += BAD_REQ;
+        return SOME_ERROR;
     }
 
+    
+
     // Validate HTTP version
+    
     if (strncmp(version, "HTTP/1.", 7) != 0)
     {
-        header->parser_error = PARSE_ERROR_INVALID_VERSION;
-        header->http_version = ERROR_VERSION;
-        return PARSE_ERROR_INVALID_VERSION;
+        header->parser_error = BAD_REQ;
+        return SOME_ERROR;
+    }
+
+
+    if (strlen(version) > 8){
+        header->parser_error = BAD_REQ;
+        return SOME_ERROR;
     }
 
     switch (version[7])
@@ -194,10 +221,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         header->http_version_str = http_type[HTTP1_0];
         break;
     default:
-        header->http_version = ERROR_VERSION;
-        header->parser_error = PARSE_ERROR_INVALID_VERSION;
-        return PARSE_ERROR_INVALID_VERSION;
+        header->parser_error = VERSION_NOT_SUPPORTED;
+        return SOME_ERROR;
     }
+
+    header->current_state = host_parse;
 
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
@@ -216,26 +244,39 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
         if (strcasecmp(key, "Host") == 0)
         {
-            header->hostname_str = strdup(value);
+            header->hostname_str = strdup(value); // remember to free host afterwards
         }
         else if (strcasecmp(key, "Connection") == 0)
         {
             header->connection_keep_alive = (strcasecmp(value, "keep-alive") == 0);
             header->connection_close = (strcasecmp(value, "Close") == 0);
         }
+        else if (strcasecmp(key, "Cache-Control") == 0){
+            // strtok_r()
+            // header->max_age = value; // remember to free max_age afterwards
+        }
         // Add more header parsing as needed
     }
 
-    // Validate required headers for HTTP/1.1
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
-        header->parser_error = PARSE_ERROR_MALFORMED;
-        return PARSE_ERROR_MALFORMED; // Host is required for HTTP/1.1
+        header->parser_error = BAD_REQ;
+        return SOME_ERROR; // Host is required for HTTP/1.1
     }
 
-    return PARSE_OK;
+    return GOOD_TO_GO;
 }
 
+
+   
+
+    
+    
+
+    // // Validate required headers for HTTP/1.1
+    // 
+
+    // 
 /**
  * @function cleanup_header
  * @brief Frees all dynamically allocated memory in header structure
@@ -270,97 +311,3 @@ int str_equals(char *a, char *b, int size)
     return (strncmp(a, b, size) == 0);
 }
 
-
-/**
- * @function parse_request_line_thread_unsafe
- * @brief Legacy thread-unsafe HTTP request parser
- * 
- * @param request Raw HTTP request string to parse
- * @param header Pointer to header structure to populate
- * 
- * @warning This function is not thread-safe and should be used with caution
- * @deprecated Use parse_request_line_thread_safe instead
- * 
- * This function provides basic HTTP request parsing without thread safety
- * or comprehensive error checking. Maintained for backward compatibility.
- */
-void parse_request_line_thread_unsafe(char *request, HttpHeader_t *header)
-{
-
-    if (request == NULL || header == NULL)
-        return;
-
-    // just get the header
-    char *entire_req = request;
-    char *lines[MAX_LINE_TO_TOKENIZE_IN_HTTP + 1];
-    int line_number = -1;
-    lines[++line_number] = strtok(entire_req, "\r\n");
-
-    while (((lines[++line_number] = strtok(NULL, "\r\n")) != NULL) && (line_number < MAX_LINE_TO_TOKENIZE_IN_HTTP))
-        ;
-
-    line_number = -1;
-    char *line = lines[0];
-    while (line_number < MAX_LINE_TO_TOKENIZE_IN_HTTP && line != NULL && *line != '\0')
-    {
-        line = lines[++line_number];
-        int word_number = 0;
-        char *token = strtok(line, " ");
-        if (word_number == 0 && token != NULL && strcmp(token, reqMethod[GET]) == 0)
-        {
-            header->method_str = reqMethod[GET];
-            header->method = GET;
-        }
-        word_number++;
-        while ((token = strtok(NULL, " ")) != NULL)
-        {
-            if (line_number == 0)
-            {
-                if (word_number == 1)
-                {
-                    header->uri_str = token;
-                }
-
-                else if (word_number == 2)
-                {
-                    if (strncmp(token, "HTTP/1.", 7) != 0)
-                    {
-                        header->http_version = ERROR_VERSION;
-                        continue;
-                    }
-                    if (token[7] == '1')
-                    {
-                        header->http_version_str = http_type[HTTP1_1];
-                        header->http_version = HTTP1_1;
-                    }
-                    else if (token[7] == '0')
-                    {
-                        header->http_version_str = http_type[HTTP1_0];
-                        header->http_version = HTTP1_0;
-                    }
-                    else
-                    {
-                        header->http_version = ERROR_VERSION;
-                    }
-                }
-            }
-            /* Process additional headers */
-            if (line_number == 1 && word_number == 1)
-            {
-                header->hostname_str = token;
-            }
-            if (line_number == 2 && word_number == 1)
-            {
-                if (strncmp(token, "Keep-alive", sizeof(token)))
-                {
-                    header->connection_keep_alive = 1;
-                }
-                else if (strncmp(token, "Close", sizeof(token)))
-                {
-                    header->connection_close = 1;
-                }
-            }
-            word_number++;
-        }
-    }
-}

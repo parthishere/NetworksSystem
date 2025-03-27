@@ -30,7 +30,7 @@ http_type:
 	.section	.data.rel.local
 	.align 32
 	.type	status_codes, @object
-	.size	status_codes, 56
+	.size	status_codes, 272
 status_codes:
 	.quad	.LC2
 	.quad	.LC3
@@ -38,7 +38,7 @@ status_codes:
 	.quad	.LC5
 	.quad	.LC6
 	.quad	.LC7
-	.zero	8
+	.zero	224
 	.section	.rodata
 .LC8:
 	.string	"GET"
@@ -549,7 +549,7 @@ handle_file_request:
 	movq	-32(%rbp), %rdx
 	movq	-24(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$2, %edx
+	movl	$4, %edx
 	leaq	.LC39(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
@@ -597,7 +597,7 @@ handle_file_request:
 	movq	-32(%rbp), %rdx
 	movq	-24(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$3, %edx
+	movl	$8, %edx
 	leaq	.LC41(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
@@ -622,7 +622,7 @@ handle_file_request:
 	movq	-32(%rbp), %rdx
 	movq	-24(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$3, %edx
+	movl	$8, %edx
 	leaq	.LC41(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
@@ -637,7 +637,7 @@ handle_file_request:
 	movq	-32(%rbp), %rdx
 	movq	-24(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$1, %edx
+	movl	$2, %edx
 	leaq	.LC45(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
@@ -666,42 +666,29 @@ handle_file_request:
 	.string	"\033[31m[-] (%d) SOMETHING WENT WRONG\n\033[0m"
 .LC47:
 	.string	"SOMETHING WENT WRONG"
-	.align 8
 .LC48:
-	.string	"\033[31m[-] (%d) WRONG HTTP VERSION\n\033[0m"
-.LC49:
-	.string	"WRONG HTTP VERSION"
-.LC50:
-	.string	".."
-	.align 8
-.LC51:
-	.string	"\033[31m[-] (%d) Trying to access files above in directory\n\033[0m"
-	.align 8
-.LC52:
-	.string	"You are trying to access files above in directory\n"
-.LC53:
 	.string	"Internal server error"
 	.align 8
-.LC54:
+.LC49:
 	.string	"\033[31m[-] (%d) Bad Extension\n\033[0m"
-.LC55:
+.LC50:
 	.string	"Bad Extension"
-.LC56:
+.LC51:
 	.string	"Connection: Keep-alive"
-.LC57:
+.LC52:
 	.string	"Connection: close"
 	.align 8
-.LC58:
+.LC53:
 	.string	"%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\n\r\n"
-.LC59:
+.LC54:
 	.string	"Send header"
 	.align 8
-.LC60:
+.LC55:
 	.string	"\033[35m[+] (%d) Sent file %s, size: %d\n\033[0m"
 	.align 8
-.LC61:
+.LC56:
 	.string	"\033[31m[-] (%d) Method not allowed \n\033[0m"
-.LC62:
+.LC57:
 	.string	"Method not allowed !"
 	.text
 	.globl	build_and_send_header
@@ -728,98 +715,46 @@ build_and_send_header:
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
 	cmpq	$0, -30824(%rbp)
-	je	.L65
+	je	.L59
 	movq	-30824(%rbp), %rax
 	movl	88(%rax), %eax
-	cmpl	$-4, %eax
-	jg	.L43
-	cmpl	$-5, %eax
-	jge	.L44
-	jmp	.L66
-.L43:
-	addl	$2, %eax
-	cmpl	$1, %eax
-	ja	.L66
-.L44:
+	andl	$1, %eax
+	testl	%eax, %eax
+	jne	.L43
 	call	gettid@PLT
 	movl	%eax, %esi
 	leaq	.LC46(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
+	movq	-30824(%rbp), %rax
+	movl	88(%rax), %eax
+	movl	%eax, %esi
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$1, %edx
+	movl	%esi, %edx
 	leaq	.LC47(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
 	jmp	.L40
-.L66:
-	nop
-	movq	-30824(%rbp), %rax
-	movl	(%rax), %eax
-	cmpl	$2, %eax
-	je	.L46
-	movq	-30824(%rbp), %rax
-	movl	88(%rax), %eax
-	cmpl	$-3, %eax
-	jne	.L47
-.L46:
-	call	gettid@PLT
-	movl	%eax, %esi
-	leaq	.LC48(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movq	-30832(%rbp), %rdx
-	movq	-30824(%rbp), %rax
-	movq	%rdx, %rcx
-	movl	$5, %edx
-	leaq	.LC49(%rip), %rsi
-	movq	%rax, %rdi
-	call	send_
-	jmp	.L40
-.L47:
-	movq	-30824(%rbp), %rax
-	movq	16(%rax), %rax
-	leaq	.LC50(%rip), %rdx
-	movq	%rdx, %rsi
-	movq	%rax, %rdi
-	call	strstr@PLT
-	testq	%rax, %rax
-	je	.L48
-	call	gettid@PLT
-	movl	%eax, %esi
-	leaq	.LC51(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movq	-30832(%rbp), %rdx
-	movq	-30824(%rbp), %rax
-	movq	%rdx, %rcx
-	movl	$2, %edx
-	leaq	.LC52(%rip), %rsi
-	movq	%rax, %rdi
-	call	send_
-	jmp	.L40
-.L48:
+.L43:
 	movq	-30824(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	construct_filepath
 	movq	%rax, -30776(%rbp)
 	cmpq	$0, -30776(%rbp)
-	jne	.L49
+	jne	.L44
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$2, %edx
-	leaq	.LC53(%rip), %rsi
+	movl	$4, %edx
+	leaq	.LC48(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
 	jmp	.L40
-.L49:
+.L44:
 	leaq	-30792(%rbp), %rcx
 	movq	-30776(%rbp), %rdx
 	movq	-30832(%rbp), %rsi
@@ -828,29 +763,29 @@ build_and_send_header:
 	call	handle_file_request
 	movl	%eax, -30812(%rbp)
 	cmpl	$0, -30812(%rbp)
-	jns	.L50
+	jns	.L45
 	movq	-30776(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L40
-.L50:
+.L45:
 	movq	-30824(%rbp), %rax
 	movl	48(%rax), %eax
 	testl	%eax, %eax
-	jne	.L51
+	jne	.L46
 	movq	-30776(%rbp), %rax
 	movl	$46, %esi
 	movq	%rax, %rdi
 	call	strrchr@PLT
 	movq	%rax, -30768(%rbp)
 	cmpq	$0, -30768(%rbp)
-	je	.L52
+	je	.L47
 	movq	-30768(%rbp), %rax
 	addq	$1, %rax
-	jmp	.L53
-.L52:
+	jmp	.L48
+.L47:
 	movl	$0, %eax
-.L53:
+.L48:
 	movq	%rax, %rdi
 	call	get_content_type
 	movl	%eax, %eax
@@ -865,25 +800,25 @@ build_and_send_header:
 	movq	%rax, %rdi
 	call	strncmp@PLT
 	testl	%eax, %eax
-	jne	.L54
+	jne	.L49
 	movq	-30776(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	call	gettid@PLT
 	movl	%eax, %esi
-	leaq	.LC54(%rip), %rax
+	leaq	.LC49(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$1, %edx
-	leaq	.LC55(%rip), %rsi
+	movl	$2, %edx
+	leaq	.LC50(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
 	jmp	.L40
-.L54:
+.L49:
 	movl	-30812(%rbp), %eax
 	movl	$2, %edx
 	movl	$0, %esi
@@ -898,14 +833,14 @@ build_and_send_header:
 	movq	-30824(%rbp), %rax
 	movl	80(%rax), %eax
 	testl	%eax, %eax
-	je	.L55
-	leaq	.LC56(%rip), %rax
-	jmp	.L56
-.L55:
-	leaq	.LC57(%rip), %rax
-.L56:
+	je	.L50
+	leaq	.LC51(%rip), %rax
+	jmp	.L51
+.L50:
+	leaq	.LC52(%rip), %rax
+.L51:
 	movq	%rax, -30744(%rbp)
-	movq	status_codes(%rip), %rcx
+	movq	8+status_codes(%rip), %rcx
 	movq	-30824(%rbp), %rax
 	movq	8(%rax), %rdx
 	movq	-30752(%rbp), %rdi
@@ -915,14 +850,14 @@ build_and_send_header:
 	pushq	-30744(%rbp)
 	movq	%rdi, %r9
 	movq	%rsi, %r8
-	leaq	.LC58(%rip), %rsi
+	leaq	.LC53(%rip), %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	asprintf@PLT
 	addq	$16, %rsp
 	movl	%eax, -30804(%rbp)
 	cmpl	$0, -30804(%rbp)
-	jns	.L57
+	jns	.L52
 	movl	-30812(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
@@ -938,18 +873,18 @@ build_and_send_header:
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$1, %edx
+	movl	$2, %edx
 	leaq	.LC45(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
 	movq	-30784(%rbp), %rax
 	testq	%rax, %rax
-	je	.L67
+	je	.L60
 	movq	-30784(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	jmp	.L67
-.L57:
+	jmp	.L60
+.L52:
 	movl	$0, -30800(%rbp)
 	movq	-30752(%rbp), %rax
 	movl	%eax, -30796(%rbp)
@@ -963,7 +898,7 @@ build_and_send_header:
 	call	send@PLT
 	movl	%eax, -30800(%rbp)
 	cmpl	$0, -30800(%rbp)
-	jns	.L59
+	jns	.L54
 	movq	-30832(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
@@ -971,11 +906,11 @@ build_and_send_header:
 	movl	-30812(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	leaq	.LC59(%rip), %rax
+	leaq	.LC54(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L40
-.L59:
+.L54:
 	movq	-30832(%rbp), %rax
 	movl	4(%rax), %eax
 	movq	-30752(%rbp), %rdx
@@ -986,14 +921,14 @@ build_and_send_header:
 	call	sendfile@PLT
 	movl	%eax, -30800(%rbp)
 	cmpl	$0, -30800(%rbp)
-	jle	.L60
+	jle	.L55
 	call	gettid@PLT
 	movl	%eax, %esi
 	movl	-30800(%rbp), %edx
 	movq	-30776(%rbp), %rax
 	movl	%edx, %ecx
 	movq	%rax, %rdx
-	leaq	.LC60(%rip), %rax
+	leaq	.LC55(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1001,7 +936,7 @@ build_and_send_header:
 	movl	%eax, %edi
 	call	close@PLT
 	jmp	.L40
-.L60:
+.L55:
 	movq	-30776(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
@@ -1009,18 +944,18 @@ build_and_send_header:
 	movl	%eax, %edi
 	call	close@PLT
 	jmp	.L40
-.L51:
+.L46:
 	call	gettid@PLT
 	movl	%eax, %esi
-	leaq	.LC61(%rip), %rax
+	leaq	.LC56(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
 	movq	%rdx, %rcx
-	movl	$4, %edx
-	leaq	.LC62(%rip), %rsi
+	movl	$16, %edx
+	leaq	.LC57(%rip), %rsi
 	movq	%rax, %rdi
 	call	send_
 	movl	-30808(%rbp), %eax
@@ -1032,23 +967,47 @@ build_and_send_header:
 	movl	%eax, %edi
 	call	send@PLT
 	jmp	.L40
-.L65:
+.L59:
 	nop
 	jmp	.L40
-.L67:
+.L60:
 	nop
 .L40:
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
-	je	.L63
+	je	.L58
 	call	__stack_chk_fail@PLT
-.L63:
+.L58:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
 .LFE11:
 	.size	build_and_send_header, .-build_and_send_header
+	.globl	build_for_og_server
+	.type	build_for_og_server, @function
+build_for_og_server:
+.LFB12:
+	.cfi_startproc
+	endbr64
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	subq	$16, %rsp
+	movl	$0, %edx
+	movl	$1, %esi
+	movl	$2, %edi
+	call	socket@PLT
+	movl	%eax, -4(%rbp)
+	nop
+	leave
+	.cfi_def_cfa 7, 8
+	ret
+	.cfi_endproc
+.LFE12:
+	.size	build_for_og_server, .-build_for_og_server
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

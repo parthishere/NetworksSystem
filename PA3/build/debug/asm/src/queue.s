@@ -473,7 +473,7 @@ destroy_threadpool:
 	call	sem_post@PLT
 	addl	$1, -40(%rbp)
 .L29:
-	cmpl	$149, -40(%rbp)
+	cmpl	$0, -40(%rbp)
 	jle	.L30
 	movl	$0, -36(%rbp)
 	jmp	.L31
@@ -509,7 +509,7 @@ destroy_threadpool:
 	call	pthread_attr_destroy@PLT
 	addl	$1, -36(%rbp)
 .L31:
-	cmpl	$149, -36(%rbp)
+	cmpl	$0, -36(%rbp)
 	jle	.L32
 	movq	-24(%rbp), %rax
 	movq	192(%rax), %rax

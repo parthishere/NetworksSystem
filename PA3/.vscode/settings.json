@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "parser.h": "c",
+        "builder.h": "c",
+        "cache.h": "c",
+        "common.h": "c",
+        "setup.h": "c",
+        "handle_req.h": "c"
+    }
+}

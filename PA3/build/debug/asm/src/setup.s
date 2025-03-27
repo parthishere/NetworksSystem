@@ -65,9 +65,9 @@ getin_addr:
 .LC10:
 	.string	"listen"
 	.text
-	.globl	init_server_side_socket
-	.type	init_server_side_socket, @function
-init_server_side_socket:
+	.globl	init_socket
+	.type	init_socket, @function
+init_socket:
 .LFB7:
 	.cfi_startproc
 	endbr64
@@ -76,9 +76,10 @@ init_server_side_socket:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	subq	$160, %rsp
-	movq	%rdi, -152(%rbp)
-	movq	%rsi, -160(%rbp)
+	subq	$192, %rsp
+	movq	%rdi, -168(%rbp)
+	movq	%rsi, -176(%rbp)
+	movq	%rdx, -184(%rbp)
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
@@ -89,9 +90,8 @@ init_server_side_socket:
 	call	memset@PLT
 	movl	$0, -108(%rbp)
 	movl	$1, -104(%rbp)
-	movl	$1, -112(%rbp)
-	movq	-160(%rbp), %rax
-	movq	8(%rax), %rax
+	movq	$0, -128(%rbp)
+	movq	-176(%rbp), %rax
 	movq	%rax, -120(%rbp)
 	movq	-120(%rbp), %rax
 	movq	%rax, %rsi
@@ -114,17 +114,25 @@ init_server_side_socket:
 	movl	$1, %edi
 	call	exit@PLT
 .L6:
-	movq	-152(%rbp), %rax
+	cmpq	$0, -184(%rbp)
+	jne	.L7
+	movl	$1, -112(%rbp)
+	jmp	.L8
+.L7:
+	movq	-184(%rbp), %rax
+	movq	%rax, -128(%rbp)
+.L8:
+	movq	-168(%rbp), %rax
 	leaq	136(%rax), %rcx
 	leaq	-112(%rbp), %rdx
-	movq	-120(%rbp), %rax
-	movq	%rax, %rsi
-	movl	$0, %edi
+	movq	-120(%rbp), %rsi
+	movq	-128(%rbp), %rax
+	movq	%rax, %rdi
 	call	getaddrinfo@PLT
-	movl	%eax, -132(%rbp)
-	cmpl	$0, -132(%rbp)
-	jns	.L7
-	movl	-132(%rbp), %eax
+	movl	%eax, -140(%rbp)
+	cmpl	$0, -140(%rbp)
+	jns	.L9
+	movl	-140(%rbp), %eax
 	movl	%eax, %edi
 	call	gai_strerror@PLT
 	movq	%rax, %rdx
@@ -136,40 +144,42 @@ init_server_side_socket:
 	call	fprintf@PLT
 	movl	$1, %edi
 	call	exit@PLT
-.L7:
+.L9:
 	leaq	.LC3(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movq	-152(%rbp), %rax
+	movq	-168(%rbp), %rax
 	movq	136(%rax), %rax
-	movq	%rax, -128(%rbp)
-	jmp	.L8
-.L14:
-	movq	-128(%rbp), %rax
+	movq	%rax, -136(%rbp)
+	jmp	.L10
+.L17:
+	movq	-136(%rbp), %rax
 	movl	12(%rax), %edx
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movl	8(%rax), %ecx
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%ecx, %esi
 	movl	%eax, %edi
 	call	socket@PLT
-	movl	%eax, -136(%rbp)
-	cmpl	$0, -136(%rbp)
-	jns	.L9
+	movl	%eax, -144(%rbp)
+	cmpl	$0, -144(%rbp)
+	jns	.L11
 	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
-	jmp	.L10
-.L9:
+	jmp	.L12
+.L11:
 	leaq	.LC5(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movl	$1, -140(%rbp)
-	leaq	-140(%rbp), %rdx
-	movl	-136(%rbp), %eax
+	cmpq	$0, -184(%rbp)
+	jne	.L21
+	movl	$1, -148(%rbp)
+	leaq	-148(%rbp), %rdx
+	movl	-144(%rbp), %eax
 	movl	$4, %r8d
 	movq	%rdx, %rcx
 	movl	$2, %edx
@@ -177,44 +187,43 @@ init_server_side_socket:
 	movl	%eax, %edi
 	call	setsockopt@PLT
 	cmpl	$-1, %eax
-	jne	.L11
+	jne	.L14
 	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	movl	$1, %edi
 	call	exit@PLT
-.L11:
-	movq	-128(%rbp), %rax
+.L14:
+	movq	-136(%rbp), %rax
 	movl	16(%rax), %edx
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movq	24(%rax), %rax
 	movq	%rax, %rcx
-	movl	-136(%rbp), %eax
+	movl	-144(%rbp), %eax
 	movq	%rcx, %rsi
 	movl	%eax, %edi
 	call	bind@PLT
 	testl	%eax, %eax
-	jns	.L18
-	movl	-136(%rbp), %eax
+	jns	.L21
+	movl	-144(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	leaq	.LC7(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
-	nop
-.L10:
-	movq	-128(%rbp), %rax
+.L12:
+	movq	-136(%rbp), %rax
 	movq	40(%rax), %rax
-	movq	%rax, -128(%rbp)
-.L8:
-	cmpq	$0, -128(%rbp)
-	jne	.L14
-	jmp	.L13
-.L18:
+	movq	%rax, -136(%rbp)
+.L10:
+	cmpq	$0, -136(%rbp)
+	jne	.L17
+	jmp	.L16
+.L21:
 	nop
-.L13:
-	cmpq	$0, -128(%rbp)
-	jne	.L15
+.L16:
+	cmpq	$0, -136(%rbp)
+	jne	.L18
 	movq	stderr(%rip), %rax
 	movq	%rax, %rcx
 	movl	$50, %edx
@@ -222,21 +231,21 @@ init_server_side_socket:
 	leaq	.LC8(%rip), %rax
 	movq	%rax, %rdi
 	call	fwrite@PLT
-	movl	-136(%rbp), %eax
+	movl	-144(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$1, %edi
 	call	exit@PLT
-.L15:
-	movq	-152(%rbp), %rax
-	movl	-136(%rbp), %edx
+.L18:
+	movq	-168(%rbp), %rax
+	movl	-144(%rbp), %edx
 	movl	%edx, (%rax)
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movq	24(%rax), %rax
 	movq	%rax, %rdi
 	call	getin_addr
 	movq	%rax, %rsi
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movl	4(%rax), %eax
 	leaq	-64(%rbp), %rdx
 	movl	$46, %ecx
@@ -248,33 +257,35 @@ init_server_side_socket:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movq	-128(%rbp), %rax
+	movq	-136(%rbp), %rax
 	movq	%rax, %rdi
 	call	freeaddrinfo@PLT
-	movl	-136(%rbp), %eax
-	movl	$300, %esi
+	cmpq	$0, -184(%rbp)
+	jne	.L22
+	movl	-144(%rbp), %eax
+	movl	$2, %esi
 	movl	%eax, %edi
 	call	listen@PLT
 	testl	%eax, %eax
-	jns	.L19
+	jns	.L22
 	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	movl	$1, %edi
 	call	exit@PLT
-.L19:
+.L22:
 	nop
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
-	je	.L17
+	je	.L20
 	call	__stack_chk_fail@PLT
-.L17:
+.L20:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
 .LFE7:
-	.size	init_server_side_socket, .-init_server_side_socket
+	.size	init_socket, .-init_socket
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

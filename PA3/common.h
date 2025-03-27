@@ -59,13 +59,14 @@
  * @name Server Configuration Constants
  * @{
  */
+#define CACHE_ROOT "./saved"
 #define USE_SENDFILE 1          /* Enable zero-copy file transfers */
 #define ROOT_DIR "./www"        /* Web root directory */
 #define MAX_SIZE (1024 * 30)    /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE   /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE  /* Transmit buffer size */
 #define USE_FORK 0              /* Use threading instead of forking */
-#define TOTAL_THREADS 150       /* Number of worker threads */
+#define TOTAL_THREADS 1       /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
 #define TIMEOUT_HTTP_SEC 2      /* Connection timeout in seconds */
 /** @} */
@@ -108,12 +109,12 @@ typedef enum httpType_s
  */
 typedef enum statusCode_s
 {
-    OK,                         /* 200 OK */
-    BAD_REQ,                    /* 400 Bad Request */
-    FORBIDDEN,                  /* 403 Forbidden */
-    NOT_FOUND,                  /* 404 Not Found */
-    METHOD_NOT_ALLOWED,         /* 405 Method Not Allowed */
-    VERSION_NOT_SUPPORTED,      /* 505 HTTP Version Not Supported */
+    OK = 1 << 0,                         /* 200 OK */
+    BAD_REQ = 1 << 1,                    /* 400 Bad Request */
+    FORBIDDEN = 1 << 2,                  /* 403 Forbidden */
+    NOT_FOUND = 1 << 3,                  /* 404 Not Found */
+    METHOD_NOT_ALLOWED = 1 << 4,         /* 405 Method Not Allowed */
+    VERSION_NOT_SUPPORTED = 1 << 5,      /* 505 HTTP Version Not Supported */
     total_status_codes,         /* Count of status codes */
 } statusCode_t;
 
@@ -199,6 +200,11 @@ typedef struct req_header_s
     int connection_close;              /* Connection: close flag */
 
     int parser_error;                  /* Parser error code */
+    int current_state;
+
+    int open_file_fd;
+
+    int max_age;
 } HttpHeader_t;
 
 

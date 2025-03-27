@@ -4,6 +4,7 @@
 #include "includes/handle_req.h"
 #include "includes/setup.h"
 #include "includes/fork.h"
+#include "includes/cache.h"
 
 static volatile sig_atomic_t shutdown_flag = 0;
 static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -36,7 +37,9 @@ int main(int argc, char *argv[])
     sockdetails_t sd;
     sd.addr_len = sizeof(sd.client_info);
 
-    init_server_side_socket(&sd, argv);
+    init_cache_table(1);
+    
+    init_socket(&sd, argv[1], NULL);
 
 #if USE_FORK == 0
     threadpool tp = create_threadpool(TOTAL_THREADS);

@@ -9,7 +9,7 @@ ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 
 CC := gcc
 CFLAGS := 
-LDFLAGS := 
+LDFLAGS := -lpthread -lssl -lcrypto
 INC := -I$(INCLUDE_DIR) -I./ -I$(SRC_DIR) 
 
 ROOT_SRC = $(wildcard *.c)
