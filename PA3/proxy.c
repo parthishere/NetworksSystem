@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     blocklist_t *bl = init_blocklist();
     printf("%d is blocked \n", is_blocked(NULL, "maps.google.com"));
     
-    init_socket(&sd, argv[1], NULL);
+    init_socket(&sd, argv[1]);
 
 #if USE_FORK == 0
     threadpool tp = create_threadpool(TOTAL_THREADS);

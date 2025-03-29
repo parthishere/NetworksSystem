@@ -83,15 +83,91 @@ void *handle_req(sockdetails_t sd)
             if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
                 // error
                 printf("Error !\n");
+                break;
             }
 
-            // printf("cache lookup -> %d, \n", cache_lookup(NULL, header.hostname_str, header.uri_str, 10));
+            if(cache_lookup(NULL, header.hostname_str, header.uri_str, 10) < 0){
+                // failed create a new socket!
+                sockdetails_t sd;
+                sd.addr_len = sizeof(sd.client_info);
 
-            sockdetails_t sd;
-            sd.addr_len = sizeof(sd.client_info);
+                struct addrinfo hints, *temp;
+
+                memset(&hints, 0, sizeof(hints));
+                hints.ai_family = AF_UNSPEC;
+                hints.ai_socktype = SOCK_STREAM; // for TCP
+                
+                if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &sd.server_info)) < 0)
+                {
+                    fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
+                    exit(EXIT_FAILURE);                                                   // exit if there is an error
+                }
+                printf(GRN "[+] getaddrinfo call successful\n" RESET);
+                printf(" Host name %s, port name %s\n\r", header.hostname_str, header.hostname_port_str);
+
+                for (temp = sd.server_info; temp != NULL; temp = temp->ai_next)
+                {
+                    /*
+                    int socket(int domain, int type, int protocol);
+                    we need domain to be IF_INET (IPv4)
+                    we need type to be UDP
+                    and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
+                    */
+                    if ((sd.sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+                    {
+                        perror(RED "server: socket");
+                        continue;
+                    }
+                    printf(GRN "[+] socket call successful\n" RESET);
+                    
+                    if()
+
+                    break;
+                }
+
+                if(temp == NULL){
+                    fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
+                    close(sd.sockfd);
+                    exit(EXIT_FAILURE);
+                }
+
+                if((sd.client_sock_fd = connect(sd.sockfd, sd.server_info->ai_addr, sd.server_info->ai_addrlen)) < 0){
+                    fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
+                    close(sd.sockfd);
+                    exit(EXIT_FAILURE);
+                }
+
+                const char *connection_type = header.connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
+                printf("waiting for send ?? \n");
+                char *send_req = "GET  /index.html HTTP/1.1\r\nHost: localhost:8080";
+                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0){
+                    fprintf(stderr, RED "[-] send failed for server %d \n" RESET, errno);
+                    close(sd.sockfd);
+                    close(sd.client_sock_fd);
+                    exit(EXIT_FAILURE);
+                }
+                printf("Sent\n\r");
+
+                char recv_buf[RECIEVE_SIZE];
+                if(recv(sd.client_sock_fd, recv_buf, sizeof(recv_buf), 0) < 0){
+                    fprintf(stderr, RED "[-] recv failed for server \n" RESET);
+                    close(sd.sockfd);
+                    close(sd.client_sock_fd);
+                    exit(EXIT_FAILURE);
+                }
+
+                printf("recv buf %s\n", recv_buf);
+                /* Handle header construction errors */
+               
+
+
+
+            }
+
+           
             // printf("Hostname %s\n", header.hostname_str);
 
-            //init_socket(&sd, header.hostname_port_str, header.hostname_str);            
+            //         
             
             printf("lets see if its working\n");
 

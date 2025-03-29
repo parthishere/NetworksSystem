@@ -117,10 +117,9 @@ main:
 	call	printf@PLT
 	movq	-384(%rbp), %rax
 	addq	$8, %rax
-	movq	(%rax), %rcx
+	movq	(%rax), %rdx
 	leaq	-192(%rbp), %rax
-	movl	$0, %edx
-	movq	%rcx, %rsi
+	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	init_socket@PLT
 	movl	$1, %edi

@@ -287,11 +287,13 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
                 return SOME_ERROR;
             }
 
-            char *colon = strchr(host_copy, ':');
+            printf("Key %s Value %s host copy %s\n", key, value, host_copy);
+
+            char *colon = strdup(value);
             if (colon) {
                 *colon = '\0';  // Split the string
                 header->hostname_str = strdup(host_copy);
-                header->hostname_port_str = strdup(colon + 1);
+                header->hostname_port_str = strdup(colon);
                 
                 // Validate both duplications worked
                 if (!header->hostname_str || !header->hostname_port_str) {

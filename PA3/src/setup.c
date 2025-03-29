@@ -8,17 +8,15 @@
  * provides TCP stream socket setup with proper error handling.
  */
 
-
 #include "includes/setup.h"
-
 
 /**
  * @function getin_addr
  * @brief Extracts the IP address structure from a sockaddr structure
- * 
+ *
  * @param sa Pointer to generic socket address structure
  * @return void* Pointer to the IP address structure (IPv4 or IPv6)
- * 
+ *
  * This function handles both IPv4 and IPv6 addresses by:
  * 1. Checking the address family
  * 2. Performing appropriate structure casting
@@ -37,24 +35,23 @@ void *getin_addr(struct sockaddr *sa)
     return NULL;
 }
 
-
 /**
  * @function init_server_side_socket
  * @brief Initializes and configures a server-side TCP socket
- * 
+ *
  * @param sd Pointer to socket details structure
  * @param argv Command line arguments array containing port number
- * 
+ *
  * This function performs complete server socket setup:
  * 1. Configures address parameters
  * 2. Creates and binds socket
  * 3. Sets socket options
  * 4. Prepares for listening
- * 
+ *
  * @note Port number must be > 1024 (non-privileged ports)
  * @note Supports both IPv4 and IPv6
  */
-void init_socket(sockdetails_t *sd, char *port, char* hostname)
+void init_socket(sockdetails_t *sd, char *port)
 {
     struct addrinfo hints, *temp;
     char ip[INET6_ADDRSTRLEN];
@@ -66,27 +63,20 @@ void init_socket(sockdetails_t *sd, char *port, char* hostname)
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM; // for TCP
+    hints.ai_flags = AI_PASSIVE;     // fill up my IP
 
-    char *server_address = NULL;
     char *server_port = port;
-    printf("Passed Server Port %s\n", server_port);
+    // printf("Passed Server Port %s\n", server_port);
     if (atoi(server_port) <= 1024)
     {
         fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
         exit(EXIT_FAILURE);
     }
 
-    if(hostname == NULL){
-        hints.ai_flags = AI_PASSIVE;     // fill up my IP
-    }
-    else {
-        server_address = hostname;
-    }
-
     /* Validate and set port number */
 
     /* Get address information */
-    if ((status = getaddrinfo(server_address, server_port, &hints, &sd->server_info)) < 0)
+    if ((status = getaddrinfo(NULL, server_port, &hints, &sd->server_info)) < 0)
     {
         fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
         exit(EXIT_FAILURE);                                                   // exit if there is an error
@@ -109,27 +99,24 @@ void init_socket(sockdetails_t *sd, char *port, char* hostname)
         }
         printf(GRN "[+] socket call successful\n" RESET);
 
-        if(hostname == NULL){
-            int yes = 1;
-            /* Set socket options */
-            if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-            {
-                perror(RED "setsockopt");
-                exit(1);
-            }
-
-            /*
-            int bind(int sockfd, const struct sockaddr *addr,
-                    socklen_t addrlen);
-            */
-            if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
-            {
-                close(sockfd);
-                perror(RED "server: bind");
-                continue;
-            }
+        int yes = 1;
+        /* Set socket options */
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        {
+            perror(RED "setsockopt");
+            exit(1);
         }
-        
+
+        /*
+        int bind(int sockfd, const struct sockaddr *addr,
+                socklen_t addrlen);
+        */
+        if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
+        {
+            close(sockfd);
+            perror(RED "server: bind");
+            continue;
+        }
 
         break;
     }
@@ -148,16 +135,10 @@ void init_socket(sockdetails_t *sd, char *port, char* hostname)
     printf(GRN "[+] Server recieving TCP/HTTP1.0 packet to : %s\n" RESET, ip);
 
     freeaddrinfo(temp);
-    
-    if(hostname == NULL){
-        /* Start listening for connections */
-        if (listen(sockfd, TOTAL_THREADS*2) < 0)
-        {
-            perror("listen");
-            exit(1);
-        }
-    }
 
-    
-    
+    if (listen(sockfd, TOTAL_THREADS * 2) < 0)
+    {
+        perror("listen");
+        exit(1);
+    }
 }

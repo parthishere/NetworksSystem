@@ -17,6 +17,43 @@
 .LC6:
 	.string	"Error !"
 .LC7:
+	.string	"\033[31mgetaddrinfo\n\033[0m"
+	.align 8
+.LC8:
+	.string	"\033[32m[+] getaddrinfo call successful\n\033[0m"
+.LC9:
+	.string	" Host name %s, port name %s\n\r"
+.LC10:
+	.string	"\033[31mserver: socket"
+	.align 8
+.LC11:
+	.string	"\033[32m[+] socket call successful\n\033[0m"
+	.align 8
+.LC12:
+	.string	"\033[31m[-] socket connection failed for server \n\033[0m"
+	.align 8
+.LC13:
+	.string	"\033[31m[-] connect failed for server %d\n\033[0m"
+.LC14:
+	.string	"Connection: Keep-alive"
+.LC15:
+	.string	"Connection: close"
+.LC16:
+	.string	"waiting for send ?? "
+	.align 8
+.LC17:
+	.string	"GET  /index.html HTTP/1.1\r\nHost: localhost:8080"
+	.align 8
+.LC18:
+	.string	"\033[31m[-] send failed for server %d \n\033[0m"
+.LC19:
+	.string	"Sent\n\r"
+	.align 8
+.LC20:
+	.string	"\033[31m[-] recv failed for server \n\033[0m"
+.LC21:
+	.string	"recv buf %s\n"
+.LC22:
 	.string	"lets see if its working"
 	.text
 	.globl	handle_req
@@ -30,31 +67,31 @@ handle_req:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	leaq	-28672(%rsp), %r11
+	leaq	-61440(%rsp), %r11
 .LPSRL0:
 	subq	$4096, %rsp
 	orq	$0, (%rsp)
 	cmpq	%r11, %rsp
 	jne	.LPSRL0
-	subq	$2512, %rsp
+	subq	$528, %rsp
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
 	leaq	.LC0(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-.L13:
-	leaq	-31024(%rbp), %rax
-	movq	%rax, -31160(%rbp)
-	movl	$0, -31172(%rbp)
+.L24:
+	leaq	-61744(%rbp), %rax
+	movq	%rax, -61944(%rbp)
+	movl	$0, -61964(%rbp)
 	jmp	.L2
 .L3:
-	movq	-31160(%rbp), %rax
-	movl	-31172(%rbp), %edx
+	movq	-61944(%rbp), %rax
+	movl	-61964(%rbp), %edx
 	movq	$0, (%rax,%rdx,8)
-	addl	$1, -31172(%rbp)
+	addl	$1, -61964(%rbp)
 .L2:
-	cmpl	$15, -31172(%rbp)
+	cmpl	$15, -61964(%rbp)
 	jbe	.L3
 	movl	20(%rbp), %eax
 	leal	63(%rax), %edx
@@ -63,7 +100,7 @@ handle_req:
 	sarl	$6, %eax
 	movl	%eax, %esi
 	movslq	%esi, %rax
-	movq	-31024(%rbp,%rax,8), %rax
+	movq	-61744(%rbp,%rax,8), %rax
 	movl	20(%rbp), %edx
 	andl	$63, %edx
 	movl	$1, %edi
@@ -72,9 +109,9 @@ handle_req:
 	movq	%rdi, %rdx
 	orq	%rax, %rdx
 	movslq	%esi, %rax
-	movq	%rdx, -31024(%rbp,%rax,8)
-	movq	$2, -31152(%rbp)
-	movq	$0, -31144(%rbp)
+	movq	%rdx, -61744(%rbp,%rax,8)
+	movq	$2, -61920(%rbp)
+	movq	$0, -61912(%rbp)
 	movl	20(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC1(%rip), %rax
@@ -83,22 +120,22 @@ handle_req:
 	call	printf@PLT
 	movl	20(%rbp), %eax
 	leal	1(%rax), %edi
-	leaq	-31152(%rbp), %rdx
-	leaq	-31024(%rbp), %rax
+	leaq	-61920(%rbp), %rdx
+	leaq	-61744(%rbp), %rax
 	movq	%rdx, %r8
 	movl	$0, %ecx
 	movl	$0, %edx
 	movq	%rax, %rsi
 	call	select@PLT
-	movl	%eax, -31168(%rbp)
-	cmpl	$0, -31168(%rbp)
+	movl	%eax, -61960(%rbp)
+	cmpl	$0, -61960(%rbp)
 	jns	.L4
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L5
 .L4:
-	cmpl	$0, -31168(%rbp)
+	cmpl	$0, -61960(%rbp)
 	jne	.L6
 	call	gettid@PLT
 	movl	%eax, %esi
@@ -114,7 +151,7 @@ handle_req:
 	cmovs	%edx, %eax
 	sarl	$6, %eax
 	cltq
-	movq	-31024(%rbp,%rax,8), %rdx
+	movq	-61744(%rbp,%rax,8), %rdx
 	movl	20(%rbp), %eax
 	andl	$63, %eax
 	movl	$1, %esi
@@ -123,35 +160,35 @@ handle_req:
 	movq	%rsi, %rax
 	andq	%rdx, %rax
 	testq	%rax, %rax
-	je	.L13
+	je	.L24
 	movl	20(%rbp), %eax
-	leaq	-30736(%rbp), %rsi
+	leaq	-61456(%rbp), %rsi
 	movl	$0, %ecx
 	movl	$30720, %edx
 	movl	%eax, %edi
 	call	recv@PLT
-	movl	%eax, -31164(%rbp)
-	cmpl	$0, -31164(%rbp)
+	movl	%eax, -61956(%rbp)
+	cmpl	$0, -61956(%rbp)
 	jns	.L8
 	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	movl	$0, %eax
-	jmp	.L14
+	jmp	.L25
 .L8:
-	leaq	-30736(%rbp), %rax
+	leaq	-61456(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC5(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	leaq	-31136(%rbp), %rax
+	leaq	-61856(%rbp), %rax
 	movl	$112, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	leaq	-31136(%rbp), %rdx
-	leaq	-30736(%rbp), %rax
+	leaq	-61856(%rbp), %rdx
+	leaq	-61456(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	parse_request_line_thread_safe@PLT
@@ -160,34 +197,232 @@ handle_req:
 	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
+	jmp	.L5
 .L10:
-	movl	$128, -30752(%rbp)
+	movq	-61840(%rbp), %rdx
+	movq	-61832(%rbp), %rax
+	movl	$10, %ecx
+	movq	%rax, %rsi
+	movl	$0, %edi
+	call	cache_lookup@PLT
+	testl	%eax, %eax
+	jns	.L11
+	movl	$128, -61472(%rbp)
+	leaq	-61904(%rbp), %rax
+	movl	$48, %edx
+	movl	$0, %esi
+	movq	%rax, %rdi
+	call	memset@PLT
+	movl	$0, -61900(%rbp)
+	movl	$1, -61896(%rbp)
+	movq	-61824(%rbp), %rsi
+	movq	-61832(%rbp), %rax
+	leaq	-61616(%rbp), %rdx
+	leaq	136(%rdx), %rcx
+	leaq	-61904(%rbp), %rdx
+	movq	%rax, %rdi
+	call	getaddrinfo@PLT
+	testl	%eax, %eax
+	jns	.L12
+	movq	stderr(%rip), %rax
+	movq	%rax, %rcx
+	movl	$21, %edx
+	movl	$1, %esi
 	leaq	.LC7(%rip), %rax
 	movq	%rax, %rdi
+	call	fwrite@PLT
+	movl	$1, %edi
+	call	exit@PLT
+.L12:
+	leaq	.LC8(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	movq	-61824(%rbp), %rdx
+	movq	-61832(%rbp), %rax
+	movq	%rax, %rsi
+	leaq	.LC9(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	movq	-61480(%rbp), %rax
+	movq	%rax, -61952(%rbp)
+	jmp	.L13
+.L17:
+	movq	-61952(%rbp), %rax
+	movl	12(%rax), %edx
+	movq	-61952(%rbp), %rax
+	movl	8(%rax), %ecx
+	movq	-61952(%rbp), %rax
+	movl	4(%rax), %eax
+	movl	%ecx, %esi
+	movl	%eax, %edi
+	call	socket@PLT
+	movl	%eax, -61616(%rbp)
+	movl	-61616(%rbp), %eax
+	testl	%eax, %eax
+	jns	.L14
+	leaq	.LC10(%rip), %rax
+	movq	%rax, %rdi
+	call	perror@PLT
+	jmp	.L27
+.L14:
+	leaq	.LC11(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	jmp	.L16
+.L27:
+	movq	-61952(%rbp), %rax
+	movq	40(%rax), %rax
+	movq	%rax, -61952(%rbp)
+.L13:
+	cmpq	$0, -61952(%rbp)
+	jne	.L17
+.L16:
+	cmpq	$0, -61952(%rbp)
+	jne	.L18
+	movq	stderr(%rip), %rax
+	movq	%rax, %rcx
+	movl	$50, %edx
+	movl	$1, %esi
+	leaq	.LC12(%rip), %rax
+	movq	%rax, %rdi
+	call	fwrite@PLT
+	movl	-61616(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+	movl	$1, %edi
+	call	exit@PLT
+.L18:
+	movq	-61480(%rbp), %rax
+	movl	16(%rax), %edx
+	movq	-61480(%rbp), %rax
+	movq	24(%rax), %rax
+	movq	%rax, %rcx
+	movl	-61616(%rbp), %eax
+	movq	%rcx, %rsi
+	movl	%eax, %edi
+	call	connect@PLT
+	movl	%eax, -61612(%rbp)
+	movl	-61612(%rbp), %eax
+	testl	%eax, %eax
+	jns	.L19
+	call	__errno_location@PLT
+	movl	(%rax), %edx
+	movq	stderr(%rip), %rax
+	leaq	.LC13(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	fprintf@PLT
+	movl	-61616(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+.L19:
+	movl	-61768(%rbp), %eax
+	testl	%eax, %eax
+	je	.L20
+	leaq	.LC14(%rip), %rax
+	jmp	.L21
+.L20:
+	leaq	.LC15(%rip), %rax
+.L21:
+	movq	%rax, -61936(%rbp)
+	leaq	.LC16(%rip), %rax
+	movq	%rax, %rdi
 	call	puts@PLT
-	movl	-31044(%rbp), %eax
+	leaq	.LC17(%rip), %rax
+	movq	%rax, -61928(%rbp)
+	movq	-61928(%rbp), %rax
+	movq	%rax, %rdi
+	call	strlen@PLT
+	movq	%rax, %rdx
+	movl	-61612(%rbp), %eax
+	movq	-61928(%rbp), %rsi
+	movl	$0, %ecx
+	movl	%eax, %edi
+	call	send@PLT
+	testq	%rax, %rax
+	jns	.L22
+	call	__errno_location@PLT
+	movl	(%rax), %edx
+	movq	stderr(%rip), %rax
+	leaq	.LC18(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	fprintf@PLT
+	movl	-61616(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+	movl	-61612(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+	movl	$1, %edi
+	call	exit@PLT
+.L22:
+	leaq	.LC19(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	movl	-61612(%rbp), %eax
+	leaq	-30736(%rbp), %rsi
+	movl	$0, %ecx
+	movl	$30720, %edx
+	movl	%eax, %edi
+	call	recv@PLT
+	testq	%rax, %rax
+	jns	.L23
+	movq	stderr(%rip), %rax
+	movq	%rax, %rcx
+	movl	$37, %edx
+	movl	$1, %esi
+	leaq	.LC20(%rip), %rax
+	movq	%rax, %rdi
+	call	fwrite@PLT
+	movl	-61616(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+	movl	-61612(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
+	movl	$1, %edi
+	call	exit@PLT
+.L23:
+	leaq	-30736(%rbp), %rax
+	movq	%rax, %rsi
+	leaq	.LC21(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+.L11:
+	leaq	.LC22(%rip), %rax
+	movq	%rax, %rdi
+	call	puts@PLT
+	movl	-61764(%rbp), %eax
 	cmpl	$1, %eax
 	je	.L5
-	movl	-31048(%rbp), %eax
+	movl	-61768(%rbp), %eax
 	testl	%eax, %eax
 	je	.L5
-	leaq	-31136(%rbp), %rax
+	leaq	-61856(%rbp), %rax
 	movl	$112, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	jmp	.L13
+	jmp	.L24
 .L5:
 	movl	20(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$0, %eax
-.L14:
+.L25:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L15
+	je	.L26
 	call	__stack_chk_fail@PLT
-.L15:
+.L26:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
