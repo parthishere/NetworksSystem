@@ -7,6 +7,7 @@
         "setup.h": "c",
         "handle_req.h": "c",
         "blocklist.h": "c",
-        "glob.h": "c"
+        "glob.h": "c",
+        "prefetch.h": "c"
     }
 }

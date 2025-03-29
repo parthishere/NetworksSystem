@@ -21,6 +21,7 @@
 #include "builder.h"
 #include "setup.h"
 #include "cache.h"
+#include "blocklist.h"
 
 /**
  * @function handle_req

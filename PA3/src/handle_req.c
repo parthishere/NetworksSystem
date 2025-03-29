@@ -85,8 +85,12 @@ void *handle_req(sockdetails_t sd)
                 printf("Error !\n");
                 break;
             }
+            if(is_blocked(NULL, header.hostname_str)){
+                break;
+            }
 
-            if(cache_lookup(NULL, header.hostname_str, header.uri_str, 10) < 0){
+            int file_fd;
+            if(file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 10) < 0){
                 // failed create a new socket!
                 sockdetails_t sd;
                 sd.addr_len = sizeof(sd.client_info);
@@ -120,7 +124,7 @@ void *handle_req(sockdetails_t sd)
                     }
                     printf(GRN "[+] socket call successful\n" RESET);
                     
-                    if()
+                    // if()
 
                     break;
                 }
@@ -162,6 +166,11 @@ void *handle_req(sockdetails_t sd)
 
 
 
+            }
+            else{
+                // file_fd
+
+                // create another thread;
             }
 
            
