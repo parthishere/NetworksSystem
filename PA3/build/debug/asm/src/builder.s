@@ -717,7 +717,7 @@ build_and_send_header:
 	cmpq	$0, -30824(%rbp)
 	je	.L59
 	movq	-30824(%rbp), %rax
-	movl	88(%rax), %eax
+	movl	96(%rax), %eax
 	andl	$1, %eax
 	testl	%eax, %eax
 	jne	.L43
@@ -728,7 +728,7 @@ build_and_send_header:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-30824(%rbp), %rax
-	movl	88(%rax), %eax
+	movl	96(%rax), %eax
 	movl	%eax, %esi
 	movq	-30832(%rbp), %rdx
 	movq	-30824(%rbp), %rax
@@ -770,7 +770,7 @@ build_and_send_header:
 	jmp	.L40
 .L45:
 	movq	-30824(%rbp), %rax
-	movl	48(%rax), %eax
+	movl	56(%rax), %eax
 	testl	%eax, %eax
 	jne	.L46
 	movq	-30776(%rbp), %rax
@@ -831,7 +831,7 @@ build_and_send_header:
 	movl	%eax, %edi
 	call	lseek@PLT
 	movq	-30824(%rbp), %rax
-	movl	80(%rax), %eax
+	movl	88(%rax), %eax
 	testl	%eax, %eax
 	je	.L50
 	leaq	.LC51(%rip), %rax
@@ -1001,7 +1001,7 @@ build_for_og_server:
 	cmpq	$0, -8(%rbp)
 	je	.L64
 	movq	-8(%rbp), %rax
-	movl	88(%rax), %eax
+	movl	96(%rax), %eax
 	andl	$1, %eax
 	testl	%eax, %eax
 	jne	.L61
@@ -1012,7 +1012,7 @@ build_for_og_server:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-8(%rbp), %rax
-	movl	88(%rax), %eax
+	movl	96(%rax), %eax
 	movl	%eax, %esi
 	movq	-16(%rbp), %rdx
 	movq	-8(%rbp), %rax

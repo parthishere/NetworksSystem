@@ -80,16 +80,16 @@ void *handle_req(sockdetails_t sd)
             printf("recieved_buf : %s\n\n", recieved_buf);
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
-            if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
-                // error
-                printf("Error !\n");
-            }
+            // if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
+            //     // error
+            //     printf("Error !\n");
+            // }
 
             sockdetails_t sd;
             sd.addr_len = sizeof(sd.client_info);
             printf("Hostname %s\n", header.hostname_str);
 
-            init_socket(&sd, header.hostname_port_str, header.hostname_str);            
+            // init_socket(&sd, header.hostname_port_str, header.hostname_str);            
             
             printf("lets see if its working\n");
 

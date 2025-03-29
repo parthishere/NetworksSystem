@@ -172,7 +172,7 @@ use_fork:
 	call	perror@PLT
 .L12:
 	leaq	-30976(%rbp), %rax
-	movl	$104, %edx
+	movl	$112, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
@@ -186,14 +186,14 @@ use_fork:
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	build_and_send_header@PLT
-	movl	-30892(%rbp), %eax
+	movl	-30884(%rbp), %eax
 	cmpl	$1, %eax
 	je	.L9
-	movl	-30896(%rbp), %eax
+	movl	-30888(%rbp), %eax
 	testl	%eax, %eax
 	je	.L9
 	leaq	-30976(%rbp), %rax
-	movl	$104, %edx
+	movl	$112, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
