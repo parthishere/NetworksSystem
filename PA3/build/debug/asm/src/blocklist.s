@@ -1,10 +1,12 @@
 	.file	"blocklist.c"
 	.text
+	.local	_blocklist
+	.comm	_blocklist,8,8
 	.section	.rodata
 .LC0:
 	.string	"r"
 .LC1:
-	.string	"./blocklist"
+	.string	"./blocklist.cfg"
 .LC2:
 	.string	"\n"
 	.text
@@ -27,15 +29,16 @@ init_blocklist:
 	xorl	%eax, %eax
 	movl	$16, %edi
 	call	malloc@PLT
-	movq	%rax, -304(%rbp)
-	cmpq	$0, -304(%rbp)
+	movq	%rax, _blocklist(%rip)
+	movq	_blocklist(%rip), %rax
+	testq	%rax, %rax
 	jne	.L2
 	movl	$0, %eax
 	jmp	.L7
 .L2:
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	movq	$0, (%rax)
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	movl	$0, 8(%rax)
 	leaq	.LC0(%rip), %rax
 	movq	%rax, %rsi
@@ -45,7 +48,7 @@ init_blocklist:
 	movq	%rax, -296(%rbp)
 	cmpq	$0, -296(%rbp)
 	jne	.L5
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	jmp	.L7
 .L6:
 	leaq	-288(%rbp), %rax
@@ -54,21 +57,21 @@ init_blocklist:
 	movq	%rax, %rdi
 	call	strcspn@PLT
 	movb	$0, -288(%rbp,%rax)
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	movl	8(%rax), %eax
 	addl	$1, %eax
 	cltq
 	leaq	0(,%rax,8), %rdx
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	movq	(%rax), %rax
+	movq	_blocklist(%rip), %rbx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	realloc@PLT
-	movq	-304(%rbp), %rdx
-	movq	%rax, (%rdx)
-	movq	-304(%rbp), %rax
+	movq	%rax, (%rbx)
+	movq	_blocklist(%rip), %rax
 	movq	(%rax), %rdx
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 	movl	8(%rax), %eax
 	cltq
 	salq	$3, %rax
@@ -77,10 +80,9 @@ init_blocklist:
 	movq	%rax, %rdi
 	call	strdup@PLT
 	movq	%rax, (%rbx)
-	movq	-304(%rbp), %rax
-	movl	8(%rax), %eax
-	leal	1(%rax), %edx
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
+	movl	8(%rax), %edx
+	addl	$1, %edx
 	movl	%edx, 8(%rax)
 .L5:
 	movq	-296(%rbp), %rdx
@@ -93,7 +95,7 @@ init_blocklist:
 	movq	-296(%rbp), %rax
 	movq	%rax, %rdi
 	call	fclose@PLT
-	movq	-304(%rbp), %rax
+	movq	_blocklist(%rip), %rax
 .L7:
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
@@ -123,11 +125,11 @@ is_blocked:
 	movq	%rsi, -32(%rbp)
 	cmpq	$0, -24(%rbp)
 	jne	.L10
-	movl	$0, %eax
-	jmp	.L11
+	movq	_blocklist(%rip), %rax
+	movq	%rax, -24(%rbp)
 .L10:
 	movl	$0, -4(%rbp)
-	jmp	.L12
+	jmp	.L11
 .L14:
 	movq	-24(%rbp), %rax
 	movq	(%rax), %rax
@@ -141,18 +143,18 @@ is_blocked:
 	movq	%rax, %rdi
 	call	glob_match
 	testl	%eax, %eax
-	je	.L13
+	je	.L12
 	movl	$1, %eax
-	jmp	.L11
-.L13:
-	addl	$1, -4(%rbp)
+	jmp	.L13
 .L12:
+	addl	$1, -4(%rbp)
+.L11:
 	movq	-24(%rbp), %rax
 	movl	8(%rax), %eax
 	cmpl	%eax, -4(%rbp)
 	jl	.L14
 	movl	$0, %eax
-.L11:
+.L13:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -328,34 +330,34 @@ glob_match:
 	jne	.L42
 	movl	$0, %eax
 	jmp	.L17
+.L42:
+	movl	$1, %eax
+	jmp	.L17
 .L28:
 	movl	$0, %eax
 	jmp	.L17
-.L42:
-	addq	$1, -24(%rbp)
-	jmp	.L43
 .L22:
 	movq	-24(%rbp), %rax
 	movzbl	(%rax), %eax
 	cmpb	$63, %al
-	je	.L44
+	je	.L43
 	movq	-24(%rbp), %rax
 	movzbl	(%rax), %edx
 	movq	-32(%rbp), %rax
 	movzbl	(%rax), %eax
 	cmpb	%al, %dl
-	jne	.L45
-.L44:
+	jne	.L44
+.L43:
 	movq	-32(%rbp), %rax
 	movzbl	(%rax), %eax
 	testb	%al, %al
-	jne	.L43
+	jne	.L46
 	movl	$0, %eax
 	jmp	.L17
-.L45:
+.L44:
 	movl	$0, %eax
 	jmp	.L17
-.L43:
+.L46:
 	movq	-32(%rbp), %rax
 	leaq	1(%rax), %rdx
 	movq	-24(%rbp), %rax

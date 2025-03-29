@@ -44,6 +44,10 @@ sig_handler:
 .LC1:
 	.string	"\033[31m[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n\033[0m"
 .LC2:
+	.string	"maps.google.com"
+.LC3:
+	.string	"%d is blocked \n"
+.LC4:
 	.string	"\033[31maccept\033[0m"
 	.text
 	.globl	main
@@ -102,6 +106,15 @@ main:
 	movl	$0, %eax
 	call	init_blocklist@PLT
 	movq	%rax, -368(%rbp)
+	leaq	.LC2(%rip), %rax
+	movq	%rax, %rsi
+	movl	$0, %edi
+	call	is_blocked@PLT
+	movl	%eax, %esi
+	leaq	.LC3(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movq	-384(%rbp), %rax
 	addq	$8, %rax
 	movq	(%rax), %rcx
@@ -134,7 +147,7 @@ main:
 	movl	(%rax), %eax
 	cmpl	$4, %eax
 	je	.L7
-	leaq	.LC2(%rip), %rax
+	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L5

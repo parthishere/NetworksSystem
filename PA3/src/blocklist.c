@@ -10,7 +10,7 @@ blocklist_t* init_blocklist() {
     _blocklist->pattern_count = 0;
     
     // Load patterns from file
-    FILE* file = fopen("./blocklist", "r");
+    FILE* file = fopen(BLOCKLIST_FILE_NAME "r");
     if (!file) return _blocklist;  // No blocklist file
     
     char line[256];
@@ -26,6 +26,7 @@ blocklist_t* init_blocklist() {
     }
     
     fclose(file);
+    
     return _blocklist;
 }
 

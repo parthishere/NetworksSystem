@@ -60,6 +60,7 @@
  * @name Server Configuration Constants
  * @{
  */
+#define BLOCKLIST_FILE_NAME "./blocklist.cfg"
 #define CACHE_ROOT "./cache"
 #define USE_SENDFILE 1          /* Enable zero-copy file transfers */
 #define ROOT_DIR "./www"        /* Web root directory */
