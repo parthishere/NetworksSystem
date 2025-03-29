@@ -15,7 +15,7 @@
 .LC5:
 	.string	"recieved_buf : %s\n\n"
 .LC6:
-	.string	"Hostname %s\n"
+	.string	"Error !"
 .LC7:
 	.string	"lets see if its working"
 	.text
@@ -43,7 +43,7 @@ handle_req:
 	leaq	.LC0(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-.L12:
+.L13:
 	leaq	-31024(%rbp), %rax
 	movq	%rax, -31160(%rbp)
 	movl	$0, -31172(%rbp)
@@ -123,7 +123,7 @@ handle_req:
 	movq	%rsi, %rax
 	andq	%rdx, %rax
 	testq	%rax, %rax
-	je	.L12
+	je	.L13
 	movl	20(%rbp), %eax
 	leaq	-30736(%rbp), %rsi
 	movl	$0, %ecx
@@ -137,7 +137,7 @@ handle_req:
 	movq	%rax, %rdi
 	call	perror@PLT
 	movl	$0, %eax
-	jmp	.L13
+	jmp	.L14
 .L8:
 	leaq	-30736(%rbp), %rax
 	movq	%rax, %rsi
@@ -150,13 +150,18 @@ handle_req:
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	movl	$128, -30752(%rbp)
-	movq	-31112(%rbp), %rax
-	movq	%rax, %rsi
+	leaq	-31136(%rbp), %rdx
+	leaq	-30736(%rbp), %rax
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	parse_request_line_thread_safe@PLT
+	testl	%eax, %eax
+	jns	.L10
 	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
+	call	puts@PLT
+.L10:
+	movl	$128, -30752(%rbp)
 	leaq	.LC7(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
@@ -171,18 +176,18 @@ handle_req:
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	jmp	.L12
+	jmp	.L13
 .L5:
 	movl	20(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$0, %eax
-.L13:
+.L14:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L14
+	je	.L15
 	call	__stack_chk_fail@PLT
-.L14:
+.L15:
 	leave
 	.cfi_def_cfa 7, 8
 	ret

@@ -9,7 +9,7 @@
  */
 #include "parser.h"
 
-#define MAX_LINE_TO_TOKENIZE_IN_HTTP 5
+#define MAX_LINE_TO_TOKENIZE_IN_HTTP 7
 
 
 #define SOME_ERROR -1
@@ -49,6 +49,34 @@ typedef enum states_s {
     connection_parse,
     cache_control_parse,
 }states_t;
+
+
+
+/**
+ * @brief Extracts the path from a full URL in an HTTP request
+ * @param url The full URL (e.g., "http://detectportal.firefox.com/canonical.html")
+ * @return Pointer to newly allocated string containing just the path
+ *         Caller must free this memory
+ */
+char* extract_uri_path(const char* url) {
+    // Skip the protocol (http:// or https://)
+    const char* protocol_end = strstr(url, "://");
+    if (!protocol_end) {
+        return strdup("/"); // No protocol found, assume root path
+    }
+    
+    // Move past the ://
+    const char* host_start = protocol_end + 3;
+    
+    // Find the first slash after the host
+    const char* path_start = strchr(host_start, '/');
+    if (!path_start) {
+        return strdup("/"); // No path found, return root path
+    }
+    
+    // Duplicate the path portion
+    return strdup(path_start);
+}
 
 
 /**
@@ -178,12 +206,13 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     }
     
     // Copy URI
-    header->uri_str = strdup(uri); // Remember to free this later
+    header->uri_str = extract_uri_path(uri);; // Remember to free this later
     if (!header->uri_str)
     {
         header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
+    printf("Path only: %s\n", header->uri_str);
 
     // Get HTTP version
     version = strtok_r(NULL, " ", &token_ctx);
@@ -204,7 +233,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     }
 
 
-    if (strlen(version) > 8){
+    if (strlen(version) > 8 || strlen(version) < 7){
         header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
@@ -241,14 +270,53 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         while (*value == ' ')
             value++;
 
-        if (strcasecmp(key, "Host") == 0)
+        if (strncasecmp(key, "Host", strlen(key)) == 0)
         {
             key = strtok_r(value, ":", &token_ctx);
             value = strtok_r(NULL, " ", &token_ctx);
-            printf("server %s port %s\n", key, value);
-            header->hostname_str = strdup(key); // remember to free host afterwards
-            header->hostname_port_str = strdup(value);
+
+            if(!key){
+                header->parser_error |= BAD_REQ;
+                return SOME_ERROR;
+            }
+
+            char *host_copy = strdup(key);
+            
+            if (!host_copy) {
+                header->parser_error |= BAD_REQ;
+                return SOME_ERROR;
+            }
+
+            char *colon = strchr(host_copy, ':');
+            if (colon) {
+                *colon = '\0';  // Split the string
+                header->hostname_str = strdup(host_copy);
+                header->hostname_port_str = strdup(colon + 1);
+                
+                // Validate both duplications worked
+                if (!header->hostname_str || !header->hostname_port_str) {
+                    free(host_copy);
+                    free(header->hostname_str);  // Safe even if NULL
+                    free(header->hostname_port_str);
+                    header->hostname_str = NULL;
+                    header->hostname_port_str = NULL;
+                    header->parser_error |= BAD_REQ;
+                    return SOME_ERROR;
+                }
+            } else {
+                // No port specified
+                header->hostname_str = strdup(host_copy);
+                if (!header->hostname_str) {
+                    free(host_copy);
+                    header->parser_error |= BAD_REQ;
+                    return SOME_ERROR;
+                }
+                header->hostname_port_str = NULL;
+            }
+            
+            free(host_copy);
         }
+        
         else if (strcasecmp(key, "Connection") == 0)
         {
             header->connection_keep_alive = (strcasecmp(value, "keep-alive") == 0);
