@@ -25,7 +25,7 @@ static char *reqMethod[total_req_methods + 1] = {
     "GET",
     "POST",
     "DELETE",
-    "PATCH"};
+    "PATCH", "", "", ""};
 
 /**
  * @brief Array of supported HTTP protocol versions
@@ -154,6 +154,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     int valid_header = 0;
     for (int i = 0; i < total_req_methods; i++)
     {
+        
         if (strncmp(method, reqMethod[i], strlen(method)) == 0)
         {
             if(strncmp(method, reqMethod[GET], strlen(method)) == 0){
@@ -179,7 +180,6 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         return SOME_ERROR;
     }
 
-    
     // Get URI
     uri = strtok_r(NULL, " ", &token_ctx);
     if (!uri)

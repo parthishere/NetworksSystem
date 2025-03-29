@@ -85,6 +85,8 @@ void *handle_req(sockdetails_t sd)
                 printf("Error !\n");
             }
 
+            // printf("cache lookup -> %d, \n", cache_lookup(NULL, header.hostname_str, header.uri_str, 10));
+
             sockdetails_t sd;
             sd.addr_len = sizeof(sd.client_info);
             // printf("Hostname %s\n", header.hostname_str);

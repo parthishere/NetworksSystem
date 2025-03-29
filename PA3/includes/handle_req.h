@@ -20,6 +20,7 @@
 #include "parser.h"
 #include "builder.h"
 #include "setup.h"
+#include "cache.h"
 
 /**
  * @function handle_req
