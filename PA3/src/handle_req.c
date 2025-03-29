@@ -40,6 +40,7 @@ void *handle_req(sockdetails_t sd)
     HttpHeader_t header;              /* HTTP header structure */
     fd_set readfds;                   /* File descriptor set for select() */
 
+    printf("something came \n");
     while (1)
     {
         /* Initialize select() parameters */
@@ -49,6 +50,7 @@ void *handle_req(sockdetails_t sd)
         /* Set timeout period for idle connections */
         struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
 
+        printf("something came %d \n", sd.client_sock_fd);
         /* Monitor socket for incoming data */
         int select_status = select(sd.client_sock_fd + 1, &readfds, NULL, NULL, &timeout);
         /* Handle select errors */
@@ -75,6 +77,7 @@ void *handle_req(sockdetails_t sd)
                 return NULL;
             }
 
+            printf("recieved_buf : %s\n\n", recieved_buf);
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
             if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
@@ -84,10 +87,14 @@ void *handle_req(sockdetails_t sd)
 
             sockdetails_t sd;
             sd.addr_len = sizeof(sd.client_info);
-            init_socket(&sd, "80", NULL);            
+            printf("Hostname %s\n", header.hostname_str);
+
+            init_socket(&sd, header.hostname_port_str, header.hostname_str);            
+            
+            printf("lets see if its working\n");
 
             /* Generate and send response */
-            build_and_send_header(&header, &sd);
+            // build_and_send_header(&header, &sd);
 
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)

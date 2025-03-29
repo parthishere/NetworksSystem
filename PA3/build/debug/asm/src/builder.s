@@ -996,12 +996,35 @@ build_for_og_server:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	subq	$16, %rsp
-	movl	$0, %edx
-	movl	$1, %esi
-	movl	$2, %edi
-	call	socket@PLT
-	movl	%eax, -4(%rbp)
+	movq	%rdi, -8(%rbp)
+	movq	%rsi, -16(%rbp)
+	cmpq	$0, -8(%rbp)
+	je	.L64
+	movq	-8(%rbp), %rax
+	movl	88(%rax), %eax
+	andl	$1, %eax
+	testl	%eax, %eax
+	jne	.L61
+	call	gettid@PLT
+	movl	%eax, %esi
+	leaq	.LC46(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	movq	-8(%rbp), %rax
+	movl	88(%rax), %eax
+	movl	%eax, %esi
+	movq	-16(%rbp), %rdx
+	movq	-8(%rbp), %rax
+	movq	%rdx, %rcx
+	movl	%esi, %edx
+	leaq	.LC47(%rip), %rsi
+	movq	%rax, %rdi
+	call	send_
+	jmp	.L61
+.L64:
 	nop
+.L61:
 	leave
 	.cfi_def_cfa 7, 8
 	ret

@@ -1,6 +1,6 @@
 SRC_DIR = src
 INCLUDE_DIR = includes
-PORT ?= 8000
+PORT ?= 8080
 TIMEOUT ?= 60
 
 OUTPUT_DIR = ./build/debug

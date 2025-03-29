@@ -157,11 +157,7 @@ void init_socket(sockdetails_t *sd, char *port, char* hostname)
             exit(1);
         }
     }
-    else{
-        // sockdetails_t sd;
-        // sd.sockfd = sockfd;
-        // sd.their_addr = serv_info->ai_addr;
-        // sd.addr_len = sizeof(struct sockaddr);
-    }
+
+    
     
 }

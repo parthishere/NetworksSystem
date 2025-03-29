@@ -77,7 +77,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     
     if (!request || !header || strlen(request) > MAX_SIZE)
     {
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -105,7 +105,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (line_count == 0)
     {
 
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -116,7 +116,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     method = strtok_r(lines[0], " ", &token_ctx);
     if (!method)
     {
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -143,11 +143,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     }
     if (!valid_header)
     {
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
     else if(!valid_method){
-        header->parser_error += METHOD_NOT_ALLOWED;
+        header->parser_error |= METHOD_NOT_ALLOWED;
         return SOME_ERROR;
     }
 
@@ -156,8 +156,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     uri = strtok_r(NULL, " ", &token_ctx);
     if (!uri)
     {
-        
-        header->parser_error += PARSE_ERROR_INVALID_URI;
+        header->parser_error |= PARSE_ERROR_INVALID_URI;
         return SOME_ERROR;
     }
     
@@ -166,7 +165,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (uri_len == 0)
     {
         
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -174,7 +173,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (strstr(uri, "..") != NULL)
     {
         
-        header->parser_error += FORBIDDEN;
+        header->parser_error |= FORBIDDEN;
         return SOME_ERROR;
     }
     
@@ -182,7 +181,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     header->uri_str = strdup(uri); // Remember to free this later
     if (!header->uri_str)
     {
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -190,7 +189,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     version = strtok_r(NULL, " ", &token_ctx);
     if (!version)
     {
-        header->parser_error += BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -200,13 +199,13 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     
     if (strncmp(version, "HTTP/1.", 7) != 0)
     {
-        header->parser_error = BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
 
     if (strlen(version) > 8){
-        header->parser_error = BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
 
@@ -221,7 +220,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         header->http_version_str = http_type[HTTP1_0];
         break;
     default:
-        header->parser_error = VERSION_NOT_SUPPORTED;
+        header->parser_error |= VERSION_NOT_SUPPORTED;
         return SOME_ERROR;
     }
 
@@ -244,7 +243,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
         if (strcasecmp(key, "Host") == 0)
         {
-            header->hostname_str = strdup(value); // remember to free host afterwards
+            key = strtok_r(value, ":", &token_ctx);
+            value = strtok_r(NULL, " ", &token_ctx);
+            printf("server %s port %s\n", key, value);
+            header->hostname_str = strdup(key); // remember to free host afterwards
+            header->hostname_port_str = strdup(value);
         }
         else if (strcasecmp(key, "Connection") == 0)
         {
@@ -260,7 +263,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
-        header->parser_error = BAD_REQ;
+        header->parser_error |= BAD_REQ;
         return SOME_ERROR; // Host is required for HTTP/1.1
     }
 

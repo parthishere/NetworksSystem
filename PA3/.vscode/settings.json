@@ -5,6 +5,8 @@
         "cache.h": "c",
         "common.h": "c",
         "setup.h": "c",
-        "handle_req.h": "c"
+        "handle_req.h": "c",
+        "blocklist.h": "c",
+        "glob.h": "c"
     }
 }

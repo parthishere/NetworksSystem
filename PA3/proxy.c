@@ -5,6 +5,7 @@
 #include "includes/setup.h"
 #include "includes/fork.h"
 #include "includes/cache.h"
+#include "includes/blocklist.h"
 
 static volatile sig_atomic_t shutdown_flag = 0;
 static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -38,6 +39,7 @@ int main(int argc, char *argv[])
     sd.addr_len = sizeof(sd.client_info);
 
     init_cache_table(1);
+    blocklist_t *bl = init_blocklist();
     
     init_socket(&sd, argv[1], NULL);
 

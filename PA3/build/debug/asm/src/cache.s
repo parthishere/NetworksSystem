@@ -113,7 +113,7 @@ hash_index:
 	.size	hash_index, .-hash_index
 	.section	.rodata
 .LC0:
-	.string	"./saved"
+	.string	"./cache"
 .LC1:
 	.string	"Can't open dir %s\n"
 .LC2:
@@ -867,6 +867,70 @@ str2md5:
 	.cfi_endproc
 .LFE326:
 	.size	str2md5, .-str2md5
+	.globl	cleanup_cache
+	.type	cleanup_cache, @function
+cleanup_cache:
+.LFB327:
+	.cfi_startproc
+	endbr64
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	subq	$48, %rsp
+	movq	%rdi, -40(%rbp)
+	movl	$0, -20(%rbp)
+	movl	$0, -20(%rbp)
+	jmp	.L74
+.L76:
+	movq	-40(%rbp), %rax
+	movl	-20(%rbp), %edx
+	movslq	%edx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movq	%rax, -8(%rbp)
+	movq	-8(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movq	-8(%rbp), %rax
+	movq	4144(%rax), %rax
+	testq	%rax, %rax
+	je	.L75
+	movq	-16(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movq	-8(%rbp), %rax
+	movq	4144(%rax), %rax
+	movq	%rax, -8(%rbp)
+.L75:
+	movq	-16(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-40(%rbp), %rax
+	movl	-20(%rbp), %edx
+	movslq	%edx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	addl	$1, -20(%rbp)
+.L74:
+	cmpl	$1023, -20(%rbp)
+	jle	.L76
+	movq	-40(%rbp), %rax
+	addq	$8192, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_destroy@PLT
+	movq	-40(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	nop
+	leave
+	.cfi_def_cfa 7, 8
+	ret
+	.cfi_endproc
+.LFE327:
+	.size	cleanup_cache, .-cleanup_cache
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

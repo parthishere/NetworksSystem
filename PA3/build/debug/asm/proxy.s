@@ -99,6 +99,9 @@ main:
 	movl	$128, -48(%rbp)
 	movl	$1, %edi
 	call	init_cache_table@PLT
+	movl	$0, %eax
+	call	init_blocklist@PLT
+	movq	%rax, -368(%rbp)
 	movq	-384(%rbp), %rax
 	addq	$8, %rax
 	movq	(%rax), %rcx

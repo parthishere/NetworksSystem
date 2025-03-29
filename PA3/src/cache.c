@@ -286,3 +286,23 @@ char *str2md5(char *str, int length)
     }
     return out;
 }
+
+void cleanup_cache(cache_table_t *table){
+    cache_entry_t *entry;
+    int i = 0;
+    for (i = 0; i<HASH_TABLE_SIZE; i++){
+        entry = table->buckets[i];
+        cache_entry_t *prev = entry;
+        if(entry->next){
+            free(prev);
+            prev = entry;
+            entry = entry->next;
+        }
+        free(prev);
+        free(table->buckets[i]);
+    }
+    pthread_mutex_destroy(&table->lock);
+
+    free(table);
+
+}

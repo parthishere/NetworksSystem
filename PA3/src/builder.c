@@ -404,7 +404,24 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
     }
 }
 
-void build_for_og_server(){
-    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+void build_for_og_server(HttpHeader_t *request_header, sockdetails_t *sd){
+    char *filename, *final_filename, *return_request;
+    int return_size;
+
+    if (request_header == NULL)
+        return;
+
+    
+    if((request_header->parser_error & OK) == 0){
+        printf(RED "[-] (%d) SOMETHING WENT WRONG\n" RESET, gettid());
+        send_(request_header, "SOMETHING WENT WRONG", request_header->parser_error, sd);
+        return;
+    }
+    
+
+   
+
+       
+
     
 }

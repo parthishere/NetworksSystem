@@ -24,5 +24,5 @@ test:
 # Run server
 .PHONY: run
 run: server
-	cd $(SERVER_DIR) && $(SERVER_BIN) 8000; \
+	cd $(SERVER_DIR) && $(SERVER_BIN) 7000; \
 	

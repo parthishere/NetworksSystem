@@ -53,13 +53,14 @@
 /* File Transfer Optimization */
 #include <sys/sendfile.h>     /* Zero-copy file transfer */
 
+#include <glob.h>
 
 
 /**
  * @name Server Configuration Constants
  * @{
  */
-#define CACHE_ROOT "./saved"
+#define CACHE_ROOT "./cache"
 #define USE_SENDFILE 1          /* Enable zero-copy file transfers */
 #define ROOT_DIR "./www"        /* Web root directory */
 #define MAX_SIZE (1024 * 30)    /* Maximum buffer size (30KB) */
@@ -186,6 +187,7 @@ typedef struct req_header_s
 
     char *uri_str;                     /* Request URI */
     char *hostname_str;                /* Host header value */
+    char *hostname_port_str;
 
     contentType_t content_type;        /* Response content type enum */
     char *content_type_str;            /* Content type string */
