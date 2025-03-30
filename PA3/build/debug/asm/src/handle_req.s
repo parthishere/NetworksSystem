@@ -205,6 +205,11 @@ handle_req:
 	andq	%rdx, %rax
 	testq	%rax, %rax
 	je	.L32
+	leaq	-30736(%rbp), %rax
+	movl	$30720, %edx
+	movl	$0, %esi
+	movq	%rax, %rdi
+	call	memset@PLT
 	movl	20(%rbp), %eax
 	leaq	-30736(%rbp), %rsi
 	movl	$0, %ecx
@@ -531,6 +536,11 @@ handle_req:
 	je	.L8
 	leaq	-31024(%rbp), %rax
 	movl	$112, %edx
+	movl	$0, %esi
+	movq	%rax, %rdi
+	call	memset@PLT
+	leaq	-30736(%rbp), %rax
+	movl	$30720, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT

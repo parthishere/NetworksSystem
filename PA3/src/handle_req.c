@@ -84,6 +84,7 @@ void *handle_req(sockdetails_t sd)
         /* Process incoming data when available */
         if (FD_ISSET(sd.client_sock_fd, &readfds))
         {
+            memset(recieved_buf, 0, sizeof(recieved_buf));
             /* Read incoming request with error checking */
             if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
             {
@@ -196,7 +197,7 @@ void *handle_req(sockdetails_t sd)
                 close(file_fd);
                 
                 
-
+                
                 
                 /* Handle header construction errors */
                 
@@ -205,32 +206,35 @@ void *handle_req(sockdetails_t sd)
                 // GET / HTTP/1.0\r\nHost: localhost:8080\r\n\r\n
                 // FD_ZERO(&readfds);
                 // select_status = select(0, &readfds, NULL, NULL, &timeout);
-
+                
                 
             }
             else{
                 // file_fd
-
+                
+                sendfile(sd.client_sock_fd, file_fd, NULL, )
                 // create another thread;
             }
-
+            
            
             // printf("Hostname %s\n", header.hostname_str);
-
+            
             //         
             
             printf("lets see if its working\n");
-
+            
             /* Generate and send response */
             // build_and_send_header(&header, &sd);
-
+            
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)
             {
+
                 break;
             }
             /* Clear header for next request */
             memset(&header, 0, sizeof(header));
+            memset(recieved_buf, 0, sizeof(recieved_buf));
         }
     }
 
