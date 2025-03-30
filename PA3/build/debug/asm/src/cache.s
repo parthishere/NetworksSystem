@@ -772,6 +772,10 @@ cache_lookup:
 	movl	-84(%rbp), %edx
 	movq	(%rax,%rdx,8), %rax
 	movq	%rax, -64(%rbp)
+	movq	-72(%rbp), %rax
+	addq	$8192, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_lock@PLT
 	movq	-64(%rbp), %rdx
 	movl	-84(%rbp), %eax
 	movl	%eax, %esi

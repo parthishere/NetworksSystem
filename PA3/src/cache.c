@@ -242,6 +242,7 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
     char *hashstr = str2md5(str, strlen(str));
     unsigned int index = hash_index(hashstr);
     cache_entry_t *entry = table_to_use->buckets[index];
+    pthread_mutex_lock(&table_to_use->lock);
     printf("Index %d, index bucket %p", index, entry);
     while (entry)
     {

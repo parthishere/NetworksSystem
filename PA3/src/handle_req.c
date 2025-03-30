@@ -105,7 +105,7 @@ void *handle_req(sockdetails_t sd)
             }
 
             int file_fd;
-            if(file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60) < 0){
+            if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0){
                 // failed create a new socket!
 
                 struct addrinfo hints, *temp, *servinfo;
@@ -212,25 +212,25 @@ void *handle_req(sockdetails_t sd)
             else{
                 // file_fd
                 
-                char send_buffer[RECIEVE_SIZE];
-                printf(RED"Sent form the fucking cache \n\r"RESET);
+                
+                printf(RED"Sent form the fucking cache %d\n\r"RESET, file_fd);
                 // int size = lseek(file_fd, 0, SEEK_END);
                 // lseek(file_fd, 0, SEEK_SET);
                 
-                // while(1){
-                    memset(send_buffer, 0, sizeof(send_buffer));
-                    numbytes = read(file_fd, send_buffer, sizeof(send_buffer));
+                while(1){
+                    memset(recieved_buf, 0, sizeof(recieved_buf));
+                    numbytes = read(file_fd, recieved_buf, sizeof(recieved_buf));
                     if(numbytes <= 0) {
                         break;
                     }
 
-                    printf("%s", send_buffer);
-                    if(send(sd.client_sock_fd, send_buffer, numbytes, 0) <0){
+                    printf("%s", recieved_buf);
+                    if(send(sd.client_sock_fd, recieved_buf, numbytes, 0) <0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sd.client_sock_fd);
                         break;
                     }
-                // }
+                }
 
                 close(file_fd);
                 // create another thread;
