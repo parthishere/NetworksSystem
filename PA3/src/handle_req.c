@@ -211,8 +211,11 @@ void *handle_req(sockdetails_t sd)
             }
             else{
                 // file_fd
-                
-                sendfile(sd.client_sock_fd, file_fd, NULL, )
+                printf("Sent form the fucking cache \n\r");
+                int size = lseek(file_fd, 0, SEEK_END);
+                lseek(file_fd, 0, SEEK_SET);
+                sendfile(sd.client_sock_fd, file_fd, NULL, size);
+                close(file_fd);
                 // create another thread;
             }
             
