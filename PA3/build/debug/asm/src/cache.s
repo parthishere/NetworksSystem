@@ -222,6 +222,14 @@ init_cache:
 	.align 8
 .LC4:
 	.string	"something you will need to tweak"
+.LC5:
+	.string	"hash string %s\n\r"
+.LC6:
+	.string	"filenaem %s \n"
+.LC7:
+	.string	"open"
+.LC8:
+	.string	"stat"
 	.text
 	.globl	cache_add_new
 	.type	cache_add_new, @function
@@ -310,8 +318,8 @@ cache_add_new:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	snprintf@PLT
-	movl	%eax, -228(%rbp)
-	movl	-228(%rbp), %eax
+	movl	%eax, -236(%rbp)
+	movl	-236(%rbp), %eax
 	movslq	%eax, %rbx
 	movq	-200(%rbp), %rax
 	movq	%rax, %rdi
@@ -331,78 +339,121 @@ cache_add_new:
 	movq	%rax, %rdi
 	call	str2md5
 	movq	%rax, -192(%rbp)
+	movq	-192(%rbp), %rax
+	movq	%rax, %rsi
+	leaq	.LC5(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	movq	-192(%rbp), %rdx
+	leaq	-224(%rbp), %rax
+	movq	%rdx, %rcx
+	leaq	.LC0(%rip), %rdx
+	leaq	.LC2(%rip), %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	asprintf@PLT
+	movq	-224(%rbp), %rax
+	movq	%rax, %rsi
+	leaq	.LC6(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movl	$4152, %edi
 	call	malloc@PLT
 	movq	%rax, -184(%rbp)
 	cmpq	$0, -184(%rbp)
-	je	.L30
-	movq	-184(%rbp), %rax
-	movl	$502, %esi
+	jne	.L29
+	movl	$-1, %eax
+	jmp	.L30
+.L29:
+	movq	-224(%rbp), %rax
+	movl	$438, %edx
+	movl	$66, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	open@PLT
-	movl	%eax, -224(%rbp)
-	cmpl	$0, -224(%rbp)
+	movl	%eax, -232(%rbp)
+	cmpl	$0, -232(%rbp)
 	jns	.L31
+	leaq	.LC7(%rip), %rax
+	movq	%rax, %rdi
+	call	perror@PLT
 	movq	-184(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+	movl	$-1, %eax
 	jmp	.L30
 .L31:
 	movq	-184(%rbp), %rax
+	movq	-192(%rbp), %rcx
+	movl	$32, %edx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	call	strncpy@PLT
+	movq	-184(%rbp), %rax
+	movb	$0, 32(%rax)
+	movq	-184(%rbp), %rax
+	leaq	33(%rax), %rcx
+	movq	-264(%rbp), %rax
+	movl	$4095, %edx
+	movq	%rax, %rsi
+	movq	%rcx, %rdi
+	call	strncpy@PLT
+	movq	-184(%rbp), %rax
+	movb	$0, 4128(%rax)
+	movq	-224(%rbp), %rax
 	leaq	-176(%rbp), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	stat@PLT
 	testl	%eax, %eax
 	je	.L32
-	movq	-184(%rbp), %rax
+	leaq	.LC8(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
-.L32:
+	movl	-232(%rbp), %eax
+	movl	%eax, %edi
+	call	close@PLT
 	movq	-184(%rbp), %rax
-	movq	-192(%rbp), %rdx
-	movq	%rdx, %rsi
 	movq	%rax, %rdi
-	call	strcpy@PLT
-	movq	-184(%rbp), %rax
-	leaq	33(%rax), %rdx
-	movq	-264(%rbp), %rax
-	movq	%rax, %rsi
-	movq	%rdx, %rdi
-	call	strcpy@PLT
-	movq	-72(%rbp), %rax
+	call	free@PLT
+	movq	-224(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movl	$-1, %eax
+	jmp	.L30
+.L32:
+	movq	-88(%rbp), %rax
 	movq	%rax, %rdx
 	movq	-184(%rbp), %rax
 	movq	%rdx, 4136(%rax)
-	movq	-184(%rbp), %rax
-	movq	$0, 4144(%rax)
 	movq	-192(%rbp), %rax
 	movq	%rax, %rdi
 	call	hash_index
-	movl	%eax, -220(%rbp)
+	movl	%eax, -228(%rbp)
 	movq	-216(%rbp), %rax
 	addq	$8192, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT
 	movq	-216(%rbp), %rax
-	movl	-220(%rbp), %edx
+	movl	-228(%rbp), %edx
 	movq	(%rax,%rdx,8), %rax
 	testq	%rax, %rax
 	jne	.L33
 	movq	-216(%rbp), %rax
-	movl	-220(%rbp), %edx
+	movl	-228(%rbp), %edx
 	movq	-184(%rbp), %rcx
 	movq	%rcx, (%rax,%rdx,8)
 	jmp	.L34
 .L33:
 	movq	-216(%rbp), %rax
-	movl	-220(%rbp), %edx
+	movl	-228(%rbp), %edx
 	movq	(%rax,%rdx,8), %rdx
 	movq	-184(%rbp), %rax
 	movq	%rdx, 4144(%rax)
 	movq	-216(%rbp), %rax
-	movl	-220(%rbp), %edx
+	movl	-228(%rbp), %edx
 	movq	-184(%rbp), %rcx
 	movq	%rcx, (%rax,%rdx,8)
 .L34:
@@ -410,13 +461,11 @@ cache_add_new:
 	addq	$8192, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_unlock@PLT
-	movq	%r12, %rsp
-	jmp	.L22
+	movl	-232(%rbp), %eax
 .L30:
 	movq	%r12, %rsp
-.L22:
-	movq	-24(%rbp), %rax
-	subq	%fs:40, %rax
+	movq	-24(%rbp), %rdx
+	subq	%fs:40, %rdx
 	je	.L36
 	call	__stack_chk_fail@PLT
 .L36:
@@ -430,9 +479,9 @@ cache_add_new:
 .LFE323:
 	.size	cache_add_new, .-cache_add_new
 	.section	.rodata
-.LC5:
+.LC9:
 	.string	"cannot open file"
-.LC6:
+.LC10:
 	.string	"cannot stat"
 	.text
 	.globl	cache_add_existing
@@ -482,7 +531,7 @@ cache_add_existing:
 	movq	%rax, %rcx
 	movl	$16, %edx
 	movl	$1, %esi
-	leaq	.LC5(%rip), %rax
+	leaq	.LC9(%rip), %rax
 	movq	%rax, %rdi
 	call	fwrite@PLT
 	jmp	.L37
@@ -498,7 +547,7 @@ cache_add_existing:
 	movq	%rax, %rcx
 	movl	$11, %edx
 	movl	$1, %esi
-	leaq	.LC6(%rip), %rax
+	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	call	fwrite@PLT
 .L43:
@@ -568,7 +617,7 @@ cache_add_existing:
 .LFE324:
 	.size	cache_add_existing, .-cache_add_existing
 	.section	.rodata
-.LC7:
+.LC11:
 	.string	"file opening from cache"
 	.text
 	.globl	cache_lookup
@@ -716,7 +765,7 @@ cache_lookup:
 	movl	%eax, -84(%rbp)
 	cmpl	$0, -84(%rbp)
 	jns	.L59
-	leaq	.LC7(%rip), %rax
+	leaq	.LC11(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 .L59:
@@ -765,7 +814,7 @@ cache_lookup:
 .LFE325:
 	.size	cache_lookup, .-cache_lookup
 	.section	.rodata
-.LC8:
+.LC12:
 	.string	"%02x"
 	.text
 	.globl	str2md5
@@ -845,7 +894,7 @@ str2md5:
 	movq	-40(%rbp), %rdx
 	leaq	(%rcx,%rdx), %rdi
 	movl	%eax, %ecx
-	leaq	.LC8(%rip), %rax
+	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdx
 	movl	$32, %esi
 	movl	$0, %eax

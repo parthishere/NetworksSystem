@@ -56,6 +56,7 @@ void *handle_req(sockdetails_t sd)
     printf("something came \n");
     while (1)
     {
+        memset(recieved_buf, 0, sizeof(recieved_buf));
         /* Initialize select() parameters */
         FD_ZERO(&readfds);
         FD_SET(sd.client_sock_fd, &readfds);
@@ -107,12 +108,14 @@ void *handle_req(sockdetails_t sd)
                 // failed create a new socket!
 
                 struct addrinfo hints, *temp, *servinfo;
-                int sockfd, client_sock_fd;
+                int sockfd;
+                int numbytes;
 
                 memset(&hints, 0, sizeof(hints));
                 hints.ai_family = AF_UNSPEC;
                 hints.ai_socktype = SOCK_STREAM; // for TCP
                 printf("hostname str %s, hostname port %s\n", header.hostname_str, header.hostname_port_str);
+                if(header.hostname_port_str == NULL) header.hostname_port_str = "80";
                 if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &servinfo)) < 0)
                 {
                     fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
@@ -135,54 +138,75 @@ void *handle_req(sockdetails_t sd)
                     }
                     printf(GRN "[+] socket call successful\n" RESET);
                     
-                    if((client_sock_fd = connect(sockfd, temp->ai_addr, temp->ai_addrlen)) < 0){
+                    if((connect(sockfd, temp->ai_addr, temp->ai_addrlen)) < 0){
                         fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
                         close(sockfd);
                         continue;
                     }
-
+                    printf(GRN "[+] connect call successful\n" RESET);
+                    
                     break;
                 }
 
-                freeaddrinfo(servinfo); 
-
+                
                 if(temp == NULL){
                     fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
-                    close(sd.sockfd);
+                    close(sockfd);
                     exit(EXIT_FAILURE);
                 }
-
+                
                 char s[INET6_ADDRSTRLEN];
                 inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
                 printf("client: connecting to %s\n", s);
-
+                
+                freeaddrinfo(servinfo); 
                 
 
                 const char *connection_type = header.connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
                 printf("waiting for send ?? \n");
-                char *send_req = "GET  /index.html HTTP/1.1\r\nHost: localhost:8080";
-                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0){
+                char *send_req;
+                asprintf(&send_req,  "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", header.uri_str, header.hostname_str);
+                if(send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0){
                     fprintf(stderr, RED "[-] send failed for server %d \n" RESET, errno);
-                    close(sd.sockfd);
-                    close(sd.client_sock_fd);
+                    close(sockfd);
                     exit(EXIT_FAILURE);
                 }
                 printf("Sent\n\r");
 
-                char recv_buf[RECIEVE_SIZE];
-                if(recv(sd.client_sock_fd, recv_buf, sizeof(recv_buf), 0) < 0){
-                    fprintf(stderr, RED "[-] recv failed for server \n" RESET);
-                    close(sd.sockfd);
-                    close(sd.client_sock_fd);
-                    exit(EXIT_FAILURE);
+                int file_fd = cache_add_new(NULL, header.hostname_str, header.uri_str);
+
+                while(1){
+                    memset(recieved_buf, 0, sizeof(recieved_buf));
+                    if((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0){
+                        fprintf(stderr, RED "[-] recv failed for server \n" RESET);
+                        close(sockfd);
+                        //exit(EXIT_FAILURE);
+                        break;
+                    }
+                    write(file_fd, recieved_buf, numbytes);
+                    printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
+                    
+                    if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
+                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                        close(sockfd);
+                        // exit(EXIT_FAILURE);
+                    }
                 }
+                
+                close(file_fd);
+                
+                
 
-                printf("recv buf %s\n", recv_buf);
+                
                 /* Handle header construction errors */
-               
+                
+                
+                
+                // GET / HTTP/1.0\r\nHost: localhost:8080\r\n\r\n
+                // FD_ZERO(&readfds);
+                // select_status = select(0, &readfds, NULL, NULL, &timeout);
 
-
-
+                
             }
             else{
                 // file_fd

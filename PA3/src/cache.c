@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
 // Global cache table
 static cache_table_t *global_table;
 
@@ -70,20 +69,21 @@ int init_cache(cache_table_t *table)
         return -1;
     }
 
-    char filename_qfd[264] ;
+    char filename_qfd[264];
 
     while ((dp = readdir(dfd)) != NULL)
     {
-        struct stat stbuf; 
-        sprintf( filename_qfd , "%s/%s",dir,dp->d_name) ;
-        if(stat(dp->d_name, &stbuf) == -1){
+        struct stat stbuf;
+        sprintf(filename_qfd, "%s/%s", dir, dp->d_name);
+        if (stat(dp->d_name, &stbuf) == -1)
+        {
             fprintf(stderr, "cannot stat %s\n", dp->d_name);
             continue;
         }
 
         cache_add_existing(NULL, dp->d_name);
 
-        if ( ( stbuf.st_mode & S_IFMT ) == S_IFDIR )
+        if ((stbuf.st_mode & S_IFMT) == S_IFDIR)
         {
             continue;
             // Skip directories
@@ -91,7 +91,7 @@ int init_cache(cache_table_t *table)
     }
 }
 
-void cache_add_new(cache_table_t *table, const char *url, const char *filepath)
+int cache_add_new(cache_table_t *table, const char *url, const char *filepath)
 {
     cache_table_t *table_to_use = NULL;
     struct stat st;
@@ -111,26 +111,38 @@ void cache_add_new(cache_table_t *table, const char *url, const char *filepath)
         printf("something you will need to tweak\n");
 
     char *hashstr = str2md5(str, strlen(str));
+    printf("hash string %s\n\r", hashstr);
+    char *filename; // remember to free it later
+    asprintf(&filename, "%s/%s", CACHE_ROOT, hashstr);
+    printf("filenaem %s \n", filename);
 
     cache_entry_t *entry = malloc(sizeof(cache_entry_t));
     if (!entry)
-        return;
-    int file_fd = open(entry->url_hash, O_CREAT | 0666);
+        return -1;
+    int file_fd = open(filename, O_CREAT | O_RDWR, 0666);
     if (file_fd < 0)
     {
+        perror("open");
         free(entry);
-        return;
-    }
-    if (stat(entry->url_hash, &st) != 0)
-    {
-        perror(entry->url_hash);
+        return -1;
     }
 
-    strcpy(entry->url_hash, hashstr);
-    strcpy(entry->filepath, filepath);
+    strncpy(entry->url_hash, hashstr, HASH_STR_LENGTH - 1);
+    entry->url_hash[HASH_STR_LENGTH - 1] = '\0';
+    strncpy(entry->filepath, filepath, PATH_MAX - 1);
+    entry->filepath[PATH_MAX - 1] = '\0';
 
-    entry->timestamp = st.st_ctime; // timestamp
-    entry->next = NULL;
+
+    if (stat(filename, &st) != 0)
+    { // Use filename, not entry->url_hash
+        perror("stat");
+        close(file_fd);
+        free(entry);
+        free(filename);
+        return -1;
+    }
+
+    entry->timestamp = st.st_mtime; // Use mtime instead of ctime
 
     unsigned int index = hash_index(hashstr);
 
@@ -147,9 +159,9 @@ void cache_add_new(cache_table_t *table, const char *url, const char *filepath)
     }
 
     pthread_mutex_unlock(&table_to_use->lock);
+
+    return file_fd;
 }
-
-
 
 void cache_add_existing(cache_table_t *table, const char *hash)
 {
@@ -255,14 +267,13 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
 
 char *str2md5(char *str, int length)
 {
-    
+
     EVP_MD_CTX *context = EVP_MD_CTX_new();
     const EVP_MD *md = EVP_md5();
     EVP_DigestInit_ex(context, md, NULL);
     int md_len;
     char *out = (char *)malloc(33);
     unsigned char digest[16];
-
 
     while (length > 0)
     {
@@ -287,13 +298,16 @@ char *str2md5(char *str, int length)
     return out;
 }
 
-void cleanup_cache(cache_table_t *table){
+void cleanup_cache(cache_table_t *table)
+{
     cache_entry_t *entry;
     int i = 0;
-    for (i = 0; i<HASH_TABLE_SIZE; i++){
+    for (i = 0; i < HASH_TABLE_SIZE; i++)
+    {
         entry = table->buckets[i];
         cache_entry_t *prev = entry;
-        if(entry->next){
+        if (entry->next)
+        {
             free(prev);
             prev = entry;
             entry = entry->next;
@@ -304,5 +318,4 @@ void cleanup_cache(cache_table_t *table){
     pthread_mutex_destroy(&table->lock);
 
     free(table);
-
 }

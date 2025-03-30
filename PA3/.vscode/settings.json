@@ -8,6 +8,18 @@
         "handle_req.h": "c",
         "blocklist.h": "c",
         "glob.h": "c",
-        "prefetch.h": "c"
+        "prefetch.h": "c",
+        "features.h": "c",
+        "errno.h": "c",
+        "*.tcc": "c",
+        "charconv": "c",
+        "optional": "c",
+        "format": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

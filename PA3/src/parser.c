@@ -280,42 +280,25 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
                 return SOME_ERROR;
             }
 
-            char *host_copy = strdup(key);
+            header->hostname_str = strdup(key);
             
-            if (!host_copy) {
+            if (!header->hostname_str) {
                 header->parser_error |= BAD_REQ;
                 return SOME_ERROR;
             }
 
-            printf("Key %s Value %s host copy %s\n", key, value, host_copy);
+            printf("Key %s Value %s\n", key, value);
 
-            char *port = strdup(value);
-            if (port) {
-                header->hostname_str = strdup(host_copy);
-                header->hostname_port_str = strdup(port);
-                
-                // Validate both duplications worked
-                if (!header->hostname_str || !header->hostname_port_str) {
-                    free(host_copy);
-                    free(header->hostname_str);  // Safe even if NULL
-                    free(header->hostname_port_str);
-                    header->hostname_str = NULL;
-                    header->hostname_port_str = NULL;
-                    header->parser_error |= BAD_REQ;
-                    return SOME_ERROR;
-                }
-            } else {
-                // No port specified
-                header->hostname_str = strdup(host_copy);
-                if (!header->hostname_str) {
-                    free(host_copy);
-                    header->parser_error |= BAD_REQ;
-                    return SOME_ERROR;
-                }
-                header->hostname_port_str = NULL;
+           
+            if(value){
+                header->hostname_port_str = strdup(value);
             }
             
-            free(host_copy);
+            if (!header->hostname_port_str) {
+                header->hostname_port_str = NULL;
+                
+            }
+          
         }
         
         else if (strcasecmp(key, "Connection") == 0)

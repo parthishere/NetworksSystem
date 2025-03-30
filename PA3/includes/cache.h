@@ -24,7 +24,7 @@ typedef struct
 cache_table_t *init_cache_table(int global);
 unsigned int hash_index(const char *hash_str);
 int init_cache(cache_table_t *table);
-void cache_add_new(cache_table_t *table, const char *url, const char *filepath);
+int cache_add_new(cache_table_t *table, const char *url, const char *filepath);
 void cache_add_existing(cache_table_t *table, const char *hash);
 int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t timeout);
 char *str2md5(char *str, int length);
