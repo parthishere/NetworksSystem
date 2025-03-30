@@ -22,6 +22,7 @@
 #include "setup.h"
 #include "cache.h"
 #include "blocklist.h"
+#include "prefetch.h"
 
 /**
  * @function handle_req

@@ -44,6 +44,10 @@ init_prefetcher:
 	.section	.rodata
 .LC0:
 	.string	"href=[\"']([^\"']+)[\"']"
+.LC1:
+	.string	"#"
+.LC2:
+	.string	"Links %s \n"
 	.text
 	.globl	extract_links
 	.type	extract_links, @function
@@ -76,12 +80,12 @@ extract_links:
 	testl	%eax, %eax
 	je	.L5
 	movl	$0, %eax
-	jmp	.L9
+	jmp	.L10
 .L5:
 	movq	-152(%rbp), %rax
 	movq	%rax, -120(%rbp)
 	jmp	.L7
-.L8:
+.L9:
 	movl	-24(%rbp), %eax
 	movl	%eax, -140(%rbp)
 	movl	-20(%rbp), %eax
@@ -128,11 +132,25 @@ extract_links:
 	addq	%rax, %rdx
 	movq	-104(%rbp), %rax
 	movq	%rax, (%rdx)
+	movq	-104(%rbp), %rax
+	leaq	.LC1(%rip), %rdx
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	strcmp@PLT
+	testl	%eax, %eax
+	je	.L8
+	movq	-104(%rbp), %rax
+	movq	%rax, %rsi
+	leaq	.LC2(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movq	-160(%rbp), %rax
 	movl	(%rax), %eax
 	leal	1(%rax), %edx
 	movq	-160(%rbp), %rax
 	movl	%edx, (%rax)
+.L8:
 	movl	-28(%rbp), %eax
 	cltq
 	addq	%rax, -120(%rbp)
@@ -146,17 +164,17 @@ extract_links:
 	movq	%rax, %rdi
 	call	regexec@PLT
 	testl	%eax, %eax
-	je	.L8
+	je	.L9
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	regfree@PLT
 	movq	-128(%rbp), %rax
-.L9:
+.L10:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L10
+	je	.L11
 	call	__stack_chk_fail@PLT
-.L10:
+.L11:
 	leave
 	.cfi_def_cfa 7, 8
 	ret

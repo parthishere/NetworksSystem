@@ -39,11 +39,18 @@ char** extract_links(const char* html_content, int* link_count) {
         char* link = malloc(length + 1);
         strncpy(link, cursor + start, length);
         link[length] = '\0';
+        // if(strncmp(link, "#", strlen(link)) == 0) continue;
+        //if(strncmp(link, "", strlen(link)) == 0) continue;
+       
         
         // Add to links array
         links = realloc(links, (*link_count + 1) * sizeof(char*));
         links[*link_count] = link;
-        (*link_count)++;
+        if(strncmp(link, "#", sizeof(link)) != 0){
+            printf("Links %s \n", link);
+            (*link_count)++;
+        }
+            
         
         // Move cursor past this match
         cursor += matches[0].rm_eo;

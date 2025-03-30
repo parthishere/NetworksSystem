@@ -28,6 +28,10 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 
+void *prefetcher_thread(void *args){
+    return NULL;
+}
+
 
 /**
  * @function handle_req
@@ -186,6 +190,8 @@ void *handle_req(sockdetails_t sd)
                     }
                     write(file_fd, recieved_buf, numbytes);
                     // printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
+                    int link_count;
+                    char **links = extract_links(recieved_buf, &link_count);
                     
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
