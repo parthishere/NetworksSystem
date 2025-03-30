@@ -119,32 +119,28 @@ extract_uri_path:
 .LC20:
 	.string	"uri str null "
 .LC21:
-	.string	"Path only: %s\n"
-.LC22:
 	.string	"no version found"
-.LC23:
+.LC22:
 	.string	"HTTP/1."
-.LC24:
+.LC23:
 	.string	"wrong thing found"
-.LC25:
+.LC24:
 	.string	"somthing wrong in version"
-.LC26:
+.LC25:
 	.string	":"
-.LC27:
+.LC26:
 	.string	"Host"
-.LC28:
+.LC27:
 	.string	"no host"
-.LC29:
-	.string	"Key %s Value %s\n"
-.LC30:
+.LC28:
 	.string	"Connection"
-.LC31:
+.LC29:
 	.string	"keep-alive"
-.LC32:
+.LC30:
 	.string	"Close"
-.LC33:
+.LC31:
 	.string	"Cache-Control"
-.LC34:
+.LC32:
 	.string	"no host in 1.1"
 	.text
 	.globl	parse_request_line_thread_safe
@@ -484,13 +480,6 @@ parse_request_line_thread_safe:
 	movl	$-1, %eax
 	jmp	.L8
 .L29:
-	movq	-224(%rbp), %rax
-	movq	16(%rax), %rax
-	movq	%rax, %rsi
-	leaq	.LC21(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
 	leaq	-176(%rbp), %rax
 	movq	%rax, %rdx
 	leaq	.LC12(%rip), %rax
@@ -500,7 +489,7 @@ parse_request_line_thread_safe:
 	movq	%rax, -120(%rbp)
 	cmpq	$0, -120(%rbp)
 	jne	.L30
-	leaq	.LC22(%rip), %rax
+	leaq	.LC21(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -514,13 +503,13 @@ parse_request_line_thread_safe:
 .L30:
 	movq	-120(%rbp), %rax
 	movl	$7, %edx
-	leaq	.LC23(%rip), %rcx
+	leaq	.LC22(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
 	testl	%eax, %eax
 	je	.L31
-	leaq	.LC24(%rip), %rax
+	leaq	.LC23(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -543,7 +532,7 @@ parse_request_line_thread_safe:
 	cmpq	$6, %rax
 	ja	.L33
 .L32:
-	leaq	.LC25(%rip), %rax
+	leaq	.LC24(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -577,7 +566,7 @@ parse_request_line_thread_safe:
 	movq	%rdx, 8(%rax)
 	jmp	.L36
 .L35:
-	leaq	.LC25(%rip), %rax
+	leaq	.LC24(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -600,7 +589,7 @@ parse_request_line_thread_safe:
 	cltq
 	movq	-96(%rbp,%rax,8), %rax
 	leaq	-176(%rbp), %rdx
-	leaq	.LC26(%rip), %rcx
+	leaq	.LC25(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strtok_r@PLT
@@ -629,7 +618,7 @@ parse_request_line_thread_safe:
 	call	strlen@PLT
 	movq	%rax, %rdx
 	movq	-104(%rbp), %rax
-	leaq	.LC27(%rip), %rcx
+	leaq	.LC26(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncasecmp@PLT
@@ -637,7 +626,7 @@ parse_request_line_thread_safe:
 	jne	.L43
 	leaq	-176(%rbp), %rdx
 	movq	-160(%rbp), %rax
-	leaq	.LC26(%rip), %rcx
+	leaq	.LC25(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strtok_r@PLT
@@ -651,7 +640,7 @@ parse_request_line_thread_safe:
 	movq	%rax, -160(%rbp)
 	cmpq	$0, -104(%rbp)
 	jne	.L44
-	leaq	.LC28(%rip), %rax
+	leaq	.LC27(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -673,7 +662,7 @@ parse_request_line_thread_safe:
 	movq	24(%rax), %rax
 	testq	%rax, %rax
 	jne	.L45
-	leaq	.LC28(%rip), %rax
+	leaq	.LC27(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax
@@ -685,13 +674,6 @@ parse_request_line_thread_safe:
 	movl	$-1, %eax
 	jmp	.L8
 .L45:
-	movq	-160(%rbp), %rdx
-	movq	-104(%rbp), %rax
-	movq	%rax, %rsi
-	leaq	.LC29(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
 	cmpq	$0, -160(%rbp)
 	je	.L46
 	movq	-160(%rbp), %rax
@@ -710,14 +692,14 @@ parse_request_line_thread_safe:
 	jmp	.L40
 .L43:
 	movq	-104(%rbp), %rax
-	leaq	.LC30(%rip), %rdx
+	leaq	.LC28(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
 	testl	%eax, %eax
 	jne	.L47
 	movq	-160(%rbp), %rax
-	leaq	.LC31(%rip), %rdx
+	leaq	.LC29(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
@@ -727,7 +709,7 @@ parse_request_line_thread_safe:
 	movq	-224(%rbp), %rax
 	movl	%edx, 88(%rax)
 	movq	-160(%rbp), %rax
-	leaq	.LC32(%rip), %rdx
+	leaq	.LC30(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
@@ -739,7 +721,7 @@ parse_request_line_thread_safe:
 	jmp	.L40
 .L47:
 	movq	-104(%rbp), %rax
-	leaq	.LC33(%rip), %rdx
+	leaq	.LC31(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
@@ -760,7 +742,7 @@ parse_request_line_thread_safe:
 	movq	24(%rax), %rax
 	testq	%rax, %rax
 	jne	.L49
-	leaq	.LC34(%rip), %rax
+	leaq	.LC32(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-224(%rbp), %rax

@@ -105,7 +105,7 @@ void *handle_req(sockdetails_t sd)
             }
 
             int file_fd;
-            if(file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 10) < 0){
+            if(file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60) < 0){
                 // failed create a new socket!
 
                 struct addrinfo hints, *temp, *servinfo;
@@ -185,7 +185,7 @@ void *handle_req(sockdetails_t sd)
                         break;
                     }
                     write(file_fd, recieved_buf, numbytes);
-                    printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
+                    // printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
                     
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
@@ -211,10 +211,27 @@ void *handle_req(sockdetails_t sd)
             }
             else{
                 // file_fd
-                printf("Sent form the fucking cache \n\r");
-                int size = lseek(file_fd, 0, SEEK_END);
-                lseek(file_fd, 0, SEEK_SET);
-                sendfile(sd.client_sock_fd, file_fd, NULL, size);
+                
+                char send_buffer[RECIEVE_SIZE];
+                printf(RED"Sent form the fucking cache \n\r"RESET);
+                // int size = lseek(file_fd, 0, SEEK_END);
+                // lseek(file_fd, 0, SEEK_SET);
+                
+                // while(1){
+                    memset(send_buffer, 0, sizeof(send_buffer));
+                    numbytes = read(file_fd, send_buffer, sizeof(send_buffer));
+                    if(numbytes <= 0) {
+                        break;
+                    }
+
+                    printf("%s", send_buffer);
+                    if(send(sd.client_sock_fd, send_buffer, numbytes, 0) <0){
+                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                        close(sd.client_sock_fd);
+                        break;
+                    }
+                // }
+
                 close(file_fd);
                 // create another thread;
             }

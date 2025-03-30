@@ -75,19 +75,21 @@ int init_cache(cache_table_t *table)
     {
         struct stat stbuf;
         sprintf(filename_qfd, "%s/%s", dir, dp->d_name);
-        if (stat(dp->d_name, &stbuf) == -1)
+        printf("Stating filename %s\n", filename_qfd);
+        if (stat(filename_qfd, &stbuf) == -1)
         {
             fprintf(stderr, "cannot stat %s\n", dp->d_name);
             continue;
         }
-
-        cache_add_existing(NULL, dp->d_name);
-
         if ((stbuf.st_mode & S_IFMT) == S_IFDIR)
         {
             continue;
             // Skip directories
         }
+
+        cache_add_existing(NULL, dp->d_name, filename_qfd);
+
+        
     }
 }
 
@@ -163,7 +165,7 @@ int cache_add_new(cache_table_t *table, const char *url, const char *filepath)
     return file_fd;
 }
 
-void cache_add_existing(cache_table_t *table, const char *hash)
+void cache_add_existing(cache_table_t *table, const char *hash, char *filename)
 {
     cache_table_t *table_to_use = NULL;
     struct stat st;
@@ -180,7 +182,11 @@ void cache_add_existing(cache_table_t *table, const char *hash)
     cache_entry_t *entry = malloc(sizeof(cache_entry_t));
     if (!entry)
         return;
-    int file_fd = open(entry->url_hash, O_RDONLY | 0666);
+    
+    char *final_filename;
+    asprintf(&final_filename, "%s/%s", CACHE_ROOT, filename);
+    printf("Add existing filename %s \n\r", filename);
+    int file_fd = open(final_filename, O_RDONLY | 0666);
     if (file_fd < 0)
     {
         free(entry);
@@ -235,8 +241,8 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
 
     char *hashstr = str2md5(str, strlen(str));
     unsigned int index = hash_index(hashstr);
-
     cache_entry_t *entry = table_to_use->buckets[index];
+    printf("Index %d, index bucket %p", index, entry);
     while (entry)
     {
         if (strcmp(entry->url_hash, hashstr) == 0)
@@ -244,7 +250,9 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             time_t current_time = time(NULL);
             if (current_time - entry->timestamp <= timeout)
             {
-                file_fd = open(entry->url_hash, O_RDONLY);
+                char *entire_filename ;
+                asprintf(&entire_filename, "%s/%s", CACHE_ROOT, entry->url_hash);
+                file_fd = open(entire_filename, O_RDONLY);
                 if (file_fd < 0)
                 {
                     perror("file opening from cache");
@@ -254,6 +262,7 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             }
             else
             {
+                printf(RED"timeout ??? \n\r"RESET);
                 pthread_mutex_unlock(&table_to_use->lock);
                 remove(entry->url_hash);
                 return file_fd;

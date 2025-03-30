@@ -221,7 +221,6 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         header->parser_error |= BAD_REQ;
         return SOME_ERROR;
     }
-    printf("Path only: %s\n", header->uri_str);
     
     // Get HTTP version
     version = strtok_r(NULL, " ", &token_ctx);
@@ -268,7 +267,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     
     header->current_state = host_parse;
     header->connection_close = 1;
-    
+
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
     {
@@ -302,8 +301,6 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
                 header->parser_error |= BAD_REQ;
                 return SOME_ERROR;
             }
-            
-            printf("Key %s Value %s\n", key, value);
             
             
             if(value){
