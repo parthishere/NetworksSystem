@@ -620,8 +620,6 @@ parse_request_line_thread_safe:
 	movq	%rax, -104(%rbp)
 	cmpq	$0, -104(%rbp)
 	je	.L46
-	movq	-104(%rbp), %rax
-	movb	$0, (%rax)
 	movq	-112(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT

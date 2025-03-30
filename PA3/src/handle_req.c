@@ -16,6 +16,19 @@
 
 #include "handle_req.h"
 
+
+
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+
+
 /**
  * @function handle_req
  * @brief Main HTTP request handler function
@@ -92,24 +105,22 @@ void *handle_req(sockdetails_t sd)
             int file_fd;
             if(file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 10) < 0){
                 // failed create a new socket!
-                sockdetails_t sd;
-                sd.addr_len = sizeof(sd.client_info);
 
-                struct addrinfo hints, *temp;
+                struct addrinfo hints, *temp, *servinfo;
+                int sockfd, client_sock_fd;
 
                 memset(&hints, 0, sizeof(hints));
                 hints.ai_family = AF_UNSPEC;
                 hints.ai_socktype = SOCK_STREAM; // for TCP
-                
-                if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &sd.server_info)) < 0)
+                printf("hostname str %s, hostname port %s\n", header.hostname_str, header.hostname_port_str);
+                if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &servinfo)) < 0)
                 {
                     fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
                     exit(EXIT_FAILURE);                                                   // exit if there is an error
                 }
                 printf(GRN "[+] getaddrinfo call successful\n" RESET);
-                printf(" Host name %s, port name %s\n\r", header.hostname_str, header.hostname_port_str);
 
-                for (temp = sd.server_info; temp != NULL; temp = temp->ai_next)
+                for (temp = servinfo; temp != NULL; temp = temp->ai_next)
                 {
                     /*
                     int socket(int domain, int type, int protocol);
@@ -117,17 +128,23 @@ void *handle_req(sockdetails_t sd)
                     we need type to be UDP
                     and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
                     */
-                    if ((sd.sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+                    if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
                     {
                         perror(RED "server: socket");
                         continue;
                     }
                     printf(GRN "[+] socket call successful\n" RESET);
                     
-                    // if()
+                    if((client_sock_fd = connect(sockfd, temp->ai_addr, temp->ai_addrlen)) < 0){
+                        fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
+                        close(sockfd);
+                        continue;
+                    }
 
                     break;
                 }
+
+                freeaddrinfo(servinfo); 
 
                 if(temp == NULL){
                     fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
@@ -135,11 +152,11 @@ void *handle_req(sockdetails_t sd)
                     exit(EXIT_FAILURE);
                 }
 
-                if((sd.client_sock_fd = connect(sd.sockfd, sd.server_info->ai_addr, sd.server_info->ai_addrlen)) < 0){
-                    fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
-                    close(sd.sockfd);
-                    exit(EXIT_FAILURE);
-                }
+                char s[INET6_ADDRSTRLEN];
+                inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
+                printf("client: connecting to %s\n", s);
+
+                
 
                 const char *connection_type = header.connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
                 printf("waiting for send ?? \n");
