@@ -1,10 +1,13 @@
-HTTP/1.0 200 OK
-Server: nginx
-Content-Length: 8
-Via: 1.1 google
-Date: Sat, 29 Mar 2025 11:59:39 GMT
-Age: 79225
-Content-Type: text/plain
-Cache-Control: public,must-revalidate,max-age=0,s-maxage=3600
+HTTP/1.0 307 Temporary Redirect
+Cache-Control: no-cache
+Location: https://na.network-auth.com/splash/jRq37bag.5.527/?mac=2C%3A3F%3A0B%3A58%3AA5%3ADC&real_ip=10.216.197.112&client_ip=10.119.10.123&client_mac=84:1B:77:FA:4F:33&vap=5&a=91032ad7bbcb6cf72875e8e8207dcfba80173f7c&b=649132&auth_version=5&key=8b5d1f7d8cf24a73b673cd2a61263f6b7f4a151a&acl_ver=P2091104V2&continue_url=http%3A%2F%2Fdetectportal.firefox.com%2Fsuccess.txt%3Fipv4
+Content-Type: text/html
+Pragma: no-cache
+Expires: 0
+Continue: close
+X-Frame-Options: deny
+Content-Length: 436
+Connection: close
 
-success
+<html>
+<body>You are being <a href='https://na.network-auth.com/splash/jRq37bag.5.527/?mac=2C%3A3F%3A0B%3A58%3AA5%3ADC&real_ip=10.216.197.112&client_ip=10.119.10.123&client_mac=84:1B:77:FA:4F:33&vap=5&a=91032ad7bbcb6cf72875e8e8207dcfba80173f7c&b=649132&auth_version=5&key=8b5d1f7d8cf24a73b673cd2a61263f6b7f4a151a&acl_ver=P2091104V2&continue_url=http%3A%2F%2Fdetectportal.firefox.com%2Fsuccess.txt%3Fipv4'>redirected</a>.</body></html>

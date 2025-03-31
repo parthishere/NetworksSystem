@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
     init_cache(NULL);
     blocklist_t *bl = init_blocklist();
     printf("%d is blocked \n", is_blocked(NULL, "maps.google.com"));
+    printf("%d is blocked \n", is_blocked(NULL, "httpforever.com"));
     
     init_socket(&sd, argv[1]);
 

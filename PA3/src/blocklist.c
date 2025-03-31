@@ -33,7 +33,7 @@ blocklist_t* init_blocklist() {
 
 // Check if a hostname is blocked
 int is_blocked(blocklist_t* blocklist, const char* hostname) {
-    if (!blocklist) blocklist = _blocklist;
+    if (blocklist == NULL) blocklist = _blocklist;
     
     for (int i = 0; i < blocklist->pattern_count; i++) {
         if (glob_match(blocklist->patterns[i], hostname)) {

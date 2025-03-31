@@ -104,7 +104,14 @@ void *handle_req(sockdetails_t sd)
                 printf("Error !\n");
                 break;
             }
+            
             if(is_blocked(NULL, header.hostname_str)){
+                char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rBlocked";
+                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                    fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                    close(sd.client_sock_fd);
+                    break;
+                }
                 break;
             }
 
@@ -180,25 +187,32 @@ void *handle_req(sockdetails_t sd)
 
                 int file_fd = cache_add_new(NULL, header.hostname_str, header.uri_str);
 
+                int link_count, total_links;
+                char **links;
+
                 while(1){
                     memset(recieved_buf, 0, sizeof(recieved_buf));
                     if((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0){
                         fprintf(stderr, RED "[-] recv failed for server \n" RESET);
-                        close(sockfd);
+                        close(sockfd);           
                         //exit(EXIT_FAILURE);
                         break;
                     }
                     write(file_fd, recieved_buf, numbytes);
                     // printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
-                    int link_count;
-                    char **links = extract_links(recieved_buf, &link_count);
-                    
+                    links = extract_links(recieved_buf, &link_count);
+                    total_links += link_count;
+                    links += link_count;
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sockfd);
                         // exit(EXIT_FAILURE);
                     }
                 }
+
+                pthread_t *thread;
+
+                // pthread_create(thread, NULL, )
                 
                 close(file_fd);
                 

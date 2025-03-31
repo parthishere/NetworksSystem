@@ -48,6 +48,8 @@ sig_handler:
 .LC3:
 	.string	"%d is blocked \n"
 .LC4:
+	.string	"httpforever.com"
+.LC5:
 	.string	"\033[31maccept\033[0m"
 	.text
 	.globl	main
@@ -117,6 +119,15 @@ main:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
+	leaq	.LC4(%rip), %rax
+	movq	%rax, %rsi
+	movl	$0, %edi
+	call	is_blocked@PLT
+	movl	%eax, %esi
+	leaq	.LC3(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movq	-384(%rbp), %rax
 	addq	$8, %rax
 	movq	(%rax), %rdx
@@ -148,7 +159,7 @@ main:
 	movl	(%rax), %eax
 	cmpl	$4, %eax
 	je	.L7
-	leaq	.LC4(%rip), %rax
+	leaq	.LC5(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L5
