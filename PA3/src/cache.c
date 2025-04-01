@@ -247,8 +247,6 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             time_t current_time;
             time(&current_time);
 
-            double diff_seconds = difftime(current_time, entry->timestamp);
-            printf("Diff time %f\n\r", diff_seconds);
             char *entire_filename ;
             asprintf(&entire_filename, "%s/%s", CACHE_ROOT, entry->url_hash);
 
@@ -266,9 +264,8 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             else
             {
                 
-                printf(RED"timeout by %ld %ld %ld %ld??? \n\r"RESET, current_time, entry->timestamp,current_time - entry->timestamp,  entry->timestamp - current_time);
                 pthread_mutex_unlock(&table_to_use->lock);
-                // remove(entire_filename);
+                remove(entire_filename);
                 return file_fd;
             }
         }
