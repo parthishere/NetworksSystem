@@ -28,7 +28,7 @@ ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
 TARGET = proxy
 
 
-all: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) run
+all: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) 
 
 run: $(OUTPUT_DIR)/$(TARGET)
 	@$(OUTPUT_DIR)/$(TARGET) $(PORT) $(TIMEOUT)

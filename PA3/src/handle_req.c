@@ -16,41 +16,259 @@
 
 #include "handle_req.h"
 
-
-
 void *get_in_addr(struct sockaddr *sa)
 {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+    if (sa->sa_family == AF_INET)
+    {
+        return &(((struct sockaddr_in *)sa)->sin_addr);
     }
 
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+int is_dynamic_content(const char *url, char *recieved_buf)
+{
 
-int is_dynamic_content(const char *url, char *recieved_buf) {
-
-    if (strstr(recieved_buf, "Cache-Control: no-cache") || 
+    if (strstr(recieved_buf, "Cache-Control: no-cache") ||
         strstr(recieved_buf, "Cache-Control: no-store") ||
-        strstr(recieved_buf, "Pragma: no-cache")) {
-        return 1;  // Server explicitly asked not to cache
+        strstr(recieved_buf, "Pragma: no-cache"))
+    {
+        return 1; // Server explicitly asked not to cache
     }
 
     const char *content_type = strstr(recieved_buf, "Content-Type:");
-    if (content_type) {
+    if (content_type)
+    {
         if (strstr(content_type, "application/json") ||
             strstr(content_type, "text/javascript") ||
-            strstr(content_type, "application/xml")) {
-            return 1;  // Likely dynamic content
+            strstr(content_type, "application/xml"))
+        {
+            return 1; // Likely dynamic content
         }
     }
 
     // Check for query parameters (anything after ?)
-    if (strchr(url, '?') != NULL) {
-        return 1;  // URL contains query parameters
+    if (strchr(url, '?') != NULL)
+    {
+        return 1; // URL contains query parameters
     }
-    
-    return 0;  // No query parameters found
+
+    return 0; // No query parameters found
+}
+
+void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
+{
+    struct addrinfo hints, *temp, *servinfo;
+    int sockfd;
+    int numbytes;
+    char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
+    int total_links = 0;
+    char **all_links = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM; // for TCP
+    if(header->hostname_port_str == NULL) header->hostname_port_str = "80";
+    if (strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0))
+    {
+        char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
+        if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
+        {
+            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+            close(sd->client_sock_fd);
+        }
+        // goto cleanup;
+    }
+
+    if ((getaddrinfo(header->hostname_str, header->hostname_port_str, &hints, &servinfo)) < 0)
+    {
+        fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
+        char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
+        if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
+        {
+            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+            close(sd->client_sock_fd);
+        }
+        // goto cleanup;
+    }
+
+    for (temp = servinfo; temp != NULL; temp = temp->ai_next)
+    {
+        if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+        {
+            perror(RED "server: socket");
+            continue;
+        }
+
+        if ((connect(sockfd, temp->ai_addr, temp->ai_addrlen)) < 0)
+        {
+            fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
+            close(sockfd);
+            continue;
+        }
+
+        break;
+    }
+
+    if (temp == NULL)
+    {
+        fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    char s[INET6_ADDRSTRLEN];
+    inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
+    printf("[+] client: connecting to %s\n", s);
+
+    freeaddrinfo(servinfo);
+
+    const char *connection_type = header->connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
+    char *send_req;
+    // free
+    asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header->uri_str, header->hostname_str, header->extra_header);
+
+    if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
+    {
+        fprintf(stderr, RED "[-] send failed for server %d \n" RESET, errno);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    int file_fd = cache_add_new(NULL, header->hostname_str, header->uri_str);
+
+    free(send_req);
+
+    while (1)
+    {
+        memset(recieved_buf, 0, sizeof(recieved_buf));
+        if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0)
+        {
+            fprintf(stderr, RED "[-] recv failed for server \n" RESET);
+            close(sockfd);
+            // exit(EXIT_FAILURE);
+            break;
+        }
+        write(file_fd, recieved_buf, numbytes);
+
+        int link_count = 0;
+        char **chunk_links = extract_links(recieved_buf, &link_count);
+
+        if (link_count > 0 && chunk_links != NULL)
+        {
+            // Resize the all_links array to accommodate new links
+            all_links = realloc(all_links, (total_links + link_count) * sizeof(char *));
+
+            // Copy pointers to the new links
+            for (int i = 0; i < link_count; i++)
+            {
+                all_links[total_links + i] = chunk_links[i];
+                printf("all links[total_links] %s\n", all_links[total_links + i]);
+            }
+
+            // Update total count
+            total_links += link_count;
+
+            // Don't free chunk_links itself as we're keeping the pointers,
+            // but free the array
+            free(chunk_links);
+        }
+
+        if (send(sd->client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0)
+        {
+            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+            close(sockfd);
+            // exit(EXIT_FAILURE);
+        }
+    }
+
+    if (all_links != NULL)
+    {
+
+        pthread_t prefetch_thread;
+        prefetcher_t *data = malloc(sizeof(prefetcher_t));
+        data->links = malloc(sizeof(char *) * total_links);
+        for (int i = 0; i < total_links; i++)
+        {
+            data->links[i] = strdup(all_links[i]);
+        }
+        data->linknum = total_links;
+        data->base_url = strdup(header->uri_str);
+
+        pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
+        pthread_detach(prefetch_thread);
+    }
+
+    free(all_links);
+
+    close(file_fd);
+}
+
+void if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd)
+{
+    char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
+    char **all_links = NULL;
+    int total_links = 0;
+    printf(YEL "Sent from cache \n\r" RESET);
+    while (1)
+    {
+        memset(recieved_buf, 0, sizeof(recieved_buf));
+        int numbytes = read(file_fd, recieved_buf, sizeof(recieved_buf));
+        if (numbytes <= 0)
+        {
+            break;
+        }
+
+        int link_count = 0;
+        char **chunk_links = extract_links(recieved_buf, &link_count);
+
+        if (link_count > 0 && chunk_links != NULL)
+        {
+            // Resize the all_links array to accommodate new links
+            all_links = realloc(all_links, (total_links + link_count) * sizeof(char *));
+
+            // Copy pointers to the new links
+            for (int i = 0; i < link_count; i++)
+            {
+                all_links[total_links + i] = strdup(chunk_links[i]);
+            }
+
+            // Update total count
+            total_links += link_count;
+
+            // Don't free chunk_links itself as we're keeping the pointers,
+            // but free the array
+            free(chunk_links);
+        }
+
+        if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
+        {
+            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+            close(sd->client_sock_fd);
+            break;
+        }
+    }
+
+    if (all_links != NULL)
+    {
+        pthread_t prefetch_thread;
+        // prefetcher_t pf = {.base_url=header.uri_str, .linknum=total_links, .links=all_links};
+        prefetcher_t *data = malloc(sizeof(prefetcher_t));
+        data->links = malloc(sizeof(char *) * total_links);
+        for (int i = 0; i < total_links; i++)
+        {
+            data->links[i] = strdup(all_links[i]);
+        }
+        data->linknum = total_links;
+        data->base_url = strdup(header->uri_str);
+
+        pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
+        pthread_detach(prefetch_thread);
+        
+    }
+
+    free(all_links);
+    close(file_fd);
 }
 
 /**
@@ -118,228 +336,40 @@ void *handle_req(sockdetails_t sd)
             // printf("recieved_buf : %s\n\n", recieved_buf);
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
-            if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
+            if (parse_request_line_thread_safe(recieved_buf, &header) < 0)
+            {
                 // error
+                // we need to send different error according with different error
                 char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rSomthing went wrong";
-                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
+                {
                     fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                    close(sd.client_sock_fd);
-                    break;
                 }
                 goto cleanup;
             }
-            
-            if(is_blocked(NULL, header.hostname_str)){
+
+            if (is_blocked(NULL, header.hostname_str))
+            {
                 char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
-                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
+                {
                     fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                    close(sd.client_sock_fd);
-                    break;
-                }
-                break;
-            }
-
-
-            printf("is dynamic content %d\n\r", is_dynamic_content(header.uri_str, recieved_buf));
-
-            char **all_links = NULL;
-            int total_links = 0;
-
-            if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0 || is_dynamic_content(header.uri_str, recieved_buf)){
-                // failed create a new socket!
-
-                struct addrinfo hints, *temp, *servinfo;
-                int sockfd;
-                int numbytes;
-
-                memset(&hints, 0, sizeof(hints));
-                hints.ai_family = AF_UNSPEC;
-                hints.ai_socktype = SOCK_STREAM; // for TCP
-                if(header.hostname_port_str == NULL) header.hostname_port_str = "80";
-                if(strcmp(header.hostname_port_str, "8080") == 0 && (strcmp(header.hostname_str, "localhost") == 0 || strcmp(header.hostname_str, "127.0.1.1") == 0)) {
-                    char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
-                    if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
-                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                        close(sd.client_sock_fd);
-                        break;
-                    }
                     goto cleanup;
                 }
-                
-                if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &servinfo)) < 0)
-                {
-                    fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
-                    char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
-                    if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
-                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                        close(sd.client_sock_fd);
-                        break;
-                    }     
-                    goto cleanup;                                              
-                }
-                printf(GRN "[+] getaddrinfo call successful\n" RESET);
-
-                for (temp = servinfo; temp != NULL; temp = temp->ai_next)
-                {
-                    if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-                    {
-                        perror(RED "server: socket");
-                        continue;
-                    }
-                    printf(GRN "[+] socket call successful\n" RESET);
-                    
-                    if((connect(sockfd, temp->ai_addr, temp->ai_addrlen)) < 0){
-                        fprintf(stderr, RED "[-] connect failed for server %d\n" RESET, errno);
-                        close(sockfd);
-                        continue;
-                    }
-                    printf(GRN "[+] connect call successful\n" RESET);
-                    
-                    break;
-                }
-
-                
-                if(temp == NULL){
-                    fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
-                    close(sockfd);
-                    exit(EXIT_FAILURE);
-                }
-                
-                char s[INET6_ADDRSTRLEN];
-                inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-                printf("client: connecting to %s\n", s);
-                
-                freeaddrinfo(servinfo); 
-                
-
-                const char *connection_type = header.connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
-                printf("waiting for send ?? \n");
-                char *send_req;
-                asprintf(&send_req,  "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header.uri_str, header.hostname_str, header.extra_header);
-                
-                printf("header -> %s", send_req);
-
-                if(send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0){
-                    fprintf(stderr, RED "[-] send failed for server %d \n" RESET, errno);
-                    close(sockfd);
-                    exit(EXIT_FAILURE);
-                }
-
-                int file_fd = cache_add_new(NULL, header.hostname_str, header.uri_str);
-
-                
-
-                while(1){
-                    memset(recieved_buf, 0, sizeof(recieved_buf));
-                    if((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0){
-                        fprintf(stderr, RED "[-] recv failed for server \n" RESET);
-                        close(sockfd);           
-                        //exit(EXIT_FAILURE);
-                        break;
-                    }
-                    write(file_fd, recieved_buf, numbytes);
-                    // printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
-                    
-                    int link_count = 0;
-                    char **chunk_links = extract_links(recieved_buf, &link_count);
-
-                    if (link_count > 0 && chunk_links != NULL) {
-                        // Resize the all_links array to accommodate new links
-                        all_links = realloc(all_links, (total_links + link_count) * sizeof(char*));
-                        
-                        // Copy pointers to the new links
-                        for (int i = 0; i < link_count; i++) {
-                            all_links[total_links + i] = chunk_links[i]; 
-                            printf("all links[total_links] %s\n", all_links[total_links + i]);
-                        }
-                        
-                        // Update total count
-                        total_links += link_count;
-                        
-                        // Don't free chunk_links itself as we're keeping the pointers,
-                        // but free the array
-                        free(chunk_links);
-                    }
-
-                    if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
-                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                        close(sockfd);
-                        // exit(EXIT_FAILURE);
-                    }
-                }
-                
-                close(file_fd);
-                
-            }
-            else{
-                printf(YEL"Sent from cache \n\r"RESET);
-                while(1){
-                    memset(recieved_buf, 0, sizeof(recieved_buf));
-                    numbytes = read(file_fd, recieved_buf, sizeof(recieved_buf));
-                    if(numbytes <= 0) {
-                        break;
-                    }
-
-                    int link_count = 0;
-                    char **chunk_links = extract_links(recieved_buf, &link_count);
-
-                    if (link_count > 0 && chunk_links != NULL) {
-                        // Resize the all_links array to accommodate new links
-                        all_links = realloc(all_links, (total_links + link_count) * sizeof(char*));
-                        
-                        // Copy pointers to the new links
-                        for (int i = 0; i < link_count; i++) {
-                            all_links[total_links + i] = strdup(chunk_links[i]); 
-                        }
-                        
-                        // Update total count
-                        total_links += link_count;
-                        
-                        // Don't free chunk_links itself as we're keeping the pointers,
-                        // but free the array
-                        free(chunk_links);
-                    }
-
-
-                    if(send(sd.client_sock_fd, recieved_buf, numbytes, 0) <0){
-                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-                        close(sd.client_sock_fd);
-                        break;
-                    }
-                }
-
-                
-                
-                // create another thread;
-            }
-            pthread_t prefetch_thread;
-            // prefetcher_t pf = {.base_url=header.uri_str, .linknum=total_links, .links=all_links};
-            prefetcher_t *data = malloc(sizeof(prefetcher_t));
-            data->links = malloc(sizeof(char*) * total_links);
-            for (int i = 0; i < total_links; i++) {
-                data->links[i] = strdup(all_links[i]);
-            }
-            data->linknum = total_links;
-            data->base_url = strdup(header.uri_str);
-
-            // for (int i = 0; i < link_count; i++) {
-            //     data->links[i] = strdup(links[i]);
-            // }
-
-            if(all_links != NULL){
-                pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
-                pthread_detach(prefetch_thread);
+                goto cleanup;
             }
 
-            free(all_links);
+            if ((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0 || is_dynamic_content(header.uri_str, recieved_buf))
+            {
+                if_not_cached(&header, &sd);
+            }
+            else
+            {
+                if_cached(&header, &sd, file_fd);
+            }
+
             close(file_fd);
-            
-           
-            // printf("Hostname %s\n", header.hostname_str);
-            
-            /* Generate and send response */
-            // build_and_send_header(&header, &sd);
-            
+
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)
             {
