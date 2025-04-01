@@ -328,6 +328,8 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         else{
             if(strstr(line, ":") == NULL){
                 printf(": not found !");
+                header->parser_error |= BAD_REQ;
+                return SOME_ERROR;
             }
             
             if(header->extra_header == NULL){

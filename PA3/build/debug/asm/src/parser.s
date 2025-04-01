@@ -747,6 +747,14 @@ parse_request_line_thread_safe:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
+	movq	-240(%rbp), %rax
+	movl	96(%rax), %eax
+	orl	$2, %eax
+	movl	%eax, %edx
+	movq	-240(%rbp), %rax
+	movl	%edx, 96(%rax)
+	movl	$-1, %eax
+	jmp	.L8
 .L49:
 	movq	-240(%rbp), %rax
 	movq	112(%rax), %rax
