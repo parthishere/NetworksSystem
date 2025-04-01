@@ -310,22 +310,33 @@ char *str2md5(char *str, int length)
 
 void cleanup_cache(cache_table_t *table)
 {
+    cache_table_t *table_to_use = NULL;
+    int file_fd = -1;
+    if (table == NULL)
+    {
+        table_to_use = global_table;
+    }
+    else
+    {
+        table_to_use = table;
+    }
+
     cache_entry_t *entry;
     int i = 0;
     for (i = 0; i < HASH_TABLE_SIZE; i++)
     {
-        entry = table->buckets[i];
+        entry = table_to_use->buckets[i];
         cache_entry_t *prev = entry;
-        if (entry->next)
+        if (entry && entry->next)
         {
-            free(prev);
+            if(prev) free(prev);
             prev = entry;
             entry = entry->next;
         }
-        free(prev);
-        free(table->buckets[i]);
+        // free(prev);
+        free(table_to_use->buckets[i]);
     }
-    pthread_mutex_destroy(&table->lock);
+    pthread_mutex_destroy(&table_to_use->lock);
 
-    free(table);
+    free(table_to_use);
 }

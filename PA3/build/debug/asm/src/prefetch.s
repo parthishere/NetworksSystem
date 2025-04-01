@@ -17,8 +17,6 @@
 	.align 8
 .LC6:
 	.string	"\033[35m[+] Relative URL: host=%s, path=%s\n\033[0m"
-.LC7:
-	.string	"80"
 	.text
 	.globl	prefetch_thread_func
 	.type	prefetch_thread_func, @function
@@ -31,28 +29,28 @@ prefetch_thread_func:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	subq	$208, %rsp
-	movq	%rdi, -200(%rbp)
+	subq	$384, %rsp
+	movq	%rdi, -376(%rbp)
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-	movq	-200(%rbp), %rax
-	movq	%rax, -168(%rbp)
-	movl	$0, -188(%rbp)
+	movq	-376(%rbp), %rax
+	movq	%rax, -344(%rbp)
+	movl	$0, -364(%rbp)
 	jmp	.L2
 .L15:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	testq	%rax, %rax
 	je	.L23
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -60,14 +58,24 @@ prefetch_thread_func:
 	movzbl	(%rax), %eax
 	testb	%al, %al
 	je	.L23
-	leaq	-128(%rbp), %rax
+	leaq	-304(%rbp), %rax
 	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	movq	-168(%rbp), %rax
+	leaq	-176(%rbp), %rax
+	movl	$168, %edx
+	movl	$0, %esi
+	movq	%rax, %rdi
+	call	memset@PLT
+	movq	-344(%rbp), %rax
+	movq	24(%rax), %rax
+	movl	156(%rax), %eax
+	movl	%eax, -20(%rbp)
+	movl	$-1, -172(%rbp)
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -79,9 +87,9 @@ prefetch_thread_func:
 	call	strncmp@PLT
 	testl	%eax, %eax
 	je	.L6
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -94,65 +102,65 @@ prefetch_thread_func:
 	testl	%eax, %eax
 	jne	.L7
 .L6:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
-	movq	%rax, -160(%rbp)
-	movq	-160(%rbp), %rax
+	movq	%rax, -336(%rbp)
+	movq	-336(%rbp), %rax
 	leaq	.LC2(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strstr@PLT
-	movq	%rax, -152(%rbp)
-	cmpq	$0, -152(%rbp)
+	movq	%rax, -328(%rbp)
+	cmpq	$0, -328(%rbp)
 	jne	.L8
-	movq	-160(%rbp), %rax
+	movq	-336(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L14
 .L8:
-	movq	-152(%rbp), %rax
+	movq	-328(%rbp), %rax
 	addq	$3, %rax
-	movq	%rax, -144(%rbp)
-	movq	-144(%rbp), %rax
+	movq	%rax, -320(%rbp)
+	movq	-320(%rbp), %rax
 	movl	$47, %esi
 	movq	%rax, %rdi
 	call	strchr@PLT
-	movq	%rax, -136(%rbp)
-	cmpq	$0, -136(%rbp)
+	movq	%rax, -312(%rbp)
+	cmpq	$0, -312(%rbp)
 	jne	.L9
 	leaq	.LC3(%rip), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -112(%rbp)
-	movq	-144(%rbp), %rax
+	movq	%rax, -288(%rbp)
+	movq	-320(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -104(%rbp)
+	movq	%rax, -280(%rbp)
 	jmp	.L10
 .L9:
-	movq	-136(%rbp), %rax
+	movq	-312(%rbp), %rax
 	movb	$0, (%rax)
-	movq	-144(%rbp), %rax
+	movq	-320(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -104(%rbp)
-	movq	-136(%rbp), %rax
+	movq	%rax, -280(%rbp)
+	movq	-312(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -112(%rbp)
-	movq	-136(%rbp), %rax
+	movq	%rax, -288(%rbp)
+	movq	-312(%rbp), %rax
 	movb	$47, (%rax)
 .L10:
-	movq	-160(%rbp), %rax
+	movq	-336(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	movq	-112(%rbp), %rdx
-	movq	-104(%rbp), %rax
+	movq	-288(%rbp), %rdx
+	movq	-280(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
@@ -160,14 +168,14 @@ prefetch_thread_func:
 	call	printf@PLT
 	jmp	.L11
 .L7:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -104(%rbp)
-	movq	-168(%rbp), %rax
+	movq	%rax, -280(%rbp)
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -175,93 +183,89 @@ prefetch_thread_func:
 	movzbl	(%rax), %eax
 	cmpb	$47, %al
 	jne	.L12
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -112(%rbp)
+	movq	%rax, -288(%rbp)
 	jmp	.L13
 .L12:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-188(%rbp), %edx
+	movl	-364(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rdx
-	leaq	-176(%rbp), %rax
+	leaq	-352(%rbp), %rax
 	leaq	.LC5(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	asprintf@PLT
-	movq	-176(%rbp), %rax
-	movq	%rax, -112(%rbp)
+	movq	-352(%rbp), %rax
+	movq	%rax, -288(%rbp)
 .L13:
-	movq	-112(%rbp), %rdx
-	movq	-104(%rbp), %rax
+	movq	-288(%rbp), %rdx
+	movq	-280(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 .L11:
-	leaq	.LC7(%rip), %rax
-	movq	%rax, %rdi
-	call	strdup@PLT
-	movq	%rax, -96(%rbp)
-	movq	-112(%rbp), %rax
+	movq	$0, -272(%rbp)
+	movq	-288(%rbp), %rax
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	is_dynamic_content@PLT
-	movl	%eax, -180(%rbp)
-	movq	-168(%rbp), %rax
-	movq	24(%rax), %rsi
-	movl	-180(%rbp), %edx
-	leaq	-128(%rbp), %rax
+	movl	%eax, -356(%rbp)
+	movl	-356(%rbp), %edx
+	leaq	-176(%rbp), %rsi
+	leaq	-304(%rbp), %rax
 	movl	$0, %r8d
 	movl	$0, %ecx
 	movq	%rax, %rdi
 	call	check_and_send_from_cache@PLT
-	movq	-112(%rbp), %rax
+	movq	-288(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	movq	-104(%rbp), %rax
+	movq	-280(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	movq	-96(%rbp), %rax
+	movq	-272(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L14
 .L23:
 	nop
 .L14:
-	addl	$1, -188(%rbp)
+	addl	$1, -364(%rbp)
 .L2:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movl	(%rax), %eax
-	cmpl	%eax, -188(%rbp)
+	cmpl	%eax, -364(%rbp)
 	jl	.L15
-	movl	$0, -184(%rbp)
+	movl	$0, -360(%rbp)
 	jmp	.L16
 .L18:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-184(%rbp), %edx
+	movl	-360(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	testq	%rax, %rax
 	jne	.L17
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-184(%rbp), %edx
+	movl	-360(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -269,31 +273,31 @@ prefetch_thread_func:
 	movq	%rax, %rdi
 	call	free@PLT
 .L17:
-	addl	$1, -184(%rbp)
+	addl	$1, -360(%rbp)
 .L16:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movl	(%rax), %eax
-	cmpl	%eax, -184(%rbp)
+	cmpl	%eax, -360(%rbp)
 	jl	.L18
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
 	testq	%rax, %rax
 	jne	.L19
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	8(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L19:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	16(%rax), %rax
 	testq	%rax, %rax
 	jne	.L20
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L20:
-	movq	-168(%rbp), %rax
+	movq	-344(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	movl	$0, %eax
@@ -309,9 +313,9 @@ prefetch_thread_func:
 .LFE6:
 	.size	prefetch_thread_func, .-prefetch_thread_func
 	.section	.rodata
-.LC8:
+.LC7:
 	.string	"href=[\"']([^\"']+)[\"']"
-.LC9:
+.LC8:
 	.string	"#"
 	.text
 	.globl	extract_links
@@ -334,7 +338,7 @@ extract_links:
 	movq	$0, -128(%rbp)
 	movq	-160(%rbp), %rax
 	movl	$0, (%rax)
-	leaq	.LC8(%rip), %rax
+	leaq	.LC7(%rip), %rax
 	movq	%rax, -112(%rbp)
 	movq	-112(%rbp), %rcx
 	leaq	-96(%rbp), %rax
@@ -398,7 +402,7 @@ extract_links:
 	movq	-104(%rbp), %rax
 	movq	%rax, (%rdx)
 	movq	-104(%rbp), %rax
-	leaq	.LC9(%rip), %rdx
+	leaq	.LC8(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT

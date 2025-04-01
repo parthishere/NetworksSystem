@@ -82,7 +82,6 @@ int main(int argc, char *argv[])
 
 cleanup:;
 
-    close(sd.client_sock_fd);
     close(sd.sockfd);
 #if USE_FORK == 0
     destroy_threadpool(tp);

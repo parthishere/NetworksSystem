@@ -971,48 +971,61 @@ cleanup_cache:
 	.cfi_def_cfa_register 6
 	subq	$48, %rsp
 	movq	%rdi, -40(%rbp)
-	movl	$0, -20(%rbp)
-	movl	$0, -20(%rbp)
-	jmp	.L76
-.L78:
+	movq	$0, -24(%rbp)
+	movl	$-1, -28(%rbp)
+	cmpq	$0, -40(%rbp)
+	jne	.L76
+	movq	global_table(%rip), %rax
+	movq	%rax, -24(%rbp)
+	jmp	.L77
+.L76:
 	movq	-40(%rbp), %rax
-	movl	-20(%rbp), %edx
+	movq	%rax, -24(%rbp)
+.L77:
+	movl	$0, -32(%rbp)
+	movl	$0, -32(%rbp)
+	jmp	.L78
+.L81:
+	movq	-24(%rbp), %rax
+	movl	-32(%rbp), %edx
 	movslq	%edx, %rdx
 	movq	(%rax,%rdx,8), %rax
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rax
 	movq	%rax, -16(%rbp)
-	movq	-8(%rbp), %rax
+	movq	-16(%rbp), %rax
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -16(%rbp)
+	je	.L79
+	movq	-16(%rbp), %rax
 	movq	4144(%rax), %rax
 	testq	%rax, %rax
-	je	.L77
-	movq	-16(%rbp), %rax
+	je	.L79
+	cmpq	$0, -8(%rbp)
+	je	.L80
+	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	movq	-8(%rbp), %rax
-	movq	%rax, -16(%rbp)
-	movq	-8(%rbp), %rax
-	movq	4144(%rax), %rax
+.L80:
+	movq	-16(%rbp), %rax
 	movq	%rax, -8(%rbp)
-.L77:
 	movq	-16(%rbp), %rax
-	movq	%rax, %rdi
-	call	free@PLT
-	movq	-40(%rbp), %rax
-	movl	-20(%rbp), %edx
+	movq	4144(%rax), %rax
+	movq	%rax, -16(%rbp)
+.L79:
+	movq	-24(%rbp), %rax
+	movl	-32(%rbp), %edx
 	movslq	%edx, %rdx
 	movq	(%rax,%rdx,8), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	addl	$1, -20(%rbp)
-.L76:
-	cmpl	$1023, -20(%rbp)
-	jle	.L78
-	movq	-40(%rbp), %rax
+	addl	$1, -32(%rbp)
+.L78:
+	cmpl	$1023, -32(%rbp)
+	jle	.L81
+	movq	-24(%rbp), %rax
 	addq	$8192, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_destroy@PLT
-	movq	-40(%rbp), %rax
+	movq	-24(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	nop

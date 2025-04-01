@@ -236,9 +236,6 @@ main:
 .L14:
 	nop
 .L6:
-	movl	-188(%rbp), %eax
-	movl	%eax, %edi
-	call	close@PLT
 	movl	-192(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT

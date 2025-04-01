@@ -97,28 +97,24 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM; // for TCP
 
-    if (header->hostname_port_str == NULL)
-        header->hostname_port_str = "80";
 
-    if (strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0) && send_to_client)
+    if (header->hostname_port_str != NULL && strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0) && send_to_client && sd->client_sock_fd > 0)
     {
         char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
         if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
         {
             fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-            close(sd->client_sock_fd);
         }
         return -1;
     }
 
-    if ((getaddrinfo(header->hostname_str, header->hostname_port_str, &hints, &servinfo)) < 0)
+    if ((getaddrinfo(header->hostname_str, header->hostname_port_str, &hints, &servinfo)) < 0 && sd->client_sock_fd > 0 && send_to_client)
     {
         fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
         char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
-        if (send_to_client && (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
+        if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
         {
             fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-            close(sd->client_sock_fd);
         }
         return -1;
         // goto cleanup;
@@ -280,7 +276,6 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-                close(sd->client_sock_fd);
                 return -1;
             }
         }
@@ -351,7 +346,7 @@ void *handle_req(sockdetails_t sd)
         /* Handle select errors */
         if (select_status < 0)
         {
-            perror(RED "select error");
+            fprintf(stderr,RED "[-] (%d) select error\n", gettid());
             break;
         }
 
@@ -369,7 +364,7 @@ void *handle_req(sockdetails_t sd)
             /* Read incoming request with error checking */
             if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
             {
-                fprintf(stderr, RED "[-] (%d) read", gettid());
+                fprintf(stderr, RED "[-] (%d) read\n", gettid());
                 return NULL;
             }
 

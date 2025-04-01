@@ -13,6 +13,7 @@ void *prefetch_thread_func(void *data)
     {
         // Create a temporary structure to hold HTTP header and sockdetails
         HttpHeader_t temp_header;
+        sockdetails_t temp_sd;
 
         // Skip empty links
         if (!prefetch_data->links[i] || strlen(prefetch_data->links[i]) == 0)
@@ -22,6 +23,10 @@ void *prefetch_thread_func(void *data)
 
         // Initialize header
         memset(&temp_header, 0, sizeof(HttpHeader_t));
+        memset(&temp_sd, 0, sizeof(sockdetails_t));
+
+        temp_sd.timeout = prefetch_data->sd->timeout;
+        temp_sd.client_sock_fd = -1; 
 
         // Check if link is absolute or relative
         if (strncmp(prefetch_data->links[i], "http://", 7) == 0 ||
@@ -82,13 +87,13 @@ void *prefetch_thread_func(void *data)
         }
 
         // Set default port if needed
-        temp_header.hostname_port_str = strdup("80");
+        temp_header.hostname_port_str = NULL;
 
         // Check if dynamic content before making the request
         int dynamic = is_dynamic_content(temp_header.uri_str, NULL);
 
         // Fetch the content but don't send to client and don't recursively prefetch
-        check_and_send_from_cache(&temp_header, prefetch_data->sd, dynamic, 0, 0);
+        check_and_send_from_cache(&temp_header, &temp_sd, dynamic, 0, 0);
 
         // Clean up
         free(temp_header.uri_str);
