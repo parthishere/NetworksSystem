@@ -1,0 +1,6 @@
+HTTP/1.0 200 OK
+Content-Type: text/plain
+Content-Length: 41
+Connection: close
+
+This is a text File. Welcome to My Server
