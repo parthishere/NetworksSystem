@@ -56,8 +56,8 @@ void *handle_req(sockdetails_t sd)
     char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
     HttpHeader_t header;              /* HTTP header structure */
     fd_set readfds;                   /* File descriptor set for select() */
+    int file_fd;
 
-    printf("something came \n");
     while (1)
     {
         memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -68,7 +68,6 @@ void *handle_req(sockdetails_t sd)
         /* Set timeout period for idle connections */
         struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
 
-        printf("something came %d \n", sd.client_sock_fd);
         /* Monitor socket for incoming data */
         int select_status = select(sd.client_sock_fd + 1, &readfds, NULL, NULL, &timeout);
         /* Handle select errors */
@@ -96,13 +95,18 @@ void *handle_req(sockdetails_t sd)
                 return NULL;
             }
 
-            printf("recieved_buf : %s\n\n", recieved_buf);
+            // printf("recieved_buf : %s\n\n", recieved_buf);
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
             if(parse_request_line_thread_safe(recieved_buf, &header) < 0){
                 // error
-                printf("Error !\n");
-                break;
+                char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rSomthing went wrong";
+                if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                    fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                    close(sd.client_sock_fd);
+                    break;
+                }
+                goto cleanup;
             }
             
             if(is_blocked(NULL, header.hostname_str)){
@@ -115,7 +119,7 @@ void *handle_req(sockdetails_t sd)
                 break;
             }
 
-            int file_fd;
+            
             if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0){
                 // failed create a new socket!
 
@@ -126,8 +130,17 @@ void *handle_req(sockdetails_t sd)
                 memset(&hints, 0, sizeof(hints));
                 hints.ai_family = AF_UNSPEC;
                 hints.ai_socktype = SOCK_STREAM; // for TCP
-                printf("hostname str %s, hostname port %s\n", header.hostname_str, header.hostname_port_str);
                 if(header.hostname_port_str == NULL) header.hostname_port_str = "80";
+                if(strcmp(header.hostname_port_str, "8080") == 0) {
+                    char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\r cannot req proxy";
+                    if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                        close(sd.client_sock_fd);
+                        break;
+                    }
+                    goto cleanup;
+                }
+                
                 if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &servinfo)) < 0)
                 {
                     fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
@@ -137,12 +150,6 @@ void *handle_req(sockdetails_t sd)
 
                 for (temp = servinfo; temp != NULL; temp = temp->ai_next)
                 {
-                    /*
-                    int socket(int domain, int type, int protocol);
-                    we need domain to be IF_INET (IPv4)
-                    we need type to be UDP
-                    and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
-                    */
                     if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
                     {
                         perror(RED "server: socket");
@@ -183,7 +190,6 @@ void *handle_req(sockdetails_t sd)
                     close(sockfd);
                     exit(EXIT_FAILURE);
                 }
-                printf("Sent\n\r");
 
                 int file_fd = cache_add_new(NULL, header.hostname_str, header.uri_str);
 
@@ -216,35 +222,15 @@ void *handle_req(sockdetails_t sd)
                 
                 close(file_fd);
                 
-                
-                
-                
-                /* Handle header construction errors */
-                
-                
-                
-                // GET / HTTP/1.0\r\nHost: localhost:8080\r\n\r\n
-                // FD_ZERO(&readfds);
-                // select_status = select(0, &readfds, NULL, NULL, &timeout);
-                
-                
             }
             else{
-                // file_fd
-                
-                
-                printf(RED"Sent form the fucking cache %d\n\r"RESET, file_fd);
-                // int size = lseek(file_fd, 0, SEEK_END);
-                // lseek(file_fd, 0, SEEK_SET);
-                
+                printf(YEL"Sent from cache \n\r"RESET);
                 while(1){
                     memset(recieved_buf, 0, sizeof(recieved_buf));
                     numbytes = read(file_fd, recieved_buf, sizeof(recieved_buf));
                     if(numbytes <= 0) {
                         break;
                     }
-
-                    printf("%s", recieved_buf);
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, 0) <0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sd.client_sock_fd);
@@ -259,26 +245,22 @@ void *handle_req(sockdetails_t sd)
            
             // printf("Hostname %s\n", header.hostname_str);
             
-            //         
-            
-            printf("lets see if its working\n");
-            
             /* Generate and send response */
             // build_and_send_header(&header, &sd);
             
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)
             {
-
-                break;
+                goto cleanup;
             }
             /* Clear header for next request */
             memset(&header, 0, sizeof(header));
             memset(recieved_buf, 0, sizeof(recieved_buf));
         }
     }
-
+cleanup:;
     /* Clean up resources before exit */
+    close(file_fd);
     close(sd.client_sock_fd);
 
     return NULL;

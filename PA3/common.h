@@ -229,6 +229,7 @@ typedef struct
     int addr_len;                        // Length of address structure
     int recvBytes;                       // Bytes received in last operation
     int sentBytes;                       // Bytes sent in last operation
+    int timeout;
 } sockdetails_t;
 
 

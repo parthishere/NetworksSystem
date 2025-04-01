@@ -75,7 +75,6 @@ int init_cache(cache_table_t *table)
     {
         struct stat stbuf;
         sprintf(filename_qfd, "%s/%s", dir, dp->d_name);
-        printf("Stating filename %s\n", filename_qfd);
         if (stat(filename_qfd, &stbuf) == -1)
         {
             fprintf(stderr, "cannot stat %s\n", dp->d_name);
@@ -113,10 +112,8 @@ int cache_add_new(cache_table_t *table, const char *url, const char *filepath)
         printf("something you will need to tweak\n");
 
     char *hashstr = str2md5(str, strlen(str));
-    printf("hash string %s\n\r", hashstr);
     char *filename; // remember to free it later
     asprintf(&filename, "%s/%s", CACHE_ROOT, hashstr);
-    printf("filenaem %s \n", filename);
 
     cache_entry_t *entry = malloc(sizeof(cache_entry_t));
     if (!entry)
@@ -144,7 +141,7 @@ int cache_add_new(cache_table_t *table, const char *url, const char *filepath)
         return -1;
     }
 
-    entry->timestamp = st.st_mtime; // Use mtime instead of ctime
+    entry->timestamp = st.st_ctime; // Use mtime instead of ctime
 
     unsigned int index = hash_index(hashstr);
 
@@ -170,6 +167,8 @@ void cache_add_existing(cache_table_t *table, const char *hash, char *filename)
     cache_table_t *table_to_use = NULL;
     struct stat st;
 
+    printf("dp->dname %s\n\r", hash);
+    printf("filename %s\n\r", filename);
     if (table == NULL)
     {
         table_to_use = global_table;
@@ -183,17 +182,14 @@ void cache_add_existing(cache_table_t *table, const char *hash, char *filename)
     if (!entry)
         return;
     
-    char *final_filename;
-    asprintf(&final_filename, "%s/%s", CACHE_ROOT, filename);
-    printf("Add existing filename %s \n\r", filename);
-    int file_fd = open(final_filename, O_RDONLY | 0666);
+    int file_fd = open(filename, O_RDONLY | 0666);
     if (file_fd < 0)
     {
         free(entry);
         fprintf(stderr, "cannot open file");
         return;
     }
-    if (stat(entry->url_hash, &st) != 0)
+    if (stat(filename, &st) != 0)
     {
         fprintf(stderr, "cannot stat");
     }
@@ -217,7 +213,7 @@ void cache_add_existing(cache_table_t *table, const char *hash, char *filename)
         entry->next = table_to_use->buckets[index];
         table_to_use->buckets[index] = entry;
     }
-
+    close(file_fd);
     pthread_mutex_unlock(&table_to_use->lock);
 }
 
@@ -248,11 +244,17 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
     {
         if (strcmp(entry->url_hash, hashstr) == 0)
         {
-            time_t current_time = time(NULL);
+            time_t current_time;
+            time(&current_time);
+
+            double diff_seconds = difftime(current_time, entry->timestamp);
+            printf("Diff time %f\n\r", diff_seconds);
+            char *entire_filename ;
+            asprintf(&entire_filename, "%s/%s", CACHE_ROOT, entry->url_hash);
+
             if (current_time - entry->timestamp <= timeout)
             {
-                char *entire_filename ;
-                asprintf(&entire_filename, "%s/%s", CACHE_ROOT, entry->url_hash);
+                
                 file_fd = open(entire_filename, O_RDONLY);
                 if (file_fd < 0)
                 {
@@ -263,9 +265,10 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             }
             else
             {
-                printf(RED"timeout ??? \n\r"RESET);
+                
+                printf(RED"timeout by %ld %ld %ld %ld??? \n\r"RESET, current_time, entry->timestamp,current_time - entry->timestamp,  entry->timestamp - current_time);
                 pthread_mutex_unlock(&table_to_use->lock);
-                remove(entry->url_hash);
+                // remove(entire_filename);
                 return file_fd;
             }
         }
