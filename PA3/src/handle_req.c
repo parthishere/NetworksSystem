@@ -139,10 +139,11 @@ void *handle_req(sockdetails_t sd)
                 break;
             }
 
-            int link_count, total_links;
-                char **links;
 
             printf("is dynamic content %d\n\r", is_dynamic_content(header.uri_str, recieved_buf));
+
+            char **all_links = NULL;
+            int total_links = 0;
 
             if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0 || is_dynamic_content(header.uri_str, recieved_buf)){
                 // failed create a new socket!
@@ -238,19 +239,34 @@ void *handle_req(sockdetails_t sd)
                     }
                     write(file_fd, recieved_buf, numbytes);
                     // printf("recv buf %d: '%s'\n", numbytes, recieved_buf);
-                    links = extract_links(recieved_buf, &link_count);
-                    total_links += link_count;
-                    links += link_count;
+                    
+                    int link_count = 0;
+                    char **chunk_links = extract_links(recieved_buf, &link_count);
+
+                    if (link_count > 0 && chunk_links != NULL) {
+                        // Resize the all_links array to accommodate new links
+                        all_links = realloc(all_links, (total_links + link_count) * sizeof(char*));
+                        
+                        // Copy pointers to the new links
+                        for (int i = 0; i < link_count; i++) {
+                            all_links[total_links + i] = chunk_links[i]; 
+                            printf("all links[total_links] %s\n", all_links[total_links + i]);
+                        }
+                        
+                        // Update total count
+                        total_links += link_count;
+                        
+                        // Don't free chunk_links itself as we're keeping the pointers,
+                        // but free the array
+                        free(chunk_links);
+                    }
+
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sockfd);
                         // exit(EXIT_FAILURE);
                     }
                 }
-
-                pthread_t *thread;
-
-               
                 
                 close(file_fd);
                 
@@ -263,6 +279,28 @@ void *handle_req(sockdetails_t sd)
                     if(numbytes <= 0) {
                         break;
                     }
+
+                    int link_count = 0;
+                    char **chunk_links = extract_links(recieved_buf, &link_count);
+
+                    if (link_count > 0 && chunk_links != NULL) {
+                        // Resize the all_links array to accommodate new links
+                        all_links = realloc(all_links, (total_links + link_count) * sizeof(char*));
+                        
+                        // Copy pointers to the new links
+                        for (int i = 0; i < link_count; i++) {
+                            all_links[total_links + i] = strdup(chunk_links[i]); 
+                        }
+                        
+                        // Update total count
+                        total_links += link_count;
+                        
+                        // Don't free chunk_links itself as we're keeping the pointers,
+                        // but free the array
+                        free(chunk_links);
+                    }
+
+
                     if(send(sd.client_sock_fd, recieved_buf, numbytes, 0) <0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sd.client_sock_fd);
@@ -270,13 +308,31 @@ void *handle_req(sockdetails_t sd)
                     }
                 }
 
-                close(file_fd);
+                
+                
                 // create another thread;
             }
-            pthread_t pthread;
-            if(links != NULL){
-                // pthread_create(&pthread, NULL, prefetch_thread_func, links);
+            pthread_t prefetch_thread;
+            // prefetcher_t pf = {.base_url=header.uri_str, .linknum=total_links, .links=all_links};
+            prefetcher_t *data = malloc(sizeof(prefetcher_t));
+            data->links = malloc(sizeof(char*) * total_links);
+            for (int i = 0; i < total_links; i++) {
+                data->links[i] = strdup(all_links[i]);
             }
+            data->linknum = total_links;
+            data->base_url = strdup(header.uri_str);
+
+            // for (int i = 0; i < link_count; i++) {
+            //     data->links[i] = strdup(links[i]);
+            // }
+
+            if(all_links != NULL){
+                pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
+                pthread_detach(prefetch_thread);
+            }
+
+            free(all_links);
+            close(file_fd);
             
            
             // printf("Hostname %s\n", header.hostname_str);

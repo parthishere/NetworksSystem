@@ -165,7 +165,8 @@ main:
 	jmp	.L5
 .L7:
 	movq	-360(%rbp), %rdx
-	subq	$160, %rsp
+	subq	$8, %rsp
+	subq	$168, %rsp
 	movq	%rsp, %rax
 	movq	-192(%rbp), %rcx
 	movq	-184(%rbp), %rbx
@@ -207,11 +208,13 @@ main:
 	movq	-40(%rbp), %rbx
 	movq	%rcx, 144(%rax)
 	movq	%rbx, 152(%rax)
+	movq	-32(%rbp), %rcx
+	movq	%rcx, 160(%rax)
 	movq	handle_req@GOTPCREL(%rip), %rax
 	movq	%rax, %rsi
 	movq	%rdx, %rdi
 	call	dispatch@PLT
-	addq	$160, %rsp
+	addq	$176, %rsp
 	leaq	shutdown_mutex(%rip), %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT

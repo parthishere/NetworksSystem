@@ -66,37 +66,37 @@ use_fork:
 	orq	$0, (%rsp)
 	cmpq	%r11, %rsp
 	jne	.LPSRL0
-	subq	$2368, %rsp
-	movq	%rdi, -31032(%rbp)
+	subq	$2384, %rsp
+	movq	%rdi, -31048(%rbp)
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-	movq	-31032(%rbp), %rax
+	movq	-31048(%rbp), %rax
 	movl	4(%rax), %eax
-	movl	%eax, -31016(%rbp)
-	movq	-31032(%rbp), %rax
+	movl	%eax, -31032(%rbp)
+	movq	-31048(%rbp), %rax
 	movl	(%rax), %eax
-	movl	%eax, -31012(%rbp)
+	movl	%eax, -31028(%rbp)
 	call	fork@PLT
 	testl	%eax, %eax
 	jne	.L5
-	movl	-31012(%rbp), %eax
+	movl	-31028(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 .L13:
 	leaq	-30864(%rbp), %rax
-	movq	%rax, -31000(%rbp)
-	movl	$0, -31020(%rbp)
+	movq	%rax, -31016(%rbp)
+	movl	$0, -31036(%rbp)
 	jmp	.L6
 .L7:
-	movq	-31000(%rbp), %rax
-	movl	-31020(%rbp), %edx
+	movq	-31016(%rbp), %rax
+	movl	-31036(%rbp), %edx
 	movq	$0, (%rax,%rdx,8)
-	addl	$1, -31020(%rbp)
+	addl	$1, -31036(%rbp)
 .L6:
-	cmpl	$15, -31020(%rbp)
+	cmpl	$15, -31036(%rbp)
 	jbe	.L7
-	movl	-31016(%rbp), %eax
+	movl	-31032(%rbp), %eax
 	leal	63(%rax), %edx
 	testl	%eax, %eax
 	cmovs	%edx, %eax
@@ -104,7 +104,7 @@ use_fork:
 	movl	%eax, %esi
 	movslq	%esi, %rax
 	movq	-30864(%rbp,%rax,8), %rax
-	movl	-31016(%rbp), %edx
+	movl	-31032(%rbp), %edx
 	andl	$63, %edx
 	movl	$1, %edi
 	movl	%edx, %ecx
@@ -113,26 +113,26 @@ use_fork:
 	orq	%rax, %rdx
 	movslq	%esi, %rax
 	movq	%rdx, -30864(%rbp,%rax,8)
-	movq	$2, -30992(%rbp)
-	movq	$0, -30984(%rbp)
-	movl	-31016(%rbp), %eax
+	movq	$2, -31008(%rbp)
+	movq	$0, -31000(%rbp)
+	movl	-31032(%rbp), %eax
 	leal	1(%rax), %edi
-	leaq	-30992(%rbp), %rdx
+	leaq	-31008(%rbp), %rdx
 	leaq	-30864(%rbp), %rax
 	movq	%rdx, %r8
 	movl	$0, %ecx
 	movl	$0, %edx
 	movq	%rax, %rsi
 	call	select@PLT
-	movl	%eax, -31008(%rbp)
-	cmpl	$0, -31008(%rbp)
+	movl	%eax, -31024(%rbp)
+	cmpl	$0, -31024(%rbp)
 	jns	.L8
 	leaq	.LC1(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 	jmp	.L9
 .L8:
-	cmpl	$0, -31008(%rbp)
+	cmpl	$0, -31024(%rbp)
 	jne	.L10
 	call	gettid@PLT
 	movl	%eax, %esi
@@ -142,14 +142,14 @@ use_fork:
 	call	printf@PLT
 	jmp	.L9
 .L10:
-	movl	-31016(%rbp), %eax
+	movl	-31032(%rbp), %eax
 	leal	63(%rax), %edx
 	testl	%eax, %eax
 	cmovs	%edx, %eax
 	sarl	$6, %eax
 	cltq
 	movq	-30864(%rbp,%rax,8), %rdx
-	movl	-31016(%rbp), %eax
+	movl	-31032(%rbp), %eax
 	andl	$63, %eax
 	movl	$1, %esi
 	movl	%eax, %ecx
@@ -159,53 +159,53 @@ use_fork:
 	testq	%rax, %rax
 	je	.L13
 	leaq	-30736(%rbp), %rsi
-	movl	-31016(%rbp), %eax
+	movl	-31032(%rbp), %eax
 	movl	$0, %ecx
 	movl	$30720, %edx
 	movl	%eax, %edi
 	call	recv@PLT
-	movl	%eax, -31004(%rbp)
-	cmpl	$0, -31004(%rbp)
+	movl	%eax, -31020(%rbp)
+	cmpl	$0, -31020(%rbp)
 	jns	.L12
 	leaq	.LC3(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 .L12:
-	leaq	-30976(%rbp), %rax
-	movl	$112, %edx
+	leaq	-30992(%rbp), %rax
+	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	leaq	-30976(%rbp), %rdx
+	leaq	-30992(%rbp), %rdx
 	leaq	-30736(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	parse_request_line_thread_safe@PLT
-	movq	-31032(%rbp), %rdx
-	leaq	-30976(%rbp), %rax
+	movq	-31048(%rbp), %rdx
+	leaq	-30992(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	build_and_send_header@PLT
-	movl	-30884(%rbp), %eax
+	movl	-30900(%rbp), %eax
 	cmpl	$1, %eax
 	je	.L9
-	movl	-30888(%rbp), %eax
+	movl	-30904(%rbp), %eax
 	testl	%eax, %eax
 	je	.L9
-	leaq	-30976(%rbp), %rax
-	movl	$112, %edx
+	leaq	-30992(%rbp), %rax
+	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
 	jmp	.L13
 .L9:
-	movl	-31016(%rbp), %eax
+	movl	-31032(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$0, %edi
 	call	_exit@PLT
 .L5:
-	movq	-31032(%rbp), %rax
+	movq	-31048(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT

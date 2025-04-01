@@ -77,8 +77,9 @@ default_thread_func:
 	call	pthread_mutex_unlock@PLT
 	movq	-24(%rbp), %rax
 	movq	8(%rax), %rsi
+	subq	$8, %rsp
 	movq	-24(%rbp), %rax
-	subq	$160, %rsp
+	subq	$168, %rsp
 	movq	%rsp, %rdx
 	movq	16(%rax), %rcx
 	movq	24(%rax), %rbx
@@ -120,8 +121,10 @@ default_thread_func:
 	movq	168(%rax), %rbx
 	movq	%rcx, 144(%rdx)
 	movq	%rbx, 152(%rdx)
+	movq	176(%rax), %rax
+	movq	%rax, 160(%rdx)
 	call	*%rsi
-	addq	$160, %rsp
+	addq	$176, %rsp
 	movq	-24(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
@@ -176,7 +179,7 @@ dispatch:
 	je	.L16
 	cmpq	$0, -48(%rbp)
 	je	.L16
-	movl	$176, %edi
+	movl	$184, %edi
 	call	malloc@PLT
 	movq	%rax, -24(%rbp)
 	cmpq	$0, -24(%rbp)
@@ -225,6 +228,8 @@ dispatch:
 	movq	168(%rbp), %rbx
 	movq	%rcx, 160(%rax)
 	movq	%rbx, 168(%rax)
+	movq	176(%rbp), %rdx
+	movq	%rdx, 176(%rax)
 	movq	-24(%rbp), %rax
 	movq	$0, (%rax)
 	movq	-32(%rbp), %rax

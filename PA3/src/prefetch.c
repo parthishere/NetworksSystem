@@ -17,11 +17,14 @@
 
 
 void *prefetch_thread_func(void *data){
-    prefetcher_t *prefetch_data = (prefetcher_t  *)data;
-    
-    while(1){
-
+    prefetcher_t *prefetch_data = (prefetcher_t*)data;
+    for(int i=0;i<prefetch_data->linknum;i++){
+        printf("prefetch -> %s \n\r",prefetch_data->links[i]);
     }
+    // while()
+    // while(1){
+
+    // }
     return NULL;
 }
 
@@ -56,7 +59,7 @@ char** extract_links(const char* html_content, int* link_count) {
         // Add to links array
         links = realloc(links, (*link_count + 1) * sizeof(char*));
         links[*link_count] = link;
-        if(strncmp(link, "#", sizeof(link)) != 0){
+        if(strncmp(link, "#", sizeof(link)) != 0 && strstr(link, "http://") == NULL && strstr(link, "https://") == NULL){
             printf("Links %s \n", link);
             (*link_count)++;
         }

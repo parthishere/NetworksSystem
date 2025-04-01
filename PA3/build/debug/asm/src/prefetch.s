@@ -1,5 +1,9 @@
 	.file	"prefetch.c"
 	.text
+	.section	.rodata
+.LC0:
+	.string	"prefetch -> %s \n\r"
+	.text
 	.globl	prefetch_thread_func
 	.type	prefetch_thread_func, @function
 prefetch_thread_func:
@@ -11,21 +15,48 @@ prefetch_thread_func:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
+	subq	$32, %rsp
 	movq	%rdi, -24(%rbp)
 	movq	-24(%rbp), %rax
 	movq	%rax, -8(%rbp)
-.L2:
-	nop
+	movl	$0, -12(%rbp)
 	jmp	.L2
+.L3:
+	movq	-8(%rbp), %rax
+	movq	8(%rax), %rax
+	movl	-12(%rbp), %edx
+	movslq	%edx, %rdx
+	salq	$3, %rdx
+	addq	%rdx, %rax
+	movq	(%rax), %rax
+	movq	%rax, %rsi
+	leaq	.LC0(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	addl	$1, -12(%rbp)
+.L2:
+	movq	-8(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	%eax, -12(%rbp)
+	jl	.L3
+	movl	$0, %eax
+	leave
+	.cfi_def_cfa 7, 8
+	ret
 	.cfi_endproc
 .LFE6:
 	.size	prefetch_thread_func, .-prefetch_thread_func
 	.section	.rodata
-.LC0:
-	.string	"href=[\"']([^\"']+)[\"']"
 .LC1:
-	.string	"#"
+	.string	"href=[\"']([^\"']+)[\"']"
 .LC2:
+	.string	"#"
+.LC3:
+	.string	"http://"
+.LC4:
+	.string	"https://"
+.LC5:
 	.string	"Links %s \n"
 	.text
 	.globl	extract_links
@@ -48,7 +79,7 @@ extract_links:
 	movq	$0, -128(%rbp)
 	movq	-160(%rbp), %rax
 	movl	$0, (%rax)
-	leaq	.LC0(%rip), %rax
+	leaq	.LC1(%rip), %rax
 	movq	%rax, -112(%rbp)
 	movq	-112(%rbp), %rcx
 	leaq	-96(%rbp), %rax
@@ -57,14 +88,14 @@ extract_links:
 	movq	%rax, %rdi
 	call	regcomp@PLT
 	testl	%eax, %eax
-	je	.L4
+	je	.L6
 	movl	$0, %eax
-	jmp	.L9
-.L4:
+	jmp	.L11
+.L6:
 	movq	-152(%rbp), %rax
 	movq	%rax, -120(%rbp)
-	jmp	.L6
-.L8:
+	jmp	.L8
+.L10:
 	movl	-24(%rbp), %eax
 	movl	%eax, -140(%rbp)
 	movl	-20(%rbp), %eax
@@ -112,15 +143,29 @@ extract_links:
 	movq	-104(%rbp), %rax
 	movq	%rax, (%rdx)
 	movq	-104(%rbp), %rax
-	leaq	.LC1(%rip), %rdx
+	leaq	.LC2(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
 	testl	%eax, %eax
-	je	.L7
+	je	.L9
+	movq	-104(%rbp), %rax
+	leaq	.LC3(%rip), %rdx
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	strstr@PLT
+	testq	%rax, %rax
+	jne	.L9
+	movq	-104(%rbp), %rax
+	leaq	.LC4(%rip), %rdx
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	strstr@PLT
+	testq	%rax, %rax
+	jne	.L9
 	movq	-104(%rbp), %rax
 	movq	%rax, %rsi
-	leaq	.LC2(%rip), %rax
+	leaq	.LC5(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -129,11 +174,11 @@ extract_links:
 	leal	1(%rax), %edx
 	movq	-160(%rbp), %rax
 	movl	%edx, (%rax)
-.L7:
+.L9:
 	movl	-28(%rbp), %eax
 	cltq
 	addq	%rax, -120(%rbp)
-.L6:
+.L8:
 	leaq	-32(%rbp), %rdx
 	movq	-120(%rbp), %rsi
 	leaq	-96(%rbp), %rax
@@ -143,17 +188,17 @@ extract_links:
 	movq	%rax, %rdi
 	call	regexec@PLT
 	testl	%eax, %eax
-	je	.L8
+	je	.L10
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	regfree@PLT
 	movq	-128(%rbp), %rax
-.L9:
+.L11:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L10
+	je	.L12
 	call	__stack_chk_fail@PLT
-.L10:
+.L12:
 	leave
 	.cfi_def_cfa 7, 8
 	ret

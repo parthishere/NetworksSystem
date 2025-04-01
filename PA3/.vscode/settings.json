@@ -24,6 +24,7 @@
         "string_view": "c",
         "initializer_list": "c",
         "span": "c",
-        "cleanup_cache.h": "c"
+        "cleanup_cache.h": "c",
+        "string": "c"
     }
 }

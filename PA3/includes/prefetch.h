@@ -8,6 +8,7 @@
 typedef struct {
     int linknum;       // Cache timeout value
     char **links;      // Thread safety lock
+    char *base_url;
 } prefetcher_t;
 
 void *prefetch_thread_func(void *);
