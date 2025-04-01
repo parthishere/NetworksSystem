@@ -469,12 +469,8 @@ cache_add_new:
 	.size	cache_add_new, .-cache_add_new
 	.section	.rodata
 .LC7:
-	.string	"dp->dname %s\n\r"
-.LC8:
-	.string	"filename %s\n\r"
-.LC9:
 	.string	"cannot open file"
-.LC10:
+.LC8:
 	.string	"cannot stat"
 	.text
 	.globl	cache_add_existing
@@ -496,18 +492,6 @@ cache_add_existing:
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
 	movq	$0, -176(%rbp)
-	movq	-208(%rbp), %rax
-	movq	%rax, %rsi
-	leaq	.LC7(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movq	-216(%rbp), %rax
-	movq	%rax, %rsi
-	leaq	.LC8(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
 	cmpq	$0, -200(%rbp)
 	jne	.L39
 	movq	global_table(%rip), %rax
@@ -537,7 +521,7 @@ cache_add_existing:
 	movq	%rax, %rcx
 	movl	$16, %edx
 	movl	$1, %esi
-	leaq	.LC9(%rip), %rax
+	leaq	.LC7(%rip), %rax
 	movq	%rax, %rdi
 	call	fwrite@PLT
 	jmp	.L38
@@ -553,7 +537,7 @@ cache_add_existing:
 	movq	%rax, %rcx
 	movl	$11, %edx
 	movl	$1, %esi
-	leaq	.LC10(%rip), %rax
+	leaq	.LC8(%rip), %rax
 	movq	%rax, %rdi
 	call	fwrite@PLT
 .L44:
@@ -626,9 +610,7 @@ cache_add_existing:
 .LFE324:
 	.size	cache_add_existing, .-cache_add_existing
 	.section	.rodata
-.LC11:
-	.string	"Index %d, index bucket %p"
-.LC12:
+.LC9:
 	.string	"file opening from cache"
 	.text
 	.globl	cache_lookup
@@ -753,13 +735,6 @@ cache_lookup:
 	addq	$8192, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT
-	movq	-56(%rbp), %rdx
-	movl	-84(%rbp), %eax
-	movl	%eax, %esi
-	leaq	.LC11(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
 	jmp	.L57
 .L63:
 	movq	-56(%rbp), %rax
@@ -796,7 +771,7 @@ cache_lookup:
 	movl	%eax, -92(%rbp)
 	cmpl	$0, -92(%rbp)
 	jns	.L60
-	leaq	.LC12(%rip), %rax
+	leaq	.LC9(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 .L60:
@@ -845,7 +820,7 @@ cache_lookup:
 .LFE325:
 	.size	cache_lookup, .-cache_lookup
 	.section	.rodata
-.LC13:
+.LC10:
 	.string	"%02x"
 	.text
 	.globl	str2md5
@@ -925,7 +900,7 @@ str2md5:
 	movq	-40(%rbp), %rdx
 	leaq	(%rcx,%rdx), %rdi
 	movl	%eax, %ecx
-	leaq	.LC13(%rip), %rax
+	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdx
 	movl	$32, %esi
 	movl	$0, %eax

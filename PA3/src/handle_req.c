@@ -29,21 +29,24 @@ void *get_in_addr(struct sockaddr *sa)
 int is_dynamic_content(const char *url, char *recieved_buf)
 {
 
-    if (strstr(recieved_buf, "Cache-Control: no-cache") ||
-        strstr(recieved_buf, "Cache-Control: no-store") ||
-        strstr(recieved_buf, "Pragma: no-cache"))
+    if (recieved_buf != NULL)
     {
-        return 1; // Server explicitly asked not to cache
-    }
-
-    const char *content_type = strstr(recieved_buf, "Content-Type:");
-    if (content_type)
-    {
-        if (strstr(content_type, "application/json") ||
-            strstr(content_type, "text/javascript") ||
-            strstr(content_type, "application/xml"))
+        if (strstr(recieved_buf, "Cache-Control: no-cache") ||
+            strstr(recieved_buf, "Cache-Control: no-store") ||
+            strstr(recieved_buf, "Pragma: no-cache"))
         {
-            return 1; // Likely dynamic content
+            return 1; // Server explicitly asked not to cache
+        }
+
+        const char *content_type = strstr(recieved_buf, "Content-Type:");
+        if (content_type)
+        {
+            if (strstr(content_type, "application/json") ||
+                strstr(content_type, "text/javascript") ||
+                strstr(content_type, "application/xml"))
+            {
+                return 1; // Likely dynamic content
+            }
         }
     }
 
@@ -56,8 +59,27 @@ int is_dynamic_content(const char *url, char *recieved_buf)
     return 0; // No query parameters found
 }
 
-void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
+void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links, HttpHeader_t *header)
 {
+    pthread_t prefetch_thread;
+    prefetcher_t *data = malloc(sizeof(prefetcher_t));
+    data->links = malloc(sizeof(char *) * total_links);
+    data->sd = sd;
+    for (int i = 0; i < total_links; i++)
+    {
+        data->links[i] = strdup(all_links[i]);
+    }
+    data->linknum = total_links;
+    data->base_url = strdup(header->hostname_str);
+
+    pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
+    pthread_detach(prefetch_thread);
+}
+
+void if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, int prefetch)
+{
+    if (!prefetch)
+        printf("PREFETCING\n");
     struct addrinfo hints, *temp, *servinfo;
     int sockfd;
     int numbytes;
@@ -68,7 +90,8 @@ void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM; // for TCP
-    if(header->hostname_port_str == NULL) header->hostname_port_str = "80";
+    if (header->hostname_port_str == NULL)
+        header->hostname_port_str = "80";
     if (strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0))
     {
         char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
@@ -126,7 +149,14 @@ void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
     const char *connection_type = header->connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
     char *send_req;
     // free
-    asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header->uri_str, header->hostname_str, header->extra_header);
+    if (header->extra_header)
+    {
+        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header->uri_str, header->hostname_str, header->extra_header);
+    }
+    else
+    {
+        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", header->uri_str, header->hostname_str);
+    }
 
     if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
     {
@@ -163,7 +193,6 @@ void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
             for (int i = 0; i < link_count; i++)
             {
                 all_links[total_links + i] = chunk_links[i];
-                printf("all links[total_links] %s\n", all_links[total_links + i]);
             }
 
             // Update total count
@@ -174,29 +203,20 @@ void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
             free(chunk_links);
         }
 
-        if (send(sd->client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0)
+        if (send_to_client)
         {
-            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-            close(sockfd);
-            // exit(EXIT_FAILURE);
+            if (send(sd->client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0)
+            {
+                fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                close(sockfd);
+                // exit(EXIT_FAILURE);
+            }
         }
     }
 
-    if (all_links != NULL)
+    if (all_links != NULL && prefetch)
     {
-
-        pthread_t prefetch_thread;
-        prefetcher_t *data = malloc(sizeof(prefetcher_t));
-        data->links = malloc(sizeof(char *) * total_links);
-        for (int i = 0; i < total_links; i++)
-        {
-            data->links[i] = strdup(all_links[i]);
-        }
-        data->linknum = total_links;
-        data->base_url = strdup(header->uri_str);
-
-        pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
-        pthread_detach(prefetch_thread);
+        prefetch_thread_create(sd, total_links, all_links, header);
     }
 
     free(all_links);
@@ -204,8 +224,10 @@ void if_not_cached(HttpHeader_t *header, sockdetails_t *sd)
     close(file_fd);
 }
 
-void if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd)
+void if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_client, int prefetch)
 {
+    if (!prefetch)
+        printf("PREFETCING\n\r");
     char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
     char **all_links = NULL;
     int total_links = 0;
@@ -241,33 +263,39 @@ void if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd)
             free(chunk_links);
         }
 
-        if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
+        if (send_to_client)
         {
-            fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
-            close(sd->client_sock_fd);
-            break;
+            if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
+            {
+                fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                close(sd->client_sock_fd);
+                break;
+            }
         }
     }
 
-    if (all_links != NULL)
+    if (all_links != NULL && prefetch)
     {
-        pthread_t prefetch_thread;
-        // prefetcher_t pf = {.base_url=header.uri_str, .linknum=total_links, .links=all_links};
-        prefetcher_t *data = malloc(sizeof(prefetcher_t));
-        data->links = malloc(sizeof(char *) * total_links);
-        for (int i = 0; i < total_links; i++)
-        {
-            data->links[i] = strdup(all_links[i]);
-        }
-        data->linknum = total_links;
-        data->base_url = strdup(header->uri_str);
-
-        pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
-        pthread_detach(prefetch_thread);
-        
+        prefetch_thread_create(sd, total_links, all_links, header);
     }
 
     free(all_links);
+    close(file_fd);
+}
+
+void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynamic_content, int send_to_client, int prefetch)
+{
+    int file_fd;
+    printf("header->hostname %s, header->uri_str %s \n", header->hostname_str, header->uri_str);
+    if ((file_fd = cache_lookup(NULL, header->hostname_str, header->uri_str, sd->timeout)) < 0 || dynamic_content)
+    {
+        if_not_cached(header, sd, send_to_client, prefetch);
+    }
+    else
+    {
+        if_cached(header, sd, file_fd, send_to_client, prefetch);
+    }
+
     close(file_fd);
 }
 
@@ -359,16 +387,7 @@ void *handle_req(sockdetails_t sd)
                 goto cleanup;
             }
 
-            if ((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0 || is_dynamic_content(header.uri_str, recieved_buf))
-            {
-                if_not_cached(&header, &sd);
-            }
-            else
-            {
-                if_cached(&header, &sd, file_fd);
-            }
-
-            close(file_fd);
+            check_and_send_from_cache(&header, &sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
 
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)

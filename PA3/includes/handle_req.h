@@ -43,3 +43,8 @@
  */   
 void *handle_req(sockdetails_t sd);
 
+void if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_client, int prefetch);
+void if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, int prefetch);
+int is_dynamic_content(const char *url, char *recieved_buf);
+void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynamic_content, int send_to_client, int prefetch);
+

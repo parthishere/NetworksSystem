@@ -28,14 +28,22 @@ int main(int argc, char *argv[])
     sigaction(SIGINT, &sa, NULL);
     signal(SIGPIPE, SIG_IGN);
 
-
-    if (argc < 3)
-    {
-        printf(RED "[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n" RESET, argc);
-        exit(EXIT_FAILURE);
-    }
-
     sockdetails_t sd;
+
+    if (argc != 3)
+    {
+        if(argc == 2){
+            sd.timeout = 60;
+        }
+        else{
+            printf(RED "[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n" RESET, argc);
+            exit(EXIT_FAILURE);
+        }
+        
+    }
+    
+    sd.timeout = atoi(argv[2]);
+    printf("Timeout %d\n",sd.timeout);
     sd.addr_len = sizeof(sd.client_info);
 
     init_cache_table(1);

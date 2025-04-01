@@ -44,12 +44,14 @@ sig_handler:
 .LC1:
 	.string	"\033[31m[-] You messed up, command is ./proxy <PORT> <TIMEOUT> | (passed numer of args: %d) \n\033[0m"
 .LC2:
-	.string	"maps.google.com"
+	.string	"Timeout %d\n"
 .LC3:
-	.string	"%d is blocked \n"
+	.string	"maps.google.com"
 .LC4:
-	.string	"httpforever.com"
+	.string	"%d is blocked \n"
 .LC5:
+	.string	"httpforever.com"
+.LC6:
 	.string	"\033[31maccept\033[0m"
 	.text
 	.globl	main
@@ -91,8 +93,13 @@ main:
 	movl	$1, %esi
 	movl	$13, %edi
 	call	signal@PLT
+	cmpl	$3, -372(%rbp)
+	je	.L3
 	cmpl	$2, -372(%rbp)
-	jg	.L3
+	jne	.L4
+	movl	$60, -36(%rbp)
+	jmp	.L3
+.L4:
 	movl	-372(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC1(%rip), %rax
@@ -102,6 +109,18 @@ main:
 	movl	$1, %edi
 	call	exit@PLT
 .L3:
+	movq	-384(%rbp), %rax
+	addq	$16, %rax
+	movq	(%rax), %rax
+	movq	%rax, %rdi
+	call	atoi@PLT
+	movl	%eax, -36(%rbp)
+	movl	-36(%rbp), %eax
+	movl	%eax, %esi
+	leaq	.LC2(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movl	$128, -48(%rbp)
 	movl	$1, %edi
 	call	init_cache_table@PLT
@@ -110,21 +129,21 @@ main:
 	movl	$0, %eax
 	call	init_blocklist@PLT
 	movq	%rax, -368(%rbp)
-	leaq	.LC2(%rip), %rax
+	leaq	.LC3(%rip), %rax
 	movq	%rax, %rsi
 	movl	$0, %edi
 	call	is_blocked@PLT
 	movl	%eax, %esi
-	leaq	.LC3(%rip), %rax
+	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	leaq	.LC4(%rip), %rax
+	leaq	.LC5(%rip), %rax
 	movq	%rax, %rsi
 	movl	$0, %edi
 	call	is_blocked@PLT
 	movl	%eax, %esi
-	leaq	.LC3(%rip), %rax
+	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -139,9 +158,9 @@ main:
 	call	create_threadpool@PLT
 	movq	%rax, -360(%rbp)
 	cmpq	$0, -360(%rbp)
-	je	.L12
-	jmp	.L6
-.L9:
+	je	.L13
+	jmp	.L7
+.L10:
 	leaq	-192(%rbp), %rax
 	addq	$8, %rax
 	movq	%rax, %rcx
@@ -154,16 +173,16 @@ main:
 	movl	%eax, -188(%rbp)
 	movl	-188(%rbp), %eax
 	testl	%eax, %eax
-	jns	.L7
+	jns	.L8
 	call	__errno_location@PLT
 	movl	(%rax), %eax
 	cmpl	$4, %eax
-	je	.L7
-	leaq	.LC5(%rip), %rax
+	je	.L8
+	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
-	jmp	.L5
-.L7:
+	jmp	.L6
+.L8:
 	movq	-360(%rbp), %rdx
 	subq	$8, %rsp
 	subq	$168, %rsp
@@ -220,21 +239,21 @@ main:
 	call	pthread_mutex_lock@PLT
 	movl	shutdown_flag(%rip), %eax
 	testl	%eax, %eax
-	jne	.L13
+	jne	.L14
 	leaq	shutdown_mutex(%rip), %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_unlock@PLT
-.L6:
+.L7:
 	movl	shutdown_flag(%rip), %eax
 	testl	%eax, %eax
-	je	.L9
-	jmp	.L5
-.L12:
-	nop
-	jmp	.L5
+	je	.L10
+	jmp	.L6
 .L13:
 	nop
-.L5:
+	jmp	.L6
+.L14:
+	nop
+.L6:
 	movl	-188(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
@@ -247,9 +266,9 @@ main:
 	movl	$0, %eax
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L11
+	je	.L12
 	call	__stack_chk_fail@PLT
-.L11:
+.L12:
 	movq	-8(%rbp), %rbx
 	leave
 	.cfi_def_cfa 7, 8
