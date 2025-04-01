@@ -612,12 +612,12 @@ cache_add_existing:
 	.section	.rodata
 	.align 8
 .LC9:
-	.string	"\033[33m[+] (%d) File is %lu sec long (%d)!\n\033[0m"
+	.string	"\033[33m[+] (%d) File is %lu sec long (<%ld)!\n\033[0m"
 .LC10:
 	.string	"file opening from cache"
 	.align 8
 .LC11:
-	.string	"\033[33m[+] (%d) File is %lu sec long, (Need to fetch newer one)!\n\033[0m"
+	.string	"\033[33m[+] (%d) File is %lu sec long, (Need to fetch newer one) (>%ld)!\n\033[0m"
 	.text
 	.globl	cache_lookup
 	.type	cache_lookup, @function
@@ -810,8 +810,10 @@ cache_lookup:
 	movq	%rdx, %rbx
 	subq	%rax, %rbx
 	call	gettid@PLT
-	movq	%rbx, %rdx
 	movl	%eax, %esi
+	movq	-128(%rbp), %rax
+	movq	%rax, %rcx
+	movq	%rbx, %rdx
 	leaq	.LC11(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax

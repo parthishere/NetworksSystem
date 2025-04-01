@@ -64,7 +64,8 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
     pthread_t prefetch_thread;
     prefetcher_t *data = malloc(sizeof(prefetcher_t));
     data->links = malloc(sizeof(char *) * total_links);
-    data->sd = sd;
+    data->sd = malloc(sizeof(sockdetails_t));
+    memcpy(data->sd, sd, sizeof(sockdetails_t));
     for (int i = 0; i < total_links; i++)
     {
         data->links[i] = strdup(all_links[i]);

@@ -168,9 +168,18 @@ prefetch_thread_create:
 	movq	%rax, %rdx
 	movq	-32(%rbp), %rax
 	movq	%rdx, 8(%rax)
+	movl	$168, %edi
+	call	malloc@PLT
+	movq	%rax, %rdx
 	movq	-32(%rbp), %rax
-	movq	-56(%rbp), %rdx
 	movq	%rdx, 24(%rax)
+	movq	-32(%rbp), %rax
+	movq	24(%rax), %rax
+	movq	-56(%rbp), %rcx
+	movl	$168, %edx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	call	memcpy@PLT
 	movl	$0, -44(%rbp)
 	jmp	.L12
 .L13:
