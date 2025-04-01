@@ -66,6 +66,7 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
     data->links = malloc(sizeof(char *) * total_links);
     data->sd = malloc(sizeof(sockdetails_t));
     memcpy(data->sd, sd, sizeof(sockdetails_t));
+    data->sd->client_sock_fd = -1;
     for (int i = 0; i < total_links; i++)
     {
         data->links[i] = strdup(all_links[i]);
@@ -81,7 +82,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 {
     printf("\n");
     if (!prefetch)
-        printf(MAG"[+] (%d) Prefetching *not* Cached uri\n"RESET, gettid());
+        printf(MAG "[+] (%d) Prefetching *not* Cached uri\n" RESET, gettid());
 
     struct addrinfo hints, *temp, *servinfo;
     int sockfd;
@@ -89,13 +90,17 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
     int total_links = 0;
     char **all_links = NULL;
+
     printf(YEL "[+] (%d) Asking file from server \n\r" RESET, gettid());
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM; // for TCP
+
     if (header->hostname_port_str == NULL)
         header->hostname_port_str = "80";
-    if (strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0))
+
+    if (strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0) && send_to_client)
     {
         char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
         if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
@@ -110,7 +115,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     {
         fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
         char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
-        if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
+        if (send_to_client && (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
         {
             fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
             close(sd->client_sock_fd);
@@ -146,7 +151,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     char s[INET6_ADDRSTRLEN];
     inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-    printf(MAG"[+] (%d) client: connecting to %s\n"RESET, gettid(), s);
+    printf(MAG "[+] (%d) client: connecting to %s\n" RESET, gettid(), s);
 
     freeaddrinfo(servinfo);
 
@@ -204,7 +209,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             free(chunk_links);
         }
 
-        if (send_to_client)
+        if (send_to_client && sd->client_sock_fd > 0)
         {
             if (send(sd->client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0)
             {
@@ -233,9 +238,9 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
 {
     printf("\n");
     if (!prefetch)
-        printf(MAG"[+] (%d) Prefetching Cached uri\n\r"RESET, gettid());
+        printf(MAG "[+] (%d) Prefetching Cached uri\n\r" RESET, gettid());
 
-    char recieved_buf[TRANSMIT_SIZE]; 
+    char recieved_buf[TRANSMIT_SIZE];
     char **all_links = NULL;
     int total_links = 0;
     printf(YEL "[+] (%d) Sent file from cache \n\r" RESET, gettid());
@@ -270,7 +275,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             free(chunk_links);
         }
 
-        if (send_to_client)
+        if (send_to_client && sd->client_sock_fd > 0)
         {
             if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
             {
@@ -375,18 +380,18 @@ void *handle_req(sockdetails_t sd)
             {
                 // error
                 // we need to send different error according with different error
-                printf(RED"[-] (%d) Parsing went wrong : 0x%02X \n\r"RESET, gettid(), header.parser_error);
+                printf(RED "[-] (%d) Parsing went wrong : 0x%02X \n\r" RESET, gettid(), header.parser_error);
                 char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rSomthing went wrong";
                 if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
                 {
-                    fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(),errno);
+                    fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                 }
                 goto cleanup;
             }
 
             if (is_blocked(NULL, header.hostname_str))
             {
-                printf(RED"[-] (%d) Blocked Domain \n\r"RESET, gettid());
+                printf(RED "[-] (%d) Blocked Domain \n\r" RESET, gettid());
                 char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
                 if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
                 {
@@ -400,7 +405,6 @@ void *handle_req(sockdetails_t sd)
 
             memset(&header, 0, sizeof(header));
             memset(recieved_buf, 0, sizeof(recieved_buf));
-            
 
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)
@@ -408,7 +412,6 @@ void *handle_req(sockdetails_t sd)
                 goto cleanup;
             }
             /* Clear header for next request */
-            
         }
     }
 cleanup:;

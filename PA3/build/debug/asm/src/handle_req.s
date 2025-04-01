@@ -180,6 +180,9 @@ prefetch_thread_create:
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	memcpy@PLT
+	movq	-32(%rbp), %rax
+	movq	24(%rax), %rax
+	movl	$-1, 4(%rax)
 	movl	$0, -44(%rbp)
 	jmp	.L12
 .L13:
@@ -375,6 +378,8 @@ if_not_cached:
 	testl	%eax, %eax
 	jne	.L18
 .L19:
+	cmpl	$0, -30964(%rbp)
+	je	.L18
 	leaq	.LC13(%rip), %rax
 	movq	%rax, -30880(%rbp)
 	movq	-30880(%rbp), %rax
@@ -424,6 +429,8 @@ if_not_cached:
 	call	fwrite@PLT
 	leaq	.LC16(%rip), %rax
 	movq	%rax, -30856(%rbp)
+	cmpl	$0, -30964(%rbp)
+	je	.L23
 	movq	-30856(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
@@ -704,6 +711,10 @@ if_not_cached:
 .L39:
 	cmpl	$0, -30964(%rbp)
 	je	.L43
+	movq	-30960(%rbp), %rax
+	movl	4(%rax), %eax
+	testl	%eax, %eax
+	jle	.L43
 	movl	-30916(%rbp), %eax
 	movslq	%eax, %rdx
 	movq	-30960(%rbp), %rax
@@ -890,6 +901,10 @@ if_cached:
 .L52:
 	cmpl	$0, -30808(%rbp)
 	je	.L57
+	movq	-30800(%rbp), %rax
+	movl	4(%rax), %eax
+	testl	%eax, %eax
+	jle	.L57
 	movl	-30772(%rbp), %eax
 	movslq	%eax, %rdx
 	movq	-30800(%rbp), %rax

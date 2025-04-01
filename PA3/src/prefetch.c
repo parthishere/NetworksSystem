@@ -6,12 +6,14 @@ void *prefetch_thread_func(void *data)
 {
     prefetcher_t *prefetch_data = (prefetcher_t *)data;
 
-    // Create a temporary structure to hold HTTP header and sockdetails
-    HttpHeader_t temp_header;
+    
 
     // Process each link
     for (int i = 0; i < prefetch_data->linknum; i++)
     {
+        // Create a temporary structure to hold HTTP header and sockdetails
+        HttpHeader_t temp_header;
+
         // Skip empty links
         if (!prefetch_data->links[i] || strlen(prefetch_data->links[i]) == 0)
         {
@@ -89,9 +91,9 @@ void *prefetch_thread_func(void *data)
         check_and_send_from_cache(&temp_header, prefetch_data->sd, dynamic, 0, 0);
 
         // Clean up
-        // free(temp_header.uri_str);
-        // free(temp_header.hostname_str);
-        // free(temp_header.hostname_port_str);
+        free(temp_header.uri_str);
+        free(temp_header.hostname_str);
+        free(temp_header.hostname_port_str);
     }
 
     // Clean up the link data
