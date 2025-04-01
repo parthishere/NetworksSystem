@@ -208,6 +208,8 @@ typedef struct req_header_s
     int open_file_fd;
 
     int max_age;
+
+    char *extra_header; // free this
 } HttpHeader_t;
 
 
@@ -230,6 +232,7 @@ typedef struct
     int recvBytes;                       // Bytes received in last operation
     int sentBytes;                       // Bytes sent in last operation
     int timeout;
+    int port;
 } sockdetails_t;
 
 

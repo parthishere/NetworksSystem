@@ -271,6 +271,8 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
     {
+        char *line = strdup(lines[i]);
+        // printf("hehe > %s, %s \n\r", line, lines[i]);
         char *key = strtok_r(lines[i], ":", &token_ctx);
         char *value = strtok_r(NULL, " ", &token_ctx);
         
@@ -323,6 +325,28 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             // strtok_r()
             // header->max_age = value; // remember to free max_age afterwards
         }
+        else{
+            if(strstr(line, ":") == NULL){
+                printf(": not found !");
+            }
+            
+            if(header->extra_header == NULL){
+                header->extra_header = malloc(strlen(line) + 3);
+                strncpy(header->extra_header, line, strlen(line));
+                strcat(header->extra_header, "\r\n");
+            }
+            else{
+                header->extra_header = realloc(header->extra_header, strlen(header->extra_header)+strlen(line)+3);
+                strcat(header->extra_header, line);
+                strcat(header->extra_header, "\r\n");
+            }
+            
+            // printf("header -> extra header %s\n", header->extra_header);
+            
+            
+            // all the extra headers
+        }
+        free(line);
         // Add more header parsing as needed
     }
     

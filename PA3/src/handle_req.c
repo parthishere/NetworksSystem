@@ -28,10 +28,30 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 
-void *prefetcher_thread(void *args){
-    return NULL;
-}
+int is_dynamic_content(const char *url, char *recieved_buf) {
 
+    if (strstr(recieved_buf, "Cache-Control: no-cache") || 
+        strstr(recieved_buf, "Cache-Control: no-store") ||
+        strstr(recieved_buf, "Pragma: no-cache")) {
+        return 1;  // Server explicitly asked not to cache
+    }
+
+    const char *content_type = strstr(recieved_buf, "Content-Type:");
+    if (content_type) {
+        if (strstr(content_type, "application/json") ||
+            strstr(content_type, "text/javascript") ||
+            strstr(content_type, "application/xml")) {
+            return 1;  // Likely dynamic content
+        }
+    }
+
+    // Check for query parameters (anything after ?)
+    if (strchr(url, '?') != NULL) {
+        return 1;  // URL contains query parameters
+    }
+    
+    return 0;  // No query parameters found
+}
 
 /**
  * @function handle_req
@@ -110,7 +130,7 @@ void *handle_req(sockdetails_t sd)
             }
             
             if(is_blocked(NULL, header.hostname_str)){
-                char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rBlocked";
+                char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
                 if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
                     fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                     close(sd.client_sock_fd);
@@ -119,8 +139,12 @@ void *handle_req(sockdetails_t sd)
                 break;
             }
 
-            
-            if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0){
+            int link_count, total_links;
+                char **links;
+
+            printf("is dynamic content %d\n\r", is_dynamic_content(header.uri_str, recieved_buf));
+
+            if((file_fd = cache_lookup(NULL, header.hostname_str, header.uri_str, 60)) < 0 || is_dynamic_content(header.uri_str, recieved_buf)){
                 // failed create a new socket!
 
                 struct addrinfo hints, *temp, *servinfo;
@@ -131,8 +155,8 @@ void *handle_req(sockdetails_t sd)
                 hints.ai_family = AF_UNSPEC;
                 hints.ai_socktype = SOCK_STREAM; // for TCP
                 if(header.hostname_port_str == NULL) header.hostname_port_str = "80";
-                if(strcmp(header.hostname_port_str, "8080") == 0) {
-                    char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\r cannot req proxy";
+                if(strcmp(header.hostname_port_str, "8080") == 0 && (strcmp(header.hostname_str, "localhost") == 0 || strcmp(header.hostname_str, "127.0.1.1") == 0)) {
+                    char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
                     if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
                         fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
                         close(sd.client_sock_fd);
@@ -144,7 +168,13 @@ void *handle_req(sockdetails_t sd)
                 if ((getaddrinfo(header.hostname_str, header.hostname_port_str, &hints, &servinfo)) < 0)
                 {
                     fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
-                    exit(EXIT_FAILURE);                                                   // exit if there is an error
+                    char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
+                    if(send(sd.client_sock_fd, send_req, strlen(send_req), 0) <0){
+                        fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
+                        close(sd.client_sock_fd);
+                        break;
+                    }     
+                    goto cleanup;                                              
                 }
                 printf(GRN "[+] getaddrinfo call successful\n" RESET);
 
@@ -184,7 +214,10 @@ void *handle_req(sockdetails_t sd)
                 const char *connection_type = header.connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
                 printf("waiting for send ?? \n");
                 char *send_req;
-                asprintf(&send_req,  "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", header.uri_str, header.hostname_str);
+                asprintf(&send_req,  "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header.uri_str, header.hostname_str, header.extra_header);
+                
+                printf("header -> %s", send_req);
+
                 if(send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0){
                     fprintf(stderr, RED "[-] send failed for server %d \n" RESET, errno);
                     close(sockfd);
@@ -193,8 +226,7 @@ void *handle_req(sockdetails_t sd)
 
                 int file_fd = cache_add_new(NULL, header.hostname_str, header.uri_str);
 
-                int link_count, total_links;
-                char **links;
+                
 
                 while(1){
                     memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -218,7 +250,7 @@ void *handle_req(sockdetails_t sd)
 
                 pthread_t *thread;
 
-                // pthread_create(thread, NULL, )
+               
                 
                 close(file_fd);
                 
@@ -240,6 +272,10 @@ void *handle_req(sockdetails_t sd)
 
                 close(file_fd);
                 // create another thread;
+            }
+            pthread_t pthread;
+            if(links != NULL){
+                // pthread_create(&pthread, NULL, prefetch_thread_func, links);
             }
             
            

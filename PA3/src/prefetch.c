@@ -2,18 +2,28 @@
 
 #include "prefetch.h"
 
-// Initialize prefetcher
-prefetcher_t* init_prefetcher(cache_table_t* cache, int timeout) {
-    prefetcher_t* prefetcher = malloc(sizeof(prefetcher_t));
-    if (!prefetcher) return NULL;
+// // Initialize prefetcher
+// prefetcher_t* init_prefetcher(cache_table_t* cache, int timeout) {
+//     prefetcher_t* prefetcher = malloc(sizeof(prefetcher_t));
+//     if (!prefetcher) return NULL;
     
-    prefetcher->cache = cache;
-    prefetcher->timeout = timeout;
-    pthread_mutex_init(&prefetcher->lock, NULL);
+//     prefetcher->cache = cache;
+//     prefetcher->timeout = timeout;
+//     pthread_mutex_init(&prefetcher->lock, NULL);
     
-    return prefetcher;
-}
+//     return prefetcher;
+// }
 
+
+
+void *prefetch_thread_func(void *data){
+    prefetcher_t *prefetch_data = (prefetcher_t  *)data;
+    
+    while(1){
+
+    }
+    return NULL;
+}
 
 // Extract links from HTML content
 char** extract_links(const char* html_content, int* link_count) {

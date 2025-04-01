@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Date: Tue, 01 Apr 2025 01:00:47 GMT
+Content-Type: application/json
+Connection: close
+Server: gunicorn/19.9.0
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{"url": "http://httpbin.org/stream/5", "args": {}, "headers": {"Host": "httpbin.org", "X-Amzn-Trace-Id": "Root=1-67eb3abe-4aae74c50effc1cd6abc8965"}, "origin": "128.138.65.48", "id": 0}
+{"url": "http://httpbin.org/stream/5", "args": {}, "headers": {"Host": "httpbin.org", "X-Amzn-Trace-Id": "Root=1-67eb3abe-4aae74c50effc1cd6abc8965"}, "origin": "128.138.65.48", "id": 1}
+{"url": "http://httpbin.org/stream/5", "args": {}, "headers": {"Host": "httpbin.org", "X-Amzn-Trace-Id": "Root=1-67eb3abe-4aae74c50effc1cd6abc8965"}, "origin": "128.138.65.48", "id": 2}
+{"url": "http://httpbin.org/stream/5", "args": {}, "headers": {"Host": "httpbin.org", "X-Amzn-Trace-Id": "Root=1-67eb3abe-4aae74c50effc1cd6abc8965"}, "origin": "128.138.65.48", "id": 3}
+{"url": "http://httpbin.org/stream/5", "args": {}, "headers": {"Host": "httpbin.org", "X-Amzn-Trace-Id": "Root=1-67eb3abe-4aae74c50effc1cd6abc8965"}, "origin": "128.138.65.48", "id": 4}

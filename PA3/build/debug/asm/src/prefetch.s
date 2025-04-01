@@ -1,8 +1,8 @@
 	.file	"prefetch.c"
 	.text
-	.globl	init_prefetcher
-	.type	init_prefetcher, @function
-init_prefetcher:
+	.globl	prefetch_thread_func
+	.type	prefetch_thread_func, @function
+prefetch_thread_func:
 .LFB6:
 	.cfi_startproc
 	endbr64
@@ -11,36 +11,15 @@ init_prefetcher:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	subq	$32, %rsp
 	movq	%rdi, -24(%rbp)
-	movl	%esi, -28(%rbp)
-	movl	$56, %edi
-	call	malloc@PLT
+	movq	-24(%rbp), %rax
 	movq	%rax, -8(%rbp)
-	cmpq	$0, -8(%rbp)
-	jne	.L2
-	movl	$0, %eax
-	jmp	.L3
 .L2:
-	movq	-8(%rbp), %rax
-	movq	-24(%rbp), %rdx
-	movq	%rdx, (%rax)
-	movq	-8(%rbp), %rax
-	movl	-28(%rbp), %edx
-	movl	%edx, 8(%rax)
-	movq	-8(%rbp), %rax
-	addq	$16, %rax
-	movl	$0, %esi
-	movq	%rax, %rdi
-	call	pthread_mutex_init@PLT
-	movq	-8(%rbp), %rax
-.L3:
-	leave
-	.cfi_def_cfa 7, 8
-	ret
+	nop
+	jmp	.L2
 	.cfi_endproc
 .LFE6:
-	.size	init_prefetcher, .-init_prefetcher
+	.size	prefetch_thread_func, .-prefetch_thread_func
 	.section	.rodata
 .LC0:
 	.string	"href=[\"']([^\"']+)[\"']"
@@ -78,14 +57,14 @@ extract_links:
 	movq	%rax, %rdi
 	call	regcomp@PLT
 	testl	%eax, %eax
-	je	.L5
+	je	.L4
 	movl	$0, %eax
-	jmp	.L10
-.L5:
+	jmp	.L9
+.L4:
 	movq	-152(%rbp), %rax
 	movq	%rax, -120(%rbp)
-	jmp	.L7
-.L9:
+	jmp	.L6
+.L8:
 	movl	-24(%rbp), %eax
 	movl	%eax, -140(%rbp)
 	movl	-20(%rbp), %eax
@@ -138,7 +117,7 @@ extract_links:
 	movq	%rax, %rdi
 	call	strcmp@PLT
 	testl	%eax, %eax
-	je	.L8
+	je	.L7
 	movq	-104(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC2(%rip), %rax
@@ -150,11 +129,11 @@ extract_links:
 	leal	1(%rax), %edx
 	movq	-160(%rbp), %rax
 	movl	%edx, (%rax)
-.L8:
+.L7:
 	movl	-28(%rbp), %eax
 	cltq
 	addq	%rax, -120(%rbp)
-.L7:
+.L6:
 	leaq	-32(%rbp), %rdx
 	movq	-120(%rbp), %rsi
 	leaq	-96(%rbp), %rax
@@ -164,17 +143,17 @@ extract_links:
 	movq	%rax, %rdi
 	call	regexec@PLT
 	testl	%eax, %eax
-	je	.L9
+	je	.L8
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	regfree@PLT
 	movq	-128(%rbp), %rax
-.L10:
+.L9:
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L11
+	je	.L10
 	call	__stack_chk_fail@PLT
-.L11:
+.L10:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
