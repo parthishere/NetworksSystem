@@ -1271,6 +1271,9 @@ handle_req:
 .L84:
 	nop
 .L79:
+	leaq	-31008(%rbp), %rax
+	movq	%rax, %rdi
+	call	cleanup_header@PLT
 	leaq	-30752(%rbp), %rax
 	movl	$30720, %edx
 	movl	$0, %esi

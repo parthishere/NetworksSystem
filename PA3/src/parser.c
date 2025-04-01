@@ -379,7 +379,7 @@ void cleanup_header(HttpHeader_t *header)
         free((void *)header->extra_header);
         // Add other fields that were dynamically allocated
         memset(header, 0, sizeof(HttpHeader_t));
-        free(header);
+        // free(header);
     }
 }
 

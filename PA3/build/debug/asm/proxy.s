@@ -245,6 +245,10 @@ main:
 	movq	-360(%rbp), %rax
 	movq	%rax, %rdi
 	call	destroy_threadpool@PLT
+	movl	$0, %edi
+	call	cleanup_cache@PLT
+	movl	$0, %edi
+	call	cleanup_blocklist@PLT
 	movl	$0, %eax
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx

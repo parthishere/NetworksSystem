@@ -400,6 +400,7 @@ void *handle_req(sockdetails_t sd)
 
             memset(&header, 0, sizeof(header));
             memset(recieved_buf, 0, sizeof(recieved_buf));
+            
 
             /* Check if connection should be closed */
             if (header.connection_close == 1 || header.connection_keep_alive == 0)
@@ -412,6 +413,7 @@ void *handle_req(sockdetails_t sd)
     }
 cleanup:;
     /* Clean up resources before exit */
+    cleanup_header(&header);
     memset(recieved_buf, 0, sizeof(recieved_buf));
     close(file_fd);
     close(sd.client_sock_fd);

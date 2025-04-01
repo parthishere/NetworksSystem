@@ -52,3 +52,5 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header);
  * or comprehensive error checking. Maintained for backward compatibility.
  */
 void parse_request_line_thread_unsafe(char *request, HttpHeader_t *header);
+
+void cleanup_header(HttpHeader_t *header);

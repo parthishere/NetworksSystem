@@ -922,9 +922,6 @@ cleanup_header:
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	movq	-8(%rbp), %rax
-	movq	%rax, %rdi
-	call	free@PLT
 .L58:
 	nop
 	leave

@@ -86,6 +86,8 @@ cleanup:;
     close(sd.sockfd);
 #if USE_FORK == 0
     destroy_threadpool(tp);
+    cleanup_cache(NULL);
+    cleanup_blocklist(NULL);
 #else
     cleanup_zombie_processes();
 #endif
