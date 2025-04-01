@@ -251,7 +251,7 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
 
             if (current_time - entry->timestamp <= timeout)
             {
-                
+                printf(YEL"[+] (%d) File is %lu sec long (<%ld)!\n"RESET, gettid(), current_time - entry->timestamp, timeout);
                 file_fd = open(entire_filename, O_RDONLY);
                 if (file_fd < 0)
                 {
@@ -263,6 +263,7 @@ int cache_lookup(cache_table_t *table, const char *url, char *filepath, time_t t
             else
             {
                 
+                printf(YEL"[+] (%d) File is %lu sec long, (Need to fetch newer one) (>%ld)!\n"RESET, gettid(), current_time - entry->timestamp, timeout);
                 pthread_mutex_unlock(&table_to_use->lock);
                 remove(entire_filename);
                 return file_fd;

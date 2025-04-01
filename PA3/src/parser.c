@@ -271,8 +271,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
     {
-        char *line = strdup(lines[i]);
-        // printf("hehe > %s, %s \n\r", line, lines[i]);
+        char *line = strdup(lines[i]); // free later
         char *key = strtok_r(lines[i], ":", &token_ctx);
         char *value = strtok_r(NULL, " ", &token_ctx);
         
@@ -306,12 +305,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             
             
             if(value){
-                header->hostname_port_str = strdup(value);
+                header->hostname_port_str = strdup(value); // free this later
             }
             
             if (!header->hostname_port_str) {
                 header->hostname_port_str = NULL;
-                
             }
             
         }
@@ -322,12 +320,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             header->connection_close = (strcasecmp(value, "Close") == 0);
         }
         else if (strcasecmp(key, "Cache-Control") == 0){
-            // strtok_r()
-            // header->max_age = value; // remember to free max_age afterwards
+           
         }
         else{
             if(strstr(line, ":") == NULL){
-                printf(": not found !");
+                printf("[-] key:value not found in header!");
                 header->parser_error |= BAD_REQ;
                 return SOME_ERROR;
             }
@@ -343,18 +340,14 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
                 strcat(header->extra_header, "\r\n");
             }
             
-            // printf("header -> extra header %s\n", header->extra_header);
-            
-            
-            // all the extra headers
         }
         free(line);
-        // Add more header parsing as needed
+
     }
     
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
-        printf("no host in 1.1\n");
+        printf("[-] No host in HTTP/1.1 header\n");
         header->parser_error |= BAD_REQ;
         return SOME_ERROR; // Host is required for HTTP/1.1
     }
@@ -363,15 +356,6 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 }
 
 
-   
-
-    
-    
-
-    // // Validate required headers for HTTP/1.1
-    // 
-
-    // 
 /**
  * @function cleanup_header
  * @brief Frees all dynamically allocated memory in header structure
@@ -385,10 +369,17 @@ void cleanup_header(HttpHeader_t *header)
 {
     if (header)
     {
+        free((void *)header->http_version_str);
         free((void *)header->uri_str);
         free((void *)header->hostname_str);
+        free((void *)header->hostname_port_str);
+        free((void *)header->content_type_str);
+        free((void *)header->method_str);
+        free((void *)header->status_code_str);
+        free((void *)header->extra_header);
         // Add other fields that were dynamically allocated
         memset(header, 0, sizeof(HttpHeader_t));
+        free(header);
     }
 }
 

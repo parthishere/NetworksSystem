@@ -126,7 +126,7 @@ main:
 	call	init_cache_table@PLT
 	movl	$0, %edi
 	call	init_cache@PLT
-	movl	$0, %eax
+	movl	$0, %edi
 	call	init_blocklist@PLT
 	movq	%rax, -368(%rbp)
 	leaq	.LC3(%rip), %rax

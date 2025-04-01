@@ -43,14 +43,13 @@ int main(int argc, char *argv[])
     }
     
     sd.timeout = atoi(argv[2]);
-    printf("Timeout %d\n",sd.timeout);
+    printf("[+] Cache Timeout is set to %d\n",sd.timeout);
     sd.addr_len = sizeof(sd.client_info);
 
     init_cache_table(1);
     init_cache(NULL);
-    blocklist_t *bl = init_blocklist();
-    printf("%d is blocked \n", is_blocked(NULL, "maps.google.com"));
-    printf("%d is blocked \n", is_blocked(NULL, "httpforever.com"));
+    blocklist_t *bl = init_blocklist(0);
+    printf("[+] Block list updated!\n");
     
     init_socket(&sd, argv[1]);
 

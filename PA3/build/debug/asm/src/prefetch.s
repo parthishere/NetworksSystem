@@ -11,17 +11,14 @@
 	.string	"/"
 	.align 8
 .LC4:
-	.string	"Absolute URL: host=%s, path=%s\n"
+	.string	"\033[35m[+] Absolute URL: host=%s, path=%s\n\033[0m"
 .LC5:
 	.string	"/%s"
 	.align 8
 .LC6:
-	.string	"Relative URL: host=%s, path=%s\n"
+	.string	"\033[35m[+] Relative URL: host=%s, path=%s\n\033[0m"
 .LC7:
 	.string	"80"
-	.align 8
-.LC8:
-	.string	"Prefetching: %s%s (dynamic=%d)\n"
 	.text
 	.globl	prefetch_thread_func
 	.type	prefetch_thread_func, @function
@@ -104,8 +101,6 @@ prefetch_thread_func:
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
-	movq	%rax, %rdi
-	call	strdup@PLT
 	movq	%rax, -160(%rbp)
 	movq	-160(%rbp), %rax
 	leaq	.LC2(%rip), %rdx
@@ -225,14 +220,6 @@ prefetch_thread_func:
 	movq	%rax, %rdi
 	call	is_dynamic_content@PLT
 	movl	%eax, -180(%rbp)
-	movq	-112(%rbp), %rdx
-	movq	-104(%rbp), %rax
-	movl	-180(%rbp), %ecx
-	movq	%rax, %rsi
-	leaq	.LC8(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
 	movq	-168(%rbp), %rax
 	movq	24(%rax), %rsi
 	movl	-180(%rbp), %edx
@@ -241,15 +228,6 @@ prefetch_thread_func:
 	movl	$0, %ecx
 	movq	%rax, %rdi
 	call	check_and_send_from_cache@PLT
-	movq	-112(%rbp), %rax
-	movq	%rax, %rdi
-	call	free@PLT
-	movq	-104(%rbp), %rax
-	movq	%rax, %rdi
-	call	free@PLT
-	movq	-96(%rbp), %rax
-	movq	%rax, %rdi
-	call	free@PLT
 	jmp	.L5
 .L19:
 	nop
@@ -302,9 +280,9 @@ prefetch_thread_func:
 .LFE6:
 	.size	prefetch_thread_func, .-prefetch_thread_func
 	.section	.rodata
-.LC9:
+.LC8:
 	.string	"href=[\"']([^\"']+)[\"']"
-.LC10:
+.LC9:
 	.string	"#"
 	.text
 	.globl	extract_links
@@ -327,7 +305,7 @@ extract_links:
 	movq	$0, -128(%rbp)
 	movq	-160(%rbp), %rax
 	movl	$0, (%rax)
-	leaq	.LC9(%rip), %rax
+	leaq	.LC8(%rip), %rax
 	movq	%rax, -112(%rbp)
 	movq	-112(%rbp), %rcx
 	leaq	-96(%rbp), %rax
@@ -391,7 +369,7 @@ extract_links:
 	movq	-104(%rbp), %rax
 	movq	%rax, (%rdx)
 	movq	-104(%rbp), %rax
-	leaq	.LC10(%rip), %rdx
+	leaq	.LC9(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
@@ -440,6 +418,52 @@ extract_links:
 	.cfi_endproc
 .LFE7:
 	.size	extract_links, .-extract_links
+	.globl	free_links
+	.type	free_links, @function
+free_links:
+.LFB8:
+	.cfi_startproc
+	endbr64
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	subq	$32, %rsp
+	movq	%rdi, -24(%rbp)
+	movl	%esi, -28(%rbp)
+	movl	$0, -4(%rbp)
+	jmp	.L29
+.L30:
+	movl	-4(%rbp), %eax
+	cltq
+	leaq	0(,%rax,8), %rdx
+	movq	-24(%rbp), %rax
+	addq	%rdx, %rax
+	movq	(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movl	-4(%rbp), %eax
+	cltq
+	leaq	0(,%rax,8), %rdx
+	movq	-24(%rbp), %rax
+	addq	%rdx, %rax
+	movq	$0, (%rax)
+	addl	$1, -4(%rbp)
+.L29:
+	movl	-4(%rbp), %eax
+	cmpl	-28(%rbp), %eax
+	jl	.L30
+	movq	-24(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	nop
+	leave
+	.cfi_def_cfa 7, 8
+	ret
+	.cfi_endproc
+.LFE8:
+	.size	free_links, .-free_links
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

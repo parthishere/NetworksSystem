@@ -23,7 +23,7 @@ void *prefetch_thread_func(void *data) {
         if (strncmp(prefetch_data->links[i], "http://", 7) == 0 || 
             strncmp(prefetch_data->links[i], "https://", 8) == 0) {
             // Absolute URL - need to parse it
-            char *url_copy = strdup(prefetch_data->links[i]);
+            char *url_copy = prefetch_data->links[i];
             char *protocol_end = strstr(url_copy, "://");
             
             if (!protocol_end) {
@@ -46,7 +46,7 @@ void *prefetch_thread_func(void *data) {
             }
             
             free(url_copy);
-            printf("Absolute URL: host=%s, path=%s\n", 
+            printf(MAG"[+] Absolute URL: host=%s, path=%s\n"RESET, 
                    temp_header.hostname_str, temp_header.uri_str);
         } else {
             // Relative URL - combine with base
@@ -63,7 +63,7 @@ void *prefetch_thread_func(void *data) {
                 temp_header.uri_str = full_path;
             }
             
-            printf("Relative URL: host=%s, path=%s\n", 
+            printf(MAG"[+] Relative URL: host=%s, path=%s\n"RESET, 
                    temp_header.hostname_str, temp_header.uri_str);
         }
         
@@ -72,17 +72,14 @@ void *prefetch_thread_func(void *data) {
         
         // Check if dynamic content before making the request
         int dynamic = is_dynamic_content(temp_header.uri_str, NULL);
-        
-        printf("Prefetching: %s%s (dynamic=%d)\n", 
-               temp_header.hostname_str, temp_header.uri_str, dynamic);
                
         // Fetch the content but don't send to client and don't recursively prefetch
         check_and_send_from_cache(&temp_header, prefetch_data->sd, dynamic, 0, 0);
         
         // Clean up
-        free(temp_header.uri_str);
-        free(temp_header.hostname_str);
-        free(temp_header.hostname_port_str);
+        // free(temp_header.uri_str);
+        // free(temp_header.hostname_str);
+        // free(temp_header.hostname_port_str);
     }
     
     // Clean up the link data
@@ -92,6 +89,7 @@ void *prefetch_thread_func(void *data) {
     free(prefetch_data->links);
     free(prefetch_data->base_url);
     free(prefetch_data);
+    
     
     return NULL;
 }
@@ -138,4 +136,13 @@ char** extract_links(const char* html_content, int* link_count) {
     
     regfree(&regex);
     return links;
+}
+
+
+void free_links(char **links, int total_links){
+    for(int i=0; i<total_links; i++){
+        free(links[i]);
+        links[i] = NULL;
+    }
+    free(links);
 }

@@ -610,8 +610,14 @@ cache_add_existing:
 .LFE324:
 	.size	cache_add_existing, .-cache_add_existing
 	.section	.rodata
+	.align 8
 .LC9:
+	.string	"\033[33m[+] (%d) File is %lu sec long (%d)!\n\033[0m"
+.LC10:
 	.string	"file opening from cache"
+	.align 8
+.LC11:
+	.string	"\033[33m[+] (%d) File is %lu sec long, (Need to fetch newer one)!\n\033[0m"
 	.text
 	.globl	cache_lookup
 	.type	cache_lookup, @function
@@ -664,9 +670,9 @@ cache_lookup:
 	movl	$16, %eax
 	subq	$1, %rax
 	addq	%rsi, %rax
-	movl	$16, %ebx
+	movl	$16, %ecx
 	movl	$0, %edx
-	divq	%rbx
+	divq	%rcx
 	imulq	$16, %rax, %rax
 	movq	%rax, %rcx
 	andq	$-4096, %rcx
@@ -763,6 +769,21 @@ cache_lookup:
 	movq	-128(%rbp), %rax
 	cmpq	%rdx, %rax
 	jb	.L59
+	movq	-80(%rbp), %rax
+	movq	%rax, %rdx
+	movq	-56(%rbp), %rax
+	movq	4136(%rax), %rax
+	movq	%rdx, %rbx
+	subq	%rax, %rbx
+	call	gettid@PLT
+	movl	%eax, %esi
+	movq	-128(%rbp), %rax
+	movq	%rax, %rcx
+	movq	%rbx, %rdx
+	leaq	.LC9(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movq	-72(%rbp), %rax
 	movl	$0, %esi
 	movq	%rax, %rdi
@@ -771,7 +792,7 @@ cache_lookup:
 	movl	%eax, -92(%rbp)
 	cmpl	$0, -92(%rbp)
 	jns	.L60
-	leaq	.LC9(%rip), %rax
+	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	call	perror@PLT
 .L60:
@@ -782,6 +803,19 @@ cache_lookup:
 	movl	-92(%rbp), %eax
 	jmp	.L62
 .L59:
+	movq	-80(%rbp), %rax
+	movq	%rax, %rdx
+	movq	-56(%rbp), %rax
+	movq	4136(%rax), %rax
+	movq	%rdx, %rbx
+	subq	%rax, %rbx
+	call	gettid@PLT
+	movq	%rbx, %rdx
+	movl	%eax, %esi
+	leaq	.LC11(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	movq	-64(%rbp), %rax
 	addq	$8192, %rax
 	movq	%rax, %rdi
@@ -820,7 +854,7 @@ cache_lookup:
 .LFE325:
 	.size	cache_lookup, .-cache_lookup
 	.section	.rodata
-.LC10:
+.LC12:
 	.string	"%02x"
 	.text
 	.globl	str2md5
@@ -900,7 +934,7 @@ str2md5:
 	movq	-40(%rbp), %rdx
 	leaq	(%rcx,%rdx), %rdi
 	movl	%eax, %ecx
-	leaq	.LC10(%rip), %rax
+	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdx
 	movl	$32, %esi
 	movl	$0, %eax

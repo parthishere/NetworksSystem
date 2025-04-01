@@ -140,10 +140,12 @@ extract_uri_path:
 	.string	"Close"
 .LC31:
 	.string	"Cache-Control"
+	.align 8
 .LC32:
-	.string	": not found !"
+	.string	"[-] key:value not found in header!"
+	.align 8
 .LC33:
-	.string	"no host in 1.1"
+	.string	"[-] No host in HTTP/1.1 header"
 	.text
 	.globl	parse_request_line_thread_safe
 	.type	parse_request_line_thread_safe, @function
@@ -884,6 +886,10 @@ cleanup_header:
 	cmpq	$0, -8(%rbp)
 	je	.L58
 	movq	-8(%rbp), %rax
+	movq	8(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
@@ -892,10 +898,33 @@ cleanup_header:
 	movq	%rax, %rdi
 	call	free@PLT
 	movq	-8(%rbp), %rax
+	movq	32(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
+	movq	48(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
+	movq	64(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
+	movq	80(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
+	movq	112(%rax), %rax
+	movq	%rax, %rdi
+	call	free@PLT
+	movq	-8(%rbp), %rax
 	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
+	movq	-8(%rbp), %rax
+	movq	%rax, %rdi
+	call	free@PLT
 .L58:
 	nop
 	leave
