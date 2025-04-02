@@ -336,17 +336,24 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
                     fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
                     break;
                 }
-                strncpy(header->extra_header, line, strlen(line));
-                strcat(header->extra_header, "\r\n");
+                strcpy(header->extra_header, line);
+                strcpy(header->extra_header, "\r\n");
             }
-            else if(strlen(header->extra_header) && strlen(line)){
-                header->extra_header = realloc(header->extra_header, (strlen(header->extra_header)+strlen(line)+3));
-                if(!header->extra_header){
+            else if(strlen(header->extra_header) && line && strlen(line) > 0){
+                size_t current_len = strlen(header->extra_header);
+                size_t line_len = strlen(line);
+
+                char *data = realloc(header->extra_header, current_len+line_len+3);
+                if(!data){
                     fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
                     break;
                 }
-                strcat(header->extra_header, line);
-                strcat(header->extra_header, "\r\n");
+                else{
+                    header->extra_header = data;
+                    strcat(header->extra_header, line);
+                    strcat(header->extra_header, "\r\n");
+                }
+                
             }
             
         }
