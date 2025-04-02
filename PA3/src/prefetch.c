@@ -6,7 +6,7 @@ void *prefetch_thread_func(void *data)
 {
     prefetcher_t *prefetch_data = (prefetcher_t *)data;
 
-    
+    if(!prefetch_data) return NULL;
 
     // Process each link
     for (int i = 0; i < prefetch_data->linknum; i++)
@@ -29,8 +29,7 @@ void *prefetch_thread_func(void *data)
         temp_sd.client_sock_fd = -1; 
 
         // Check if link is absolute or relative
-        if (strncmp(prefetch_data->links[i], "http://", 7) == 0 ||
-            strncmp(prefetch_data->links[i], "https://", 8) == 0)
+        if (strncmp(prefetch_data->links[i], "http://", 7) == 0)
         {
             // Absolute URL - need to parse it
             char *url_copy = prefetch_data->links[i];
@@ -38,18 +37,19 @@ void *prefetch_thread_func(void *data)
 
             if (!protocol_end)
             {
-                free(url_copy);
                 continue;
             }
 
             char *host_start = protocol_end + 3;
             char *path_start = strchr(host_start, '/');
+            char *port_start = strchr(host_start, ':');
 
             if (!path_start)
             {
                 // Default path if none specified
                 temp_header.uri_str = strdup("/");
                 temp_header.hostname_str = strdup(host_start);
+                
             }
             else
             {
@@ -59,15 +59,18 @@ void *prefetch_thread_func(void *data)
                 *path_start = '/';                        // Restore original string
             }
 
-            free(url_copy);
-            printf(MAG "[+] Absolute URL: host=%s, path=%s\n" RESET,
-                   temp_header.hostname_str, temp_header.uri_str);
+            printf(MAG "\n---------------------------------------------------------------\n"
+                   "[+] (%d) Prefetching absolute URL:\n"
+                   "[+] Host: %s\n"
+                   "[+] Path: %s\n"
+                   "---------------------------------------------------------------\n" RESET,
+                   gettid(), temp_header.hostname_str, temp_header.uri_str);
         }
         else
         {
             // Relative URL - combine with base
             temp_header.hostname_str = strdup(prefetch_data->base_url);
-
+            
             // Handle different relative path formats
             if (prefetch_data->links[i][0] == '/')
             {
@@ -82,36 +85,41 @@ void *prefetch_thread_func(void *data)
                 temp_header.uri_str = full_path;
             }
 
-            printf(MAG "[+] Relative URL: host=%s, path=%s\n" RESET,
-                   temp_header.hostname_str, temp_header.uri_str);
+            printf(MAG "\n---------------------------------------------------------------\n"
+                   "[+] (%d) Prefetching relative URL:\n"
+                   "[+] Host: %s\n"
+                   "[+] Path: %s\n"
+                   "---------------------------------------------------------------\n" RESET,
+                   gettid(), temp_header.hostname_str, temp_header.uri_str);
         }
 
         // Set default port if needed
-        temp_header.hostname_port_str = NULL;
+        temp_header.hostname_port_str = prefetch_data->base_port ? strdup(prefetch_data->base_port) : NULL;
 
         // Check if dynamic content before making the request
         int dynamic = is_dynamic_content(temp_header.uri_str, NULL);
 
+
         // Fetch the content but don't send to client and don't recursively prefetch
         check_and_send_from_cache(&temp_header, &temp_sd, dynamic, 0, 0);
 
-        // Clean up
-        free(temp_header.uri_str);
-        free(temp_header.hostname_str);
-        free(temp_header.hostname_port_str);
+        // Clean up allocated memory in header structure to prevent leaks
+        cleanup_header(&temp_header); // Use the existing cleanup_header function to free all header fields
     }
 
     // Clean up the link data
     for (int i = 0; i < prefetch_data->linknum; i++)
     {
-        if (!prefetch_data->links[i])
-            free(prefetch_data->links[i]);
+        if (prefetch_data->links[i])
+            free(prefetch_data->links[i]); // Free each link string allocated with strdup
     }
-    if (!prefetch_data->links)
-        free(prefetch_data->links);
-    if (!prefetch_data->base_url)
-        free(prefetch_data->base_url);
-    free(prefetch_data);
+    if (prefetch_data->links)
+        free(prefetch_data->links); // Free the array of links allocated with malloc
+    if (prefetch_data->base_url)
+        free(prefetch_data->base_url); // Free the base URL allocated with strdup
+    if (prefetch_data->sd)
+        free(prefetch_data->sd); // Free the socket details allocated with malloc
+    free(prefetch_data); // Free the prefetcher_t structure allocated with malloc
 
     return NULL;
 }
@@ -146,12 +154,24 @@ char **extract_links(const char *html_content, int *link_count)
         // if(strncmp(link, "#", strlen(link)) == 0) continue;
         // if(strncmp(link, "", strlen(link)) == 0) continue;
 
-        // Add to links array
-        links = realloc(links, (*link_count + 1) * sizeof(char *));
-        links[*link_count] = link;
-        if (strncmp(link, "#", sizeof(link)) != 0 && strstr(link, "https://") == NULL)
+        // Check if this is a link we want to keep (not a fragment or HTTPS)
+        if (strncmp(link, "#", 1) != 0 && strstr(link, "https://") == NULL)
         {
+            // Add to links array
+            links = realloc(links, (*link_count + 1) * sizeof(char *));
+            if (!links) {
+                // Handle realloc failure to prevent memory leak
+                fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array\n" RESET, gettid());
+                free(link);
+                return NULL;
+            }
+            links[*link_count] = link;
             (*link_count)++;
+        }
+        else
+        {
+            // Free links we're not going to use to prevent memory leaks
+            free(link);
         }
 
         // Move cursor past this match

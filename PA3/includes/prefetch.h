@@ -10,6 +10,7 @@ typedef struct {
     int linknum;       // Cache timeout value
     char **links;      // Thread safety lock
     char *base_url;
+    char *base_port;
     sockdetails_t *sd;
 } prefetcher_t;
 

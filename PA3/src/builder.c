@@ -73,9 +73,9 @@ void send_(HttpHeader_t *request_header, char *message, statusCode_t code, sockd
     send(sd->client_sock_fd, return_request, return_size, 0);
 }
 
-// GET / HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
-// GET /style.css HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
-// GET /script.js HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\n\r\n
+// GET / HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\r\n\n
+// GET /style.css HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\r\n\n
+// GET /script.js HTTP/1.1\r\nHost: example.com\r\nConnection: keep-alive\r\r\n\n
 
 /**
  * @function get_content_type
@@ -343,7 +343,7 @@ void build_and_send_header(HttpHeader_t *request_header, sockdetails_t *sd)
         const char *connection_type = request_header->connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
 
         /* Handle header construction errors */
-        header_size = asprintf(&return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\n\r\n", request_header->http_version_str, status_codes[OK], content_type, size, connection_type);
+        header_size = asprintf(&return_request, "%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\r\n\n", request_header->http_version_str, status_codes[OK], content_type, size, connection_type);
 
         if (header_size < 0)
         {

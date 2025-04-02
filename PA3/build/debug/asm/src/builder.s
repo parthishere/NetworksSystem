@@ -679,7 +679,7 @@ handle_file_request:
 	.string	"Connection: close"
 	.align 8
 .LC53:
-	.string	"%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\n\r\n"
+	.string	"%s %s\r\nContent-Type: %s\r\nContent-Length: %ld\r\n%s\r\r\n\n"
 .LC54:
 	.string	"Send header"
 	.align 8

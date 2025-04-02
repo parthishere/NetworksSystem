@@ -73,6 +73,7 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
     }
     data->linknum = total_links;
     data->base_url = strdup(header->hostname_str);
+    data->base_port = header->hostname_port_str ? strdup(header->hostname_port_str) : NULL;
 
     pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
     pthread_detach(prefetch_thread);
@@ -82,7 +83,10 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 {
 
     if (!prefetch)
-        printf(MAG "\n[+] (%d) Prefetching *not* Cached uri\n" RESET, gettid());
+        printf(MAG "\n===============================================================\n"
+               "[+] (%d) Prefetching *not* Cached uri: %s%s\n"
+               "===============================================================\n" RESET, 
+               gettid(), header->hostname_str, header->uri_str);
 
     struct addrinfo hints, *temp, *servinfo;
     int sockfd;
@@ -91,33 +95,32 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     int total_links = 0;
     char **all_links = NULL;
 
-    printf(YEL "[+] (%d) Asking file from server \n\r" RESET, gettid());
+    printf(YEL "\n[+] (%d) Requesting file from server: %s:%s%s\n" RESET, 
+           gettid(), header->hostname_str, 
+           header->hostname_port_str ? header->hostname_port_str : "80", header->uri_str);
     
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM; // for TCP
     
-    printf(YEL "1\n\r" RESET);
-    
     if (header->hostname_port_str != NULL && strcmp(header->hostname_port_str, "8080") == 0 && (strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0) && send_to_client && sd->client_sock_fd > 0)
     {
-        char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\n\r\n\r cannot req proxy";
+        char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n\r\n cannot req proxy";
         if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
         {
             fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
         }
         return -1;
     }
-    printf(YEL "2\n\r" RESET);
 
     printf("header ->hostname %s hostname port str %s\n", header->hostname_str, header->hostname_port_str);
-    if(header->hostname_port_str == NULL) header->hostname_port_str = "80";
+    // if(header->hostname_port_str == NULL) header->hostname_port_str = "80";
 
     if ((getaddrinfo(header->hostname_str, header->hostname_port_str, &hints, &servinfo)) < 0)
     {
         fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
         if(sd->client_sock_fd > 0 && send_to_client){
-            char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
+            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked";
             if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -153,7 +156,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     if (temp == NULL)
     {
         if(sd->client_sock_fd > 0 && send_to_client){
-            char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rConnect Failed";
+            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nConnect Failed";
             if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -165,7 +168,11 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     char s[INET6_ADDRSTRLEN];
     inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-    printf(MAG "[+] (%d) client: connecting to %s\n" RESET, gettid(), s);
+    printf(MAG "\n[+] (%d) Connection established to server: %s\n"
+           "[+] Server IP address: %s:%s\n"
+           "---------------------------------------------------------------\n" RESET, 
+           gettid(), header->hostname_str, s, 
+           header->hostname_port_str ? header->hostname_port_str : "80");
 
     freeaddrinfo(servinfo);
 
@@ -178,7 +185,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     }
     else
     {
-        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", header->uri_str, header->hostname_str);
+        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\r\n\n", header->uri_str, header->hostname_str);
     }
 
     if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
@@ -202,31 +209,32 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         write(file_fd, recieved_buf, numbytes);
 
         int link_count = 0;
-        // char **chunk_links = extract_links(recieved_buf, &link_count);
+        char **chunk_links = extract_links(recieved_buf, &link_count);
 
-        // if (link_count > 0 && chunk_links != NULL)
-        // {
-        //     // Resize the all_links array to accommodate new links
-        //     all_links = realloc(all_links, (total_links + link_count) * sizeof(char *));
+        if (link_count > 0 && chunk_links != NULL)
+        {
+            // Resize the all_links array to accommodate new links
+            all_links = realloc(all_links, (total_links + link_count) * sizeof(char *));
 
-        //     if (!all_links) {
-        //         fprintf(stderr, RED "[-] Memory allocation failed\n" RESET);
-        //         free(chunk_links);
-        //         return -1;
-        //     }
-        //     // Copy pointers to the new links
-        //     for (int i = 0; i < link_count; i++)
-        //     {
-        //         all_links[total_links + i] = strdup(chunk_links[i]);
-        //     }
+            if (!all_links) {
+                fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array (requested %zu bytes)\n" RESET, 
+                       gettid(), (total_links + link_count) * sizeof(char *));
+                free(chunk_links);
+                return -1;
+            }
+            // Copy pointers to the new links
+            for (int i = 0; i < link_count; i++)
+            {
+                all_links[total_links + i] = strdup(chunk_links[i]);
+            }
 
-        //     // Update total count
-        //     total_links += link_count;
+            // Update total count
+            total_links += link_count;
 
-        //     // Don't free chunk_links itself as we're keeping the pointers,
-        //     // but free the array
-        //     free(chunk_links);
-        // }
+            // Don't free chunk_links itself as we're keeping the pointers,
+            // but free the array
+            free(chunk_links);
+        }
 
         if (send_to_client && sd->client_sock_fd > 0)
         {
@@ -243,7 +251,15 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     if (all_links != NULL && prefetch)
     {
         prefetch_thread_create(sd, total_links, all_links, header);
+        
+        // Free the all_links array since prefetch_thread_create makes its own copies
+        for (int i = 0; i < total_links; i++) {
+            free(all_links[i]); // Free each link string that was allocated with strdup
+        }
     }
+    
+    // Free the all_links array itself
+    free(all_links);
 
     close(file_fd);
 
@@ -255,14 +271,25 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
 int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_client, int prefetch)
 {
-    printf("\n");
     if (!prefetch)
-        printf(MAG "[+] (%d) Prefetching Cached uri\n\r" RESET, gettid());
+        printf(MAG "\n===============================================================\n"
+               "[+] (%d) Prefetching Cached uri: %s%s\n"
+               "===============================================================\n" RESET, 
+               gettid(), header->hostname_str, header->uri_str);
 
     char recieved_buf[TRANSMIT_SIZE];
     char **all_links = NULL;
     int total_links = 0;
-    printf(YEL "[+] (%d) Sent file from cache \n\r" RESET, gettid());
+    
+    // Get file size
+    long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
+    
+    printf(YEL "\n[+] (%d) Serving file from cache: %s%s\n"
+           "[+] Cache file size: %ld bytes\n" RESET, 
+           gettid(), header->hostname_str, header->uri_str, file_size);
+    
+    // Reset file position to beginning
+    lseek(file_fd, 0, SEEK_SET);
     while (1)
     {
         memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -315,24 +342,41 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
         prefetch_thread_create(sd, total_links, all_links, header);
     }
 
-    free(all_links);
+    // Free all allocated link strings before freeing the array
+    if (all_links != NULL) {
+        for (int i = 0; i < total_links; i++) {
+            if (all_links[i] != NULL) {
+                free(all_links[i]); // Free each link string allocated with strdup
+            }
+        }
+        free(all_links); // Free the array itself
+    }
+    
     close(file_fd);
+    return 0; // Add return value to be consistent with if_not_cached
 }
 
 void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynamic_content, int send_to_client, int prefetch)
 {
     int file_fd;
+    int result;
 
-    if ((file_fd = cache_lookup(NULL, header->hostname_str, header->uri_str, sd->timeout)) < 0 || dynamic_content)
+    file_fd = cache_lookup(NULL, header->hostname_str, header->uri_str, sd->timeout);
+    
+    if (file_fd < 0 || dynamic_content)
     {
-        if_not_cached(header, sd, send_to_client, prefetch);
+        // Not in cache or dynamic content - need to fetch from server
+        result = if_not_cached(header, sd, send_to_client, prefetch);
     }
     else
     {
-        // if_cached(header, sd, file_fd, send_to_client, prefetch);
+        // Found in cache - serve from cache
+        result = if_cached(header, sd, file_fd, send_to_client, prefetch);
+        // Don't close file_fd here as it's already closed in if_cached
     }
-
-    close(file_fd);
+    
+    // No need to close file_fd here as it's closed in both if_cached and if_not_cached
+    // Removing the potential double-close that could cause issues
 }
 
 /**
@@ -375,14 +419,18 @@ void *handle_req(sockdetails_t sd)
         /* Handle select errors */
         if (select_status < 0)
         {
-            fprintf(stderr,RED "[-] (%d) select error\n", gettid());
+            fprintf(stderr, RED "[-] (%d) Select syscall failed with error: %d (%s)\n" RESET, 
+                    gettid(), errno, strerror(errno));
             break;
         }
 
         /* Handle connection timeout */
         if (select_status == 0)
         {
-            printf(YEL "[-] (%d) Connection timed out\n" RESET, gettid());
+            printf(YEL "\n[-] (%d) CONNECTION TIMEOUT:\n"
+                   "[-] Client connection idle for %d seconds\n"
+                   "------------------------------------------------------------\n" RESET, 
+                   gettid(), TIMEOUT_HTTP_SEC);
             break;
         }
 
@@ -391,21 +439,35 @@ void *handle_req(sockdetails_t sd)
         {
             memset(recieved_buf, 0, sizeof(recieved_buf));
             /* Read incoming request with error checking */
-            if ((numbytes = recv(sd.client_sock_fd, recieved_buf, sizeof(recieved_buf), 0)) < 0)
-            {
-                fprintf(stderr, RED "[-] (%d) read\n", gettid());
-                return NULL;
-            }
+            int total_bytes = 0;
+            // while(1){
+                numbytes = recv(sd.client_sock_fd, &recieved_buf[total_bytes], sizeof(recieved_buf), 0);
+                if (numbytes <= 0)
+                {
+                    // fprintf(stderr, RED "[-] (%d) read\n", gettid());
+                    break;
+                }
+                total_bytes += (numbytes-1);
+            // }
+            
 
-            // printf("recieved_buf : %s\n\n", recieved_buf);
+            printf("\n==============================================================\n"
+                   "[+] (%d) Received request from client [%d bytes]:\n"
+                   "==============================================================\n"
+                   "%s\n"
+                   "--------------------------------------------------------------\n", 
+                   gettid(), total_bytes, recieved_buf);
             /* Initialize header structure and parse request */
             memset(&header, 0, sizeof(HttpHeader_t));
             if (parse_request_line_thread_safe(recieved_buf, &header) < 0)
             {
                 // error
                 // we need to send different error according with different error
-                printf(RED "[-] (%d) Parsing went wrong : 0x%02X \n\r" RESET, gettid(), header.parser_error);
-                char *send_req = "HTTP/1.0 404 Not Found\n\rContent-Type: text/plain\n\r\n\rSomthing went wrong";
+                printf(RED "\n[-] (%d) HTTP Parsing Error:\n"
+                       "[-] Error code: 0x%02X\n"
+                       "------------------------------------------------------------\n" RESET, 
+                       gettid(), header.parser_error);
+                char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n\r\nSomthing went wrong";
                 if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
                 {
                     fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -415,8 +477,11 @@ void *handle_req(sockdetails_t sd)
 
             if (is_blocked(NULL, header.hostname_str))
             {
-                printf(RED "[-] (%d) Blocked Domain \n\r" RESET, gettid());
-                char *send_req = "HTTP/1.0 403 Forbidden\n\rContent-Type: text/plain\n\r\n\rBlocked";
+                printf(RED "\n[-] (%d) ACCESS DENIED: Domain is in blocklist\n"
+                       "[-] Blocked domain: %s\n"
+                       "------------------------------------------------------------\n" RESET, 
+                       gettid(), header.hostname_str);
+                char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked";
                 if (send(sd.client_sock_fd, send_req, strlen(send_req), 0) < 0)
                 {
                     fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -443,7 +508,9 @@ cleanup:;
     /* Clean up resources before exit */
     cleanup_header(&header);
     memset(recieved_buf, 0, sizeof(recieved_buf));
-    close(file_fd);
+    
+    // Only close the client socket, file_fd is already closed in the handler functions
+    // or was never opened if we jumped to cleanup without accessing a file
     close(sd.client_sock_fd);
 
     return NULL;
