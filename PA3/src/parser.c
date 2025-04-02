@@ -323,7 +323,8 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
            
         }
         else{
-            if(strstr(line, ":") == NULL){
+
+            if(!line || strstr(line, ":") == NULL){
                 printf("[-] key:value not found in header!");
                 header->parser_error |= BAD_REQ;
                 return SOME_ERROR;
@@ -331,11 +332,19 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             
             if(header->extra_header == NULL){
                 header->extra_header = malloc(strlen(line) + 3);
+                if(!header->extra_header){
+                    fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
+                    break;
+                }
                 strncpy(header->extra_header, line, strlen(line));
                 strcat(header->extra_header, "\r\n");
             }
-            else{
-                header->extra_header = realloc(header->extra_header, strlen(header->extra_header)+strlen(line)+3);
+            else if(strlen(header->extra_header) && strlen(line)){
+                header->extra_header = realloc(header->extra_header, (strlen(header->extra_header)+strlen(line)+3));
+                if(!header->extra_header){
+                    fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
+                    break;
+                }
                 strcat(header->extra_header, line);
                 strcat(header->extra_header, "\r\n");
             }
@@ -369,17 +378,13 @@ void cleanup_header(HttpHeader_t *header)
 {
     if (header)
     {
-        free((void *)header->http_version_str);
-        free((void *)header->uri_str);
-        free((void *)header->hostname_str);
-        free((void *)header->hostname_port_str);
-        free((void *)header->content_type_str);
-        free((void *)header->method_str);
-        free((void *)header->status_code_str);
-        free((void *)header->extra_header);
-        // Add other fields that were dynamically allocated
+        if(header->uri_str) free((void *)header->uri_str);
+        if(header->hostname_str) free((void *)header->hostname_str);
+        if(header->hostname_port_str) free((void *)header->hostname_port_str);
+        if(header->status_code_str) free((void *)header->status_code_str);
+        if(header->extra_header) free((void *)header->extra_header);
+
         memset(header, 0, sizeof(HttpHeader_t));
-        // free(header);
     }
 }
 

@@ -145,6 +145,9 @@ extract_uri_path:
 	.string	"[-] key:value not found in header!"
 	.align 8
 .LC33:
+	.string	"\033[31m[-] (%d) Memory allocation failed\n\033[0m"
+	.align 8
+.LC34:
 	.string	"[-] No host in HTTP/1.1 header"
 	.text
 	.globl	parse_request_line_thread_safe
@@ -590,7 +593,7 @@ parse_request_line_thread_safe:
 	movl	$1, 92(%rax)
 	movl	$1, -196(%rbp)
 	jmp	.L37
-.L51:
+.L55:
 	movl	-196(%rbp), %eax
 	cltq
 	movq	-96(%rbp,%rax,8), %rax
@@ -614,9 +617,9 @@ parse_request_line_thread_safe:
 	call	strtok_r@PLT
 	movq	%rax, -168(%rbp)
 	cmpq	$0, -104(%rbp)
-	je	.L55
+	je	.L59
 	cmpq	$0, -168(%rbp)
-	je	.L55
+	je	.L59
 	jmp	.L41
 .L42:
 	addq	$1, -168(%rbp)
@@ -739,12 +742,15 @@ parse_request_line_thread_safe:
 	call	strcasecmp@PLT
 	testl	%eax, %eax
 	je	.L47
+	cmpq	$0, -112(%rbp)
+	je	.L49
 	movq	-112(%rbp), %rax
 	movl	$58, %esi
 	movq	%rax, %rdi
 	call	strchr@PLT
 	testq	%rax, %rax
-	jne	.L49
+	jne	.L50
+.L49:
 	leaq	.LC32(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -757,11 +763,11 @@ parse_request_line_thread_safe:
 	movl	%edx, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L8
-.L49:
+.L50:
 	movq	-240(%rbp), %rax
 	movq	112(%rax), %rax
 	testq	%rax, %rax
-	jne	.L50
+	jne	.L51
 	movq	-112(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
@@ -771,6 +777,20 @@ parse_request_line_thread_safe:
 	movq	%rax, %rdx
 	movq	-240(%rbp), %rax
 	movq	%rdx, 112(%rax)
+	movq	-240(%rbp), %rax
+	movq	112(%rax), %rax
+	testq	%rax, %rax
+	jne	.L52
+	call	gettid@PLT
+	movl	%eax, %edx
+	movq	stderr(%rip), %rax
+	leaq	.LC33(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	fprintf@PLT
+	jmp	.L53
+.L52:
 	movq	-112(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
@@ -789,7 +809,16 @@ parse_request_line_thread_safe:
 	movw	$2573, (%rax)
 	movb	$0, 2(%rax)
 	jmp	.L47
-.L50:
+.L51:
+	movq	-240(%rbp), %rax
+	movq	112(%rax), %rax
+	movzbl	(%rax), %eax
+	testb	%al, %al
+	je	.L47
+	movq	-112(%rbp), %rax
+	movzbl	(%rax), %eax
+	testb	%al, %al
+	je	.L47
 	movq	-240(%rbp), %rax
 	movq	112(%rax), %rax
 	movq	%rax, %rdi
@@ -809,6 +838,20 @@ parse_request_line_thread_safe:
 	movq	%rax, 112(%rdx)
 	movq	-240(%rbp), %rax
 	movq	112(%rax), %rax
+	testq	%rax, %rax
+	jne	.L54
+	call	gettid@PLT
+	movl	%eax, %edx
+	movq	stderr(%rip), %rax
+	leaq	.LC33(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	fprintf@PLT
+	jmp	.L53
+.L54:
+	movq	-240(%rbp), %rax
+	movq	112(%rax), %rax
 	movq	-112(%rbp), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
@@ -825,23 +868,24 @@ parse_request_line_thread_safe:
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L40
-.L55:
+.L59:
 	nop
 .L40:
 	addl	$1, -196(%rbp)
 .L37:
 	movl	-196(%rbp), %eax
 	cmpl	-212(%rbp), %eax
-	jl	.L51
+	jl	.L55
+.L53:
 	movq	-240(%rbp), %rax
 	movl	(%rax), %eax
 	cmpl	$1, %eax
-	jne	.L52
+	jne	.L56
 	movq	-240(%rbp), %rax
 	movq	24(%rax), %rax
 	testq	%rax, %rax
-	jne	.L52
-	leaq	.LC33(%rip), %rax
+	jne	.L56
+	leaq	.LC34(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
 	movq	-240(%rbp), %rax
@@ -852,15 +896,15 @@ parse_request_line_thread_safe:
 	movl	%edx, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L8
-.L52:
+.L56:
 	movl	$0, %eax
 .L8:
 	movq	%r12, %rsp
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L54
+	je	.L58
 	call	__stack_chk_fail@PLT
-.L54:
+.L58:
 	leaq	-16(%rbp), %rsp
 	popq	%rbx
 	popq	%r12
@@ -884,45 +928,58 @@ cleanup_header:
 	subq	$16, %rsp
 	movq	%rdi, -8(%rbp)
 	cmpq	$0, -8(%rbp)
-	je	.L58
+	je	.L67
 	movq	-8(%rbp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, %rdi
-	call	free@PLT
+	movq	16(%rax), %rax
+	testq	%rax, %rax
+	je	.L62
 	movq	-8(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L62:
+	movq	-8(%rbp), %rax
+	movq	24(%rax), %rax
+	testq	%rax, %rax
+	je	.L63
 	movq	-8(%rbp), %rax
 	movq	24(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L63:
+	movq	-8(%rbp), %rax
+	movq	32(%rax), %rax
+	testq	%rax, %rax
+	je	.L64
 	movq	-8(%rbp), %rax
 	movq	32(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L64:
 	movq	-8(%rbp), %rax
-	movq	48(%rax), %rax
-	movq	%rax, %rdi
-	call	free@PLT
-	movq	-8(%rbp), %rax
-	movq	64(%rax), %rax
-	movq	%rax, %rdi
-	call	free@PLT
+	movq	80(%rax), %rax
+	testq	%rax, %rax
+	je	.L65
 	movq	-8(%rbp), %rax
 	movq	80(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L65:
+	movq	-8(%rbp), %rax
+	movq	112(%rax), %rax
+	testq	%rax, %rax
+	je	.L66
 	movq	-8(%rbp), %rax
 	movq	112(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L66:
 	movq	-8(%rbp), %rax
 	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-.L58:
+.L67:
 	nop
 	leave
 	.cfi_def_cfa 7, 8

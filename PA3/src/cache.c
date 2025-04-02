@@ -334,7 +334,7 @@ void cleanup_cache(cache_table_t *table)
             entry = entry->next;
         }
         // free(prev);
-        free(table_to_use->buckets[i]);
+        if (table_to_use->buckets[i]) free(table_to_use->buckets[i]);
     }
     pthread_mutex_destroy(&table_to_use->lock);
 

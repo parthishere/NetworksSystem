@@ -985,7 +985,7 @@ cleanup_cache:
 	movl	$0, -32(%rbp)
 	movl	$0, -32(%rbp)
 	jmp	.L78
-.L81:
+.L82:
 	movq	-24(%rbp), %rax
 	movl	-32(%rbp), %edx
 	movslq	%edx, %rdx
@@ -1015,12 +1015,19 @@ cleanup_cache:
 	movl	-32(%rbp), %edx
 	movslq	%edx, %rdx
 	movq	(%rax,%rdx,8), %rax
+	testq	%rax, %rax
+	je	.L81
+	movq	-24(%rbp), %rax
+	movl	-32(%rbp), %edx
+	movslq	%edx, %rdx
+	movq	(%rax,%rdx,8), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+.L81:
 	addl	$1, -32(%rbp)
 .L78:
 	cmpl	$1023, -32(%rbp)
-	jle	.L81
+	jle	.L82
 	movq	-24(%rbp), %rax
 	addq	$8192, %rax
 	movq	%rax, %rdi
