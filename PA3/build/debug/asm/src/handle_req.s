@@ -729,6 +729,10 @@ if_not_cached:
 	movq	-30928(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
+	movq	-30992(%rbp), %rax
+	addq	$168, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_lock@PLT
 .L54:
 	leaq	-30768(%rbp), %rax
 	movl	$30720, %edx
@@ -744,6 +748,10 @@ if_not_cached:
 	movl	%eax, -30940(%rbp)
 	cmpl	$0, -30940(%rbp)
 	jg	.L44
+	movq	-30992(%rbp), %rax
+	addq	$168, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_unlock@PLT
 	movl	-30944(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
@@ -1023,6 +1031,10 @@ if_cached:
 .L61:
 	movq	$0, -30792(%rbp)
 	movl	$0, -30808(%rbp)
+	movq	-30832(%rbp), %rax
+	addq	$168, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_lock@PLT
 	movl	-30836(%rbp), %eax
 	movl	$2, %edx
 	movl	$0, %esi
@@ -1074,6 +1086,10 @@ if_cached:
 	movl	%eax, -30796(%rbp)
 	cmpl	$0, -30796(%rbp)
 	jg	.L64
+	movq	-30832(%rbp), %rax
+	addq	$168, %rax
+	movq	%rax, %rdi
+	call	pthread_mutex_unlock@PLT
 	cmpq	$0, -30792(%rbp)
 	jne	.L65
 	jmp	.L66

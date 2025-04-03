@@ -198,6 +198,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     free(send_req);
 
+    pthread_mutex_lock(&sd->lock);
     while (1)
     {
         
@@ -249,6 +250,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         }
         printf(GRN"[+] (%d) %d bytes Saved to cache ! (%s/%s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
     }
+    pthread_mutex_unlock(&sd->lock);
 
     
     close(file_fd);
@@ -283,6 +285,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     char **all_links = NULL;
     int total_links = 0;
     
+    pthread_mutex_lock(&sd->lock);
     // Get file size
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
     
@@ -338,6 +341,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             printf(GRN"[+] (%d) Sent %d bytes from cache (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
+    pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {
