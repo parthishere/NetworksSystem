@@ -59,11 +59,9 @@ void *prefetch_thread_func(void *data)
                 *path_start = '/';                        // Restore original string
             }
 
-            printf(MAG "\n---------------------------------------------------------------\n"
-                   "[+] (%d) Prefetching absolute URL:\n"
+            printf(MAG "[+] (%d) Prefetching absolute URL:\n"
                    "[+] Host: %s\n"
-                   "[+] Path: %s\n"
-                   "---------------------------------------------------------------\n" RESET,
+                   "[+] Path: %s\n"RESET,
                    gettid(), temp_header.hostname_str, temp_header.uri_str);
         }
         else
@@ -85,11 +83,9 @@ void *prefetch_thread_func(void *data)
                 temp_header.uri_str = full_path;
             }
 
-            printf(MAG "\n---------------------------------------------------------------\n"
-                   "[+] (%d) Prefetching relative URL:\n"
+            printf(MAG "[+] (%d) Prefetching relative URL:\n"
                    "[+] Host: %s\n"
-                   "[+] Path: %s\n"
-                   "---------------------------------------------------------------\n" RESET,
+                   "[+] Path: %s\n"RESET,
                    gettid(), temp_header.hostname_str, temp_header.uri_str);
         }
 

@@ -9,12 +9,12 @@
 	.string	"/"
 	.align 8
 .LC3:
-	.string	"\033[35m\n---------------------------------------------------------------\n[+] (%d) Prefetching absolute URL:\n[+] Host: %s\n[+] Path: %s\n---------------------------------------------------------------\n\033[0m"
+	.string	"\033[35m[+] (%d) Prefetching absolute URL:\n[+] Host: %s\n[+] Path: %s\n\033[0m"
 .LC4:
 	.string	"/%s"
 	.align 8
 .LC5:
-	.string	"\033[35m\n---------------------------------------------------------------\n[+] (%d) Prefetching relative URL:\n[+] Host: %s\n[+] Path: %s\n---------------------------------------------------------------\n\033[0m"
+	.string	"\033[35m[+] (%d) Prefetching relative URL:\n[+] Host: %s\n[+] Path: %s\n\033[0m"
 	.text
 	.globl	prefetch_thread_func
 	.type	prefetch_thread_func, @function
@@ -29,35 +29,35 @@ prefetch_thread_func:
 	.cfi_def_cfa_register 6
 	pushq	%r12
 	pushq	%rbx
-	subq	$400, %rsp
+	subq	$448, %rsp
 	.cfi_offset 12, -24
 	.cfi_offset 3, -32
-	movq	%rdi, -408(%rbp)
+	movq	%rdi, -456(%rbp)
 	movq	%fs:40, %rax
 	movq	%rax, -24(%rbp)
 	xorl	%eax, %eax
-	movq	-408(%rbp), %rax
-	movq	%rax, -368(%rbp)
-	cmpq	$0, -368(%rbp)
+	movq	-456(%rbp), %rax
+	movq	%rax, -416(%rbp)
+	cmpq	$0, -416(%rbp)
 	jne	.L2
 	movl	$0, %eax
 	jmp	.L3
 .L2:
-	movl	$0, -388(%rbp)
+	movl	$0, -436(%rbp)
 	jmp	.L4
 .L18:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	testq	%rax, %rax
 	je	.L26
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -65,24 +65,24 @@ prefetch_thread_func:
 	movzbl	(%rax), %eax
 	testb	%al, %al
 	je	.L26
-	leaq	-320(%rbp), %rax
+	leaq	-368(%rbp), %rax
 	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	leaq	-192(%rbp), %rax
-	movl	$168, %edx
+	leaq	-240(%rbp), %rax
+	movl	$208, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	32(%rax), %rax
 	movl	156(%rax), %eax
-	movl	%eax, -36(%rbp)
-	movl	$-1, -188(%rbp)
-	movq	-368(%rbp), %rax
+	movl	%eax, -84(%rbp)
+	movl	$-1, -236(%rbp)
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -94,62 +94,62 @@ prefetch_thread_func:
 	call	strncmp@PLT
 	testl	%eax, %eax
 	jne	.L8
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
-	movq	%rax, -360(%rbp)
-	movq	-360(%rbp), %rax
+	movq	%rax, -408(%rbp)
+	movq	-408(%rbp), %rax
 	leaq	.LC1(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strstr@PLT
-	movq	%rax, -352(%rbp)
-	cmpq	$0, -352(%rbp)
+	movq	%rax, -400(%rbp)
+	cmpq	$0, -400(%rbp)
 	je	.L27
-	movq	-352(%rbp), %rax
+	movq	-400(%rbp), %rax
 	addq	$3, %rax
-	movq	%rax, -344(%rbp)
-	movq	-344(%rbp), %rax
+	movq	%rax, -392(%rbp)
+	movq	-392(%rbp), %rax
 	movl	$47, %esi
 	movq	%rax, %rdi
 	call	strchr@PLT
-	movq	%rax, -336(%rbp)
-	movq	-344(%rbp), %rax
+	movq	%rax, -384(%rbp)
+	movq	-392(%rbp), %rax
 	movl	$58, %esi
 	movq	%rax, %rdi
 	call	strchr@PLT
-	movq	%rax, -328(%rbp)
-	cmpq	$0, -336(%rbp)
+	movq	%rax, -376(%rbp)
+	cmpq	$0, -384(%rbp)
 	jne	.L10
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -304(%rbp)
-	movq	-344(%rbp), %rax
+	movq	%rax, -352(%rbp)
+	movq	-392(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -296(%rbp)
+	movq	%rax, -344(%rbp)
 	jmp	.L11
 .L10:
-	movq	-336(%rbp), %rax
+	movq	-384(%rbp), %rax
 	movb	$0, (%rax)
-	movq	-344(%rbp), %rax
+	movq	-392(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -296(%rbp)
-	movq	-336(%rbp), %rax
+	movq	%rax, -344(%rbp)
+	movq	-384(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -304(%rbp)
-	movq	-336(%rbp), %rax
+	movq	%rax, -352(%rbp)
+	movq	-384(%rbp), %rax
 	movb	$47, (%rax)
 .L11:
-	movq	-304(%rbp), %r12
-	movq	-296(%rbp), %rbx
+	movq	-352(%rbp), %r12
+	movq	-344(%rbp), %rbx
 	call	gettid@PLT
 	movq	%r12, %rcx
 	movq	%rbx, %rdx
@@ -160,14 +160,14 @@ prefetch_thread_func:
 	call	printf@PLT
 	jmp	.L12
 .L8:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -296(%rbp)
-	movq	-368(%rbp), %rax
+	movq	%rax, -344(%rbp)
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -175,36 +175,36 @@ prefetch_thread_func:
 	movzbl	(%rax), %eax
 	cmpb	$47, %al
 	jne	.L13
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
-	movq	%rax, -304(%rbp)
+	movq	%rax, -352(%rbp)
 	jmp	.L14
 .L13:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-388(%rbp), %edx
+	movl	-436(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rdx
-	leaq	-376(%rbp), %rax
+	leaq	-424(%rbp), %rax
 	leaq	.LC4(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	asprintf@PLT
-	movq	-376(%rbp), %rax
-	movq	%rax, -304(%rbp)
+	movq	-424(%rbp), %rax
+	movq	%rax, -352(%rbp)
 .L14:
-	movq	-304(%rbp), %r12
-	movq	-296(%rbp), %rbx
+	movq	-352(%rbp), %r12
+	movq	-344(%rbp), %rbx
 	call	gettid@PLT
 	movq	%r12, %rcx
 	movq	%rbx, %rdx
@@ -214,11 +214,11 @@ prefetch_thread_func:
 	movl	$0, %eax
 	call	printf@PLT
 .L12:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	24(%rax), %rax
 	testq	%rax, %rax
 	je	.L15
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	24(%rax), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
@@ -226,20 +226,20 @@ prefetch_thread_func:
 .L15:
 	movl	$0, %eax
 .L16:
-	movq	%rax, -288(%rbp)
-	movq	-304(%rbp), %rax
+	movq	%rax, -336(%rbp)
+	movq	-352(%rbp), %rax
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	is_dynamic_content@PLT
-	movl	%eax, -380(%rbp)
-	movl	-380(%rbp), %edx
-	leaq	-192(%rbp), %rsi
-	leaq	-320(%rbp), %rax
+	movl	%eax, -428(%rbp)
+	movl	-428(%rbp), %edx
+	leaq	-240(%rbp), %rsi
+	leaq	-368(%rbp), %rax
 	movl	$0, %r8d
 	movl	$0, %ecx
 	movq	%rax, %rdi
 	call	check_and_send_from_cache@PLT
-	leaq	-320(%rbp), %rax
+	leaq	-368(%rbp), %rax
 	movq	%rax, %rdi
 	call	cleanup_header@PLT
 	jmp	.L17
@@ -249,27 +249,27 @@ prefetch_thread_func:
 .L27:
 	nop
 .L17:
-	addl	$1, -388(%rbp)
+	addl	$1, -436(%rbp)
 .L4:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movl	(%rax), %eax
-	cmpl	%eax, -388(%rbp)
+	cmpl	%eax, -436(%rbp)
 	jl	.L18
-	movl	$0, -384(%rbp)
+	movl	$0, -432(%rbp)
 	jmp	.L19
 .L21:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-384(%rbp), %edx
+	movl	-432(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	testq	%rax, %rax
 	je	.L20
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
-	movl	-384(%rbp), %edx
+	movl	-432(%rbp), %edx
 	movslq	%edx, %rdx
 	salq	$3, %rdx
 	addq	%rdx, %rax
@@ -277,40 +277,40 @@ prefetch_thread_func:
 	movq	%rax, %rdi
 	call	free@PLT
 .L20:
-	addl	$1, -384(%rbp)
+	addl	$1, -432(%rbp)
 .L19:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movl	(%rax), %eax
-	cmpl	%eax, -384(%rbp)
+	cmpl	%eax, -432(%rbp)
 	jl	.L21
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
 	testq	%rax, %rax
 	je	.L22
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	8(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L22:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	16(%rax), %rax
 	testq	%rax, %rax
 	je	.L23
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L23:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	32(%rax), %rax
 	testq	%rax, %rax
 	je	.L24
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	32(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L24:
-	movq	-368(%rbp), %rax
+	movq	-416(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	movl	$0, %eax
@@ -320,7 +320,7 @@ prefetch_thread_func:
 	je	.L25
 	call	__stack_chk_fail@PLT
 .L25:
-	addq	$400, %rsp
+	addq	$448, %rsp
 	popq	%rbx
 	popq	%r12
 	popq	%rbp

@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+Date: Thu, 03 Apr 2025 07:57:28 GMT
+Content-Type: application/json
+Content-Length: 408
+Connection: close
+Server: gunicorn/19.9.0
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{
+  "args": {
+    "param1": "value1", 
+    "param2": "value2"
+  }, 
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "identity", 
+    "Host": "httpbin.org", 
+    "Proxy-Connection": "Keep-Alive", 
+    "User-Agent": "Wget/1.24.5", 
+    "X-Amzn-Trace-Id": "Root=1-67ee3f68-519d79817bf9cd133a856e8b"
+  }, 
+  "origin": "98.43.116.141", 
+  "url": "http://httpbin.org/get?param1=value1&param2=value2"
+}

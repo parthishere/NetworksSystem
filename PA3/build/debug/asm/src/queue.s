@@ -77,9 +77,8 @@ default_thread_func:
 	call	pthread_mutex_unlock@PLT
 	movq	-24(%rbp), %rax
 	movq	8(%rax), %rsi
-	subq	$8, %rsp
 	movq	-24(%rbp), %rax
-	subq	$168, %rsp
+	subq	$208, %rsp
 	movq	%rsp, %rdx
 	movq	16(%rax), %rcx
 	movq	24(%rax), %rbx
@@ -121,10 +120,20 @@ default_thread_func:
 	movq	168(%rax), %rbx
 	movq	%rcx, 144(%rdx)
 	movq	%rbx, 152(%rdx)
-	movq	176(%rax), %rax
-	movq	%rax, 160(%rdx)
+	movq	176(%rax), %rcx
+	movq	184(%rax), %rbx
+	movq	%rcx, 160(%rdx)
+	movq	%rbx, 168(%rdx)
+	movq	192(%rax), %rcx
+	movq	200(%rax), %rbx
+	movq	%rcx, 176(%rdx)
+	movq	%rbx, 184(%rdx)
+	movq	208(%rax), %rcx
+	movq	216(%rax), %rbx
+	movq	%rcx, 192(%rdx)
+	movq	%rbx, 200(%rdx)
 	call	*%rsi
-	addq	$176, %rsp
+	addq	$208, %rsp
 	movq	-24(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
@@ -179,7 +188,7 @@ dispatch:
 	je	.L16
 	cmpq	$0, -48(%rbp)
 	je	.L16
-	movl	$184, %edi
+	movl	$224, %edi
 	call	malloc@PLT
 	movq	%rax, -24(%rbp)
 	cmpq	$0, -24(%rbp)
@@ -228,8 +237,18 @@ dispatch:
 	movq	168(%rbp), %rbx
 	movq	%rcx, 160(%rax)
 	movq	%rbx, 168(%rax)
-	movq	176(%rbp), %rdx
-	movq	%rdx, 176(%rax)
+	movq	176(%rbp), %rcx
+	movq	184(%rbp), %rbx
+	movq	%rcx, 176(%rax)
+	movq	%rbx, 184(%rax)
+	movq	192(%rbp), %rcx
+	movq	200(%rbp), %rbx
+	movq	%rcx, 192(%rax)
+	movq	%rbx, 200(%rax)
+	movq	208(%rbp), %rcx
+	movq	216(%rbp), %rbx
+	movq	%rcx, 208(%rax)
+	movq	%rbx, 216(%rax)
 	movq	-24(%rbp), %rax
 	movq	$0, (%rax)
 	movq	-32(%rbp), %rax
@@ -478,7 +497,7 @@ destroy_threadpool:
 	call	sem_post@PLT
 	addl	$1, -40(%rbp)
 .L29:
-	cmpl	$0, -40(%rbp)
+	cmpl	$9, -40(%rbp)
 	jle	.L30
 	movl	$0, -36(%rbp)
 	jmp	.L31
@@ -514,7 +533,7 @@ destroy_threadpool:
 	call	pthread_attr_destroy@PLT
 	addl	$1, -36(%rbp)
 .L31:
-	cmpl	$0, -36(%rbp)
+	cmpl	$9, -36(%rbp)
 	jle	.L32
 	movq	-24(%rbp), %rax
 	movq	192(%rax), %rax

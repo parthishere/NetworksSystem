@@ -68,9 +68,9 @@
 #define RECIEVE_SIZE MAX_SIZE   /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE  /* Transmit buffer size */
 #define USE_FORK 0              /* Use threading instead of forking */
-#define TOTAL_THREADS 1       /* Number of worker threads */
+#define TOTAL_THREADS 10       /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
-#define TIMEOUT_HTTP_SEC 2      /* Connection timeout in seconds */
+#define TIMEOUT_HTTP_SEC 10      /* Connection timeout in seconds */
 /** @} */
 
 
@@ -233,6 +233,7 @@ typedef struct
     int sentBytes;                       // Bytes sent in last operation
     int timeout;
     int port;
+    pthread_mutex_t lock;
 } sockdetails_t;
 
 

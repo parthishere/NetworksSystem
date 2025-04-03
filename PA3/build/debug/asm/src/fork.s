@@ -113,7 +113,7 @@ use_fork:
 	orq	%rax, %rdx
 	movslq	%esi, %rax
 	movq	%rdx, -30864(%rbp,%rax,8)
-	movq	$2, -31008(%rbp)
+	movq	$10, -31008(%rbp)
 	movq	$0, -31000(%rbp)
 	movl	-31032(%rbp), %eax
 	leal	1(%rax), %edi
