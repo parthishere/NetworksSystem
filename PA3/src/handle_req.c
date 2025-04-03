@@ -156,11 +156,12 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     if (temp == NULL)
     {
         if(sd->client_sock_fd > 0 && send_to_client){
-            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nConnect Failed";
+            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nConnect Failed\r\n\r\n";
             if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
             }
+            
         }
         close(sockfd);
         return -1;
@@ -365,7 +366,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     return 0; // Add return value to be consistent with if_not_cached
 }
 
-void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynamic_content, int send_to_client, int prefetch)
+int check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynamic_content, int send_to_client, int prefetch)
 {
     int file_fd;
     int result;
@@ -384,6 +385,7 @@ void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dyna
         result = if_cached(header, sd, file_fd, send_to_client, prefetch);
         // Don't close file_fd here as it's already closed in if_cached
     }
+    return result;
     // if(!prefetch) pthread_mutex_unlock(&sd->lock);
     
     // No need to close file_fd here as it's closed in both if_cached and if_not_cached
@@ -481,7 +483,7 @@ void *handle_req(sockdetails_t *sd)
                 printf(RED "[-] (%d) HTTP Parsing Error:\n"
                        "[-] Error code: 0x%02X\n" RESET, 
                        gettid(), header.parser_error);
-                char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n\r\nSomthing went wrong";
+                char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 19\r\n\r\nSomthing went wrong";
                 if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
                 {
                     fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -503,11 +505,11 @@ void *handle_req(sockdetails_t *sd)
                 // goto cleanup;
             }
 
-            check_and_send_from_cache(&header, sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
+            int returnval = check_and_send_from_cache(&header, sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
             
 
             /* Check if connection should be closed */
-            if (header.connection_close == 1 && header.connection_keep_alive == 0)
+            if ((header.connection_close == 1 && header.connection_keep_alive == 0) || returnval < 0)
             {
                 goto cleanup;
             }
