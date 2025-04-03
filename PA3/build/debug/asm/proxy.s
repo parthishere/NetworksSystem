@@ -90,11 +90,6 @@ main:
 	movl	$1, %esi
 	movl	$13, %edi
 	call	signal@PLT
-	leaq	-240(%rbp), %rax
-	addq	$168, %rax
-	movl	$0, %esi
-	movq	%rax, %rdi
-	call	pthread_mutex_init@PLT
 	cmpl	$3, -420(%rbp)
 	je	.L3
 	cmpl	$2, -420(%rbp)

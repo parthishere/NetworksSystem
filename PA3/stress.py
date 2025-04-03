@@ -293,26 +293,25 @@ def make_request(host, port, requests):
                             break  # Connection closed by server
                         response += chunk
                         
-                        # Check if we've received a complete HTTP response
-                        if b"\r\n\r\n" in response and (
-                            # Either not a chunked response
-                            (b"Transfer-Encoding: chunked" not in response) or 
-                            # Or chunked response with terminating chunk
-                            (b"\r\n0\r\n\r\n" in response)
-                        ):
-                            break
+                        # # Check if we've received a complete HTTP response
+                        # if b"\r\n\r\n" in response and (
+                        #     # Either not a chunked response
+                        #     (b"Transfer-Encoding: chunked" not in response) or 
+                        #     # Or chunked response with terminating chunk
+                        #     (b"\r\n0\r\n\r\n" in response)
+                        # ):
+                        #     break 
                             
                     except socket.timeout:
                         print("Socket timeout while receiving data")
                         break
                 
-                print(f"< Response received: {len(response)} bytes for header > {request_str}")
-                if len(response) > 0:
-                    # Print the header part only to keep the output readable
-                    header_end = response.find(b"\r\n\r\n") + 4
-                    print(response[:header_end].decode('utf-8', errors='replace'))
-                    print("... [body content] ...")
-                print(" -------- ")
+                print(f"< Response received: {len(response)} bytes for header > \n{request_str} \n --------")
+                # if len(response) > 0:
+                #     # Print the header part only to keep the output readable
+                #     header_end = response.find(b"\r\n\r\n") + 4
+                #     print(response[:header_end].decode('utf-8', errors='replace'))
+                #     print("... [body content] ...")
 
             except Exception as e:
                 print(f"Error during request: {e}")

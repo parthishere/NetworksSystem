@@ -65,11 +65,13 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
     prefetcher_t *data = malloc(sizeof(prefetcher_t));
     data->links = malloc(sizeof(char *) * total_links);
     data->sd = malloc(sizeof(sockdetails_t));
-    memcpy(data->sd, sd, sizeof(sockdetails_t));
+    // memcpy(data->sd, sd, sizeof(sockdetails_t));
     data->sd->client_sock_fd = -1;
+    
     for (int i = 0; i < total_links; i++)
     {
-        data->links[i] = strdup(all_links[i]);
+        if(all_links[i])
+            data->links[i] = strdup(all_links[i]);
     }
     data->linknum = total_links;
     data->base_url = strdup(header->hostname_str);
@@ -284,6 +286,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     int total_links = 0;
     
     // Get file size
+    pthread_mutex_lock(&sd->lock);
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
     
     printf(GRN "[+] (%d) Serving file from cache: %s%s\n"
@@ -303,7 +306,6 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
 
         int link_count = 0;
         char **chunk_links = extract_links(recieved_buf, &link_count);
-        // pthread_mutex_lock(&sd->lock);
         if (link_count > 0 && chunk_links != NULL)
         {
             // Resize the all_links array to accommodate new links
@@ -338,8 +340,8 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             }
             printf(GRN"[+] (%d) Sent %d bytes from cache (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
-        // pthread_mutex_unlock(&sd->lock);
     }
+    pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {
@@ -411,6 +413,7 @@ void *handle_req(sockdetails_t sd)
     fd_set readfds;                   /* File descriptor set for select() */
     int file_fd;
 
+    pthread_mutex_init(&sd.lock, NULL);
     while (1)
     {
         FD_ZERO(&readfds);

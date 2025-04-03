@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     signal(SIGPIPE, SIG_IGN);
 
     sockdetails_t sd;
-    pthread_mutex_init(&sd.lock, NULL);
+    
 
     if (argc != 3)
     {
