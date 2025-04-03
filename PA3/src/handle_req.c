@@ -74,6 +74,7 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
             data->links[i] = strdup(all_links[i]);
     }
     data->linknum = total_links;
+
     data->base_url = strdup(header->hostname_str);
     data->base_port = header->hostname_port_str ? strdup(header->hostname_port_str) : NULL;
 
@@ -197,11 +198,10 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     while (1)
     {
-        pthread_mutex_lock(&sd->lock);
+        
         memset(recieved_buf, 0, sizeof(recieved_buf));
         if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0)
         {
-            pthread_mutex_unlock(&sd->lock);
             break;
         }
         write(file_fd, recieved_buf, numbytes);
@@ -218,7 +218,6 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array (requested %zu bytes)\n" RESET, 
                        gettid(), (total_links + link_count) * sizeof(char *));
                 free(chunk_links);
-                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             // Copy pointers to the new links
@@ -242,13 +241,11 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                 close(file_fd);
                 close(sockfd);
-                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN"[+] (%d) Sent %d bytes directly (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN"[+] (%d) %d bytes Saved to cache ! (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
-        pthread_mutex_unlock(&sd->lock);
     }
 
     free(all_links);
@@ -286,7 +283,6 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     int total_links = 0;
     
     // Get file size
-    pthread_mutex_lock(&sd->lock);
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
     
     printf(GRN "[+] (%d) Serving file from cache: %s%s\n"
@@ -341,7 +337,6 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             printf(GRN"[+] (%d) Sent %d bytes from cache (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
-    pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {
@@ -370,6 +365,7 @@ void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dyna
     int file_fd;
     int result;
 
+    if(!prefetch) pthread_mutex_lock(&sd->lock);
     file_fd = cache_lookup(NULL, header->hostname_str, header->uri_str, sd->timeout);
     
     if (file_fd < 0 || dynamic_content)
@@ -383,6 +379,7 @@ void check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dyna
         result = if_cached(header, sd, file_fd, send_to_client, prefetch);
         // Don't close file_fd here as it's already closed in if_cached
     }
+    // if(!prefetch) pthread_mutex_unlock(&sd->lock);
     
     // No need to close file_fd here as it's closed in both if_cached and if_not_cached
     // Removing the potential double-close that could cause issues
@@ -502,6 +499,7 @@ void *handle_req(sockdetails_t sd)
             }
 
             check_and_send_from_cache(&header, &sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
+            
 
             /* Check if connection should be closed */
             if (header.connection_close == 1 && header.connection_keep_alive == 0)

@@ -368,11 +368,11 @@ if __name__ == "__main__":
     # IMPORTANT: For direct socket connections to a server (not through a proxy),
     # the request line should NOT include the full URL
     requests_list = [
-        "GET / HTTP/1.1\r\nHost: localhost:8080\r\nConnection: keep-alive\r\n\r\n",
-        "GET /api HTTP/1.1\r\nHost: localhost:8080\r\nConnection: keep-alive\r\n\r\n",
-        "GET /test HTTP/1.1\r\nHost: localhost:8080\r\nConnection: keep-alive\r\n\r\n",
-        "POST /submit HTTP/1.1\r\nHost: localhost:8080\r\nContent-Length: 11\r\nConnection: keep-alive\r\n\r\nHello World",
-        "GET /nonexistent HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n",
+        "GET / HTTP/1.1\r\nHost: httpbin.org\r\nConnection: keep-alive\r\n\r\n",
+        "GET /api HTTP/1.1\r\nHost: httpbin.org\r\nConnection: keep-alive\r\n\r\n",
+        "GET /test HTTP/1.1\r\nHost: httpbin.org\r\nConnection: keep-alive\r\n\r\n",
+        "POST /submit HTTP/1.1\r\nHost: httpbin.org\r\nContent-Length: 11\r\nConnection: keep-alive\r\n\r\nHello World",
+        "GET /nonexistent HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n",
     ]
 
     # For testing against a real web service like httpbin.org
