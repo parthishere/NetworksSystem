@@ -22,12 +22,10 @@ default_thread_func:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	pushq	%rbx
-	subq	$40, %rsp
-	.cfi_offset 3, -24
-	movq	%rdi, -40(%rbp)
-	movq	-40(%rbp), %rax
-	movq	%rax, -32(%rbp)
+	subq	$32, %rsp
+	movq	%rdi, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movq	%rax, -16(%rbp)
 	call	gettid@PLT
 	movl	%eax, %esi
 	leaq	.LC0(%rip), %rax
@@ -42,113 +40,60 @@ default_thread_func:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$160, %rax
 	movq	%rax, %rdi
 	call	sem_wait@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$24, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	192(%rax), %rax
-	movq	%rax, -24(%rbp)
-	cmpq	$0, -24(%rbp)
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
 	je	.L3
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	(%rax), %eax
 	leal	-1(%rax), %edx
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	%edx, (%rax)
-	movq	-24(%rbp), %rax
+	movq	-8(%rbp), %rax
 	movq	(%rax), %rdx
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	%rdx, 192(%rax)
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	192(%rax), %rax
 	testq	%rax, %rax
 	jne	.L4
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	$0, 200(%rax)
 .L4:
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$24, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_unlock@PLT
-	movq	-24(%rbp), %rax
-	movq	8(%rax), %rsi
-	movq	-24(%rbp), %rax
-	subq	$208, %rsp
-	movq	%rsp, %rdx
-	movq	16(%rax), %rcx
-	movq	24(%rax), %rbx
-	movq	%rcx, (%rdx)
-	movq	%rbx, 8(%rdx)
-	movq	32(%rax), %rcx
-	movq	40(%rax), %rbx
-	movq	%rcx, 16(%rdx)
-	movq	%rbx, 24(%rdx)
-	movq	48(%rax), %rcx
-	movq	56(%rax), %rbx
-	movq	%rcx, 32(%rdx)
-	movq	%rbx, 40(%rdx)
-	movq	64(%rax), %rcx
-	movq	72(%rax), %rbx
-	movq	%rcx, 48(%rdx)
-	movq	%rbx, 56(%rdx)
-	movq	80(%rax), %rcx
-	movq	88(%rax), %rbx
-	movq	%rcx, 64(%rdx)
-	movq	%rbx, 72(%rdx)
-	movq	96(%rax), %rcx
-	movq	104(%rax), %rbx
-	movq	%rcx, 80(%rdx)
-	movq	%rbx, 88(%rdx)
-	movq	112(%rax), %rcx
-	movq	120(%rax), %rbx
-	movq	%rcx, 96(%rdx)
-	movq	%rbx, 104(%rdx)
-	movq	128(%rax), %rcx
-	movq	136(%rax), %rbx
-	movq	%rcx, 112(%rdx)
-	movq	%rbx, 120(%rdx)
-	movq	144(%rax), %rcx
-	movq	152(%rax), %rbx
-	movq	%rcx, 128(%rdx)
-	movq	%rbx, 136(%rdx)
-	movq	160(%rax), %rcx
-	movq	168(%rax), %rbx
-	movq	%rcx, 144(%rdx)
-	movq	%rbx, 152(%rdx)
-	movq	176(%rax), %rcx
-	movq	184(%rax), %rbx
-	movq	%rcx, 160(%rdx)
-	movq	%rbx, 168(%rdx)
-	movq	192(%rax), %rcx
-	movq	200(%rax), %rbx
-	movq	%rcx, 176(%rdx)
-	movq	%rbx, 184(%rdx)
-	movq	208(%rax), %rcx
-	movq	216(%rax), %rbx
-	movq	%rcx, 192(%rdx)
-	movq	%rbx, 200(%rdx)
-	call	*%rsi
-	addq	$208, %rsp
-	movq	-24(%rbp), %rax
+	movq	-8(%rbp), %rax
+	movq	8(%rax), %rdx
+	movq	-8(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rdi
+	call	*%rdx
+	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L2
 .L3:
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$24, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_unlock@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	$0, 200(%rax)
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	$0, (%rax)
 .L2:
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	208(%rax), %eax
 	testl	%eax, %eax
 	je	.L6
@@ -159,7 +104,6 @@ default_thread_func:
 	movl	$0, %eax
 	call	printf@PLT
 	movl	$0, %eax
-	movq	-8(%rbp), %rbx
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -177,124 +121,73 @@ dispatch:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	pushq	%rbx
-	subq	$40, %rsp
-	.cfi_offset 3, -24
-	movq	%rdi, -40(%rbp)
-	movq	%rsi, -48(%rbp)
-	movq	-40(%rbp), %rax
-	movq	%rax, -32(%rbp)
+	subq	$48, %rsp
+	movq	%rdi, -24(%rbp)
+	movq	%rsi, -32(%rbp)
+	movq	%rdx, -40(%rbp)
+	movq	-24(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	cmpq	$0, -16(%rbp)
+	je	.L16
 	cmpq	$0, -32(%rbp)
 	je	.L16
-	cmpq	$0, -48(%rbp)
-	je	.L16
-	movl	$224, %edi
+	movl	$24, %edi
 	call	malloc@PLT
-	movq	%rax, -24(%rbp)
-	cmpq	$0, -24(%rbp)
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
 	je	.L17
-	movq	-24(%rbp), %rax
-	movq	-48(%rbp), %rdx
+	movq	-8(%rbp), %rax
+	movq	-32(%rbp), %rdx
 	movq	%rdx, 8(%rax)
-	movq	-24(%rbp), %rax
-	movq	16(%rbp), %rcx
-	movq	24(%rbp), %rbx
-	movq	%rcx, 16(%rax)
-	movq	%rbx, 24(%rax)
-	movq	32(%rbp), %rcx
-	movq	40(%rbp), %rbx
-	movq	%rcx, 32(%rax)
-	movq	%rbx, 40(%rax)
-	movq	48(%rbp), %rcx
-	movq	56(%rbp), %rbx
-	movq	%rcx, 48(%rax)
-	movq	%rbx, 56(%rax)
-	movq	64(%rbp), %rcx
-	movq	72(%rbp), %rbx
-	movq	%rcx, 64(%rax)
-	movq	%rbx, 72(%rax)
-	movq	80(%rbp), %rcx
-	movq	88(%rbp), %rbx
-	movq	%rcx, 80(%rax)
-	movq	%rbx, 88(%rax)
-	movq	96(%rbp), %rcx
-	movq	104(%rbp), %rbx
-	movq	%rcx, 96(%rax)
-	movq	%rbx, 104(%rax)
-	movq	112(%rbp), %rcx
-	movq	120(%rbp), %rbx
-	movq	%rcx, 112(%rax)
-	movq	%rbx, 120(%rax)
-	movq	128(%rbp), %rcx
-	movq	136(%rbp), %rbx
-	movq	%rcx, 128(%rax)
-	movq	%rbx, 136(%rax)
-	movq	144(%rbp), %rcx
-	movq	152(%rbp), %rbx
-	movq	%rcx, 144(%rax)
-	movq	%rbx, 152(%rax)
-	movq	160(%rbp), %rcx
-	movq	168(%rbp), %rbx
-	movq	%rcx, 160(%rax)
-	movq	%rbx, 168(%rax)
-	movq	176(%rbp), %rcx
-	movq	184(%rbp), %rbx
-	movq	%rcx, 176(%rax)
-	movq	%rbx, 184(%rax)
-	movq	192(%rbp), %rcx
-	movq	200(%rbp), %rbx
-	movq	%rcx, 192(%rax)
-	movq	%rbx, 200(%rax)
-	movq	208(%rbp), %rcx
-	movq	216(%rbp), %rbx
-	movq	%rcx, 208(%rax)
-	movq	%rbx, 216(%rax)
-	movq	-24(%rbp), %rax
+	movq	-8(%rbp), %rax
+	movq	-40(%rbp), %rdx
+	movq	%rdx, 16(%rax)
+	movq	-8(%rbp), %rax
 	movq	$0, (%rax)
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$24, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	200(%rax), %rax
 	testq	%rax, %rax
 	je	.L13
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	192(%rax), %rax
 	testq	%rax, %rax
 	jne	.L14
 .L13:
-	movq	-32(%rbp), %rax
-	movq	-24(%rbp), %rdx
+	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rdx
 	movq	%rdx, 192(%rax)
-	movq	-32(%rbp), %rax
-	movq	-24(%rbp), %rdx
+	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rdx
 	movq	%rdx, 200(%rax)
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	(%rax), %eax
 	leal	1(%rax), %edx
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	%edx, (%rax)
 	jmp	.L15
 .L14:
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movq	200(%rax), %rax
-	movq	-24(%rbp), %rdx
+	movq	-8(%rbp), %rdx
 	movq	%rdx, (%rax)
-	movq	-32(%rbp), %rax
-	movq	-24(%rbp), %rdx
+	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rdx
 	movq	%rdx, 200(%rax)
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	(%rax), %eax
 	leal	1(%rax), %edx
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	movl	%edx, (%rax)
 .L15:
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$160, %rax
 	movq	%rax, %rdi
 	call	sem_post@PLT
-	movq	-32(%rbp), %rax
+	movq	-16(%rbp), %rax
 	addq	$24, %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_unlock@PLT
@@ -305,7 +198,6 @@ dispatch:
 .L17:
 	nop
 .L8:
-	movq	-8(%rbp), %rbx
 	leave
 	.cfi_def_cfa 7, 8
 	ret

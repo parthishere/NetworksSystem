@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     signal(SIGPIPE, SIG_IGN);
 
     sockdetails_t sd;
+    pthread_mutex_init(&sd.lock, NULL);
     
 
     if (argc != 3)
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 #if USE_FORK == 1
         use_fork(&sd);
 #else
-        dispatch(tp, handle_req, sd);
+        dispatch(tp, handle_req, &sd);
 #endif
 
         pthread_mutex_lock(&shutdown_mutex);

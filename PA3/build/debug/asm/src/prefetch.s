@@ -406,12 +406,15 @@ extract_links:
 	addq	%rdx, %rax
 	movb	$0, (%rax)
 	movq	-104(%rbp), %rax
-	movzbl	(%rax), %edx
-	movzbl	.LC7(%rip), %eax
-	movzbl	%dl, %edx
-	movzbl	%al, %eax
-	subl	%eax, %edx
-	testl	%edx, %edx
+	movq	%rax, %rdi
+	call	strlen@PLT
+	movq	%rax, %rdx
+	movq	-104(%rbp), %rax
+	leaq	.LC7(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
+	call	strncmp@PLT
+	testl	%eax, %eax
 	je	.L32
 	movq	-104(%rbp), %rax
 	leaq	.LC8(%rip), %rdx

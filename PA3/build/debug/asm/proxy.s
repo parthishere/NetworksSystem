@@ -62,27 +62,25 @@ main:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	pushq	%rbx
-	subq	$424, %rsp
-	.cfi_offset 3, -24
-	movl	%edi, -420(%rbp)
-	movq	%rsi, -432(%rbp)
+	subq	$416, %rsp
+	movl	%edi, -404(%rbp)
+	movq	%rsi, -416(%rbp)
 	movq	%fs:40, %rax
-	movq	%rax, -24(%rbp)
+	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-	leaq	-400(%rbp), %rax
+	leaq	-384(%rbp), %rax
 	movl	$152, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	leaq	-400(%rbp), %rax
+	leaq	-384(%rbp), %rax
 	addq	$8, %rax
 	movq	%rax, %rdi
 	call	sigemptyset@PLT
-	movl	$0, -264(%rbp)
+	movl	$0, -248(%rbp)
 	leaq	sig_handler(%rip), %rax
-	movq	%rax, -400(%rbp)
-	leaq	-400(%rbp), %rax
+	movq	%rax, -384(%rbp)
+	leaq	-384(%rbp), %rax
 	movl	$0, %edx
 	movq	%rax, %rsi
 	movl	$2, %edi
@@ -90,14 +88,19 @@ main:
 	movl	$1, %esi
 	movl	$13, %edi
 	call	signal@PLT
-	cmpl	$3, -420(%rbp)
+	leaq	-224(%rbp), %rax
+	addq	$168, %rax
+	movl	$0, %esi
+	movq	%rax, %rdi
+	call	pthread_mutex_init@PLT
+	cmpl	$3, -404(%rbp)
 	je	.L3
-	cmpl	$2, -420(%rbp)
+	cmpl	$2, -404(%rbp)
 	jne	.L4
-	movl	$60, -84(%rbp)
+	movl	$60, -68(%rbp)
 	jmp	.L3
 .L4:
-	movl	-420(%rbp), %eax
+	movl	-404(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC1(%rip), %rax
 	movq	%rax, %rdi
@@ -106,54 +109,54 @@ main:
 	movl	$1, %edi
 	call	exit@PLT
 .L3:
-	movq	-432(%rbp), %rax
+	movq	-416(%rbp), %rax
 	addq	$16, %rax
 	movq	(%rax), %rax
 	movq	%rax, %rdi
 	call	atoi@PLT
-	movl	%eax, -84(%rbp)
-	movl	-84(%rbp), %eax
+	movl	%eax, -68(%rbp)
+	movl	-68(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	movl	$128, -96(%rbp)
+	movl	$128, -80(%rbp)
 	movl	$1, %edi
 	call	init_cache_table@PLT
 	movl	$0, %edi
 	call	init_cache@PLT
 	movl	$0, %edi
 	call	init_blocklist@PLT
-	movq	%rax, -416(%rbp)
+	movq	%rax, -400(%rbp)
 	leaq	.LC3(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	movq	-432(%rbp), %rax
+	movq	-416(%rbp), %rax
 	addq	$8, %rax
 	movq	(%rax), %rdx
-	leaq	-240(%rbp), %rax
+	leaq	-224(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	init_socket@PLT
 	movl	$10, %edi
 	call	create_threadpool@PLT
-	movq	%rax, -408(%rbp)
-	cmpq	$0, -408(%rbp)
+	movq	%rax, -392(%rbp)
+	cmpq	$0, -392(%rbp)
 	je	.L13
 	jmp	.L7
 .L10:
-	leaq	-240(%rbp), %rax
+	leaq	-224(%rbp), %rax
 	addq	$8, %rax
 	movq	%rax, %rcx
-	movl	-240(%rbp), %eax
-	leaq	-240(%rbp), %rdx
+	movl	-224(%rbp), %eax
+	leaq	-224(%rbp), %rdx
 	addq	$144, %rdx
 	movq	%rcx, %rsi
 	movl	%eax, %edi
 	call	accept@PLT
-	movl	%eax, -236(%rbp)
-	movl	-236(%rbp), %eax
+	movl	%eax, -220(%rbp)
+	movl	-220(%rbp), %eax
 	testl	%eax, %eax
 	jns	.L8
 	call	__errno_location@PLT
@@ -165,66 +168,12 @@ main:
 	call	perror@PLT
 	jmp	.L6
 .L8:
-	movq	-408(%rbp), %rdx
-	subq	$208, %rsp
-	movq	%rsp, %rax
-	movq	-240(%rbp), %rcx
-	movq	-232(%rbp), %rbx
-	movq	%rcx, (%rax)
-	movq	%rbx, 8(%rax)
-	movq	-224(%rbp), %rcx
-	movq	-216(%rbp), %rbx
-	movq	%rcx, 16(%rax)
-	movq	%rbx, 24(%rax)
-	movq	-208(%rbp), %rcx
-	movq	-200(%rbp), %rbx
-	movq	%rcx, 32(%rax)
-	movq	%rbx, 40(%rax)
-	movq	-192(%rbp), %rcx
-	movq	-184(%rbp), %rbx
-	movq	%rcx, 48(%rax)
-	movq	%rbx, 56(%rax)
-	movq	-176(%rbp), %rcx
-	movq	-168(%rbp), %rbx
-	movq	%rcx, 64(%rax)
-	movq	%rbx, 72(%rax)
-	movq	-160(%rbp), %rcx
-	movq	-152(%rbp), %rbx
-	movq	%rcx, 80(%rax)
-	movq	%rbx, 88(%rax)
-	movq	-144(%rbp), %rcx
-	movq	-136(%rbp), %rbx
-	movq	%rcx, 96(%rax)
-	movq	%rbx, 104(%rax)
-	movq	-128(%rbp), %rcx
-	movq	-120(%rbp), %rbx
-	movq	%rcx, 112(%rax)
-	movq	%rbx, 120(%rax)
-	movq	-112(%rbp), %rcx
-	movq	-104(%rbp), %rbx
-	movq	%rcx, 128(%rax)
-	movq	%rbx, 136(%rax)
-	movq	-96(%rbp), %rcx
-	movq	-88(%rbp), %rbx
-	movq	%rcx, 144(%rax)
-	movq	%rbx, 152(%rax)
-	movq	-80(%rbp), %rcx
-	movq	-72(%rbp), %rbx
-	movq	%rcx, 160(%rax)
-	movq	%rbx, 168(%rax)
-	movq	-64(%rbp), %rcx
-	movq	-56(%rbp), %rbx
-	movq	%rcx, 176(%rax)
-	movq	%rbx, 184(%rax)
-	movq	-48(%rbp), %rcx
-	movq	-40(%rbp), %rbx
-	movq	%rcx, 192(%rax)
-	movq	%rbx, 200(%rax)
-	movq	handle_req@GOTPCREL(%rip), %rax
-	movq	%rax, %rsi
-	movq	%rdx, %rdi
+	leaq	-224(%rbp), %rdx
+	movq	-392(%rbp), %rax
+	movq	handle_req@GOTPCREL(%rip), %rcx
+	movq	%rcx, %rsi
+	movq	%rax, %rdi
 	call	dispatch@PLT
-	addq	$208, %rsp
 	leaq	shutdown_mutex(%rip), %rax
 	movq	%rax, %rdi
 	call	pthread_mutex_lock@PLT
@@ -245,23 +194,22 @@ main:
 .L14:
 	nop
 .L6:
-	movl	-240(%rbp), %eax
+	movl	-224(%rbp), %eax
 	movl	%eax, %edi
 	call	close@PLT
 	movl	$0, %edi
 	call	cleanup_cache@PLT
 	movl	$0, %edi
 	call	cleanup_blocklist@PLT
-	movq	-408(%rbp), %rax
+	movq	-392(%rbp), %rax
 	movq	%rax, %rdi
 	call	destroy_threadpool@PLT
 	movl	$0, %eax
-	movq	-24(%rbp), %rdx
+	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
 	je	.L12
 	call	__stack_chk_fail@PLT
 .L12:
-	movq	-8(%rbp), %rbx
 	leave
 	.cfi_def_cfa 7, 8
 	ret

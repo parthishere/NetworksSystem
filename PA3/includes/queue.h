@@ -46,7 +46,7 @@ typedef void *threadpool;
  * This type defines the signature for functions that can be scheduled
  * for execution by the thread pool's worker threads.
  */
-typedef void *(*dispatch_fn)(sockdetails_t);
+typedef void *(*dispatch_fn)(sockdetails_t*);
 
 /**
  * @function destroy_threadpool
@@ -74,7 +74,7 @@ void destroy_threadpool(threadpool tp);
  * If all threads are busy, the task will wait in the queue until a thread
  * becomes available.
  */
-void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t sd);
+void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t *sd);
 
 /**
  * @function create_threadpool

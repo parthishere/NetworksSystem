@@ -41,7 +41,7 @@
  * Threading: This function is designed to be thread-safe and can be
  * called by multiple threads simultaneously with different connections.
  */   
-void *handle_req(sockdetails_t sd);
+void *handle_req(sockdetails_t *sd);
 
 int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_client, int prefetch);
 int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, int prefetch);
