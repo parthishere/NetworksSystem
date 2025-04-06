@@ -231,7 +231,7 @@ int remove_connection(connection_table_t *table, char *hostname, int close_socke
         // Close socket if requested
         if (close_socket) {
             close(sockfd);
-            printf("[+] (%d) Socket connection closed socket %d\n", sockfd);
+            printf("[+] (%d) Socket connection closed socket %d\n", gettid(), sockfd);
         }
     }
     

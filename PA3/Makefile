@@ -3,7 +3,7 @@ INCLUDE_DIR = includes
 PORT ?= 8080
 TIMEOUT ?= 60
 
-OUTPUT_DIR = ./
+OUTPUT_DIR = ./build
 OBJ_DIR = $(OUTPUT_DIR)/obj $(OUTPUT_DIR)/obj/$(SRC_DIR)
 ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 
@@ -28,13 +28,13 @@ ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
 TARGET = proxy
 
 
-all: clean pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) 
+all: clean pre-build $(TARGET) $(ALL_ASMS) 
 # run
 
-run: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) 
-	@$(OUTPUT_DIR)/$(TARGET) $(PORT) $(TIMEOUT)
+run: pre-build $(TARGET) $(ALL_ASMS) 
+	@./$(TARGET) $(PORT) $(TIMEOUT)
 
-$(OUTPUT_DIR)/$(TARGET): $(ALL_OBJS)
+$(TARGET): $(ALL_OBJS)
 	@echo "Linking target: $@"
 	@$(CC) $(CFLAGS) $(INC) $^ -o $@ $(LDFLAGS)
 	@echo ""

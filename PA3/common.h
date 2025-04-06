@@ -92,6 +92,7 @@
 
 
 #define HASH_STR_LENGTH 33    // MD5 hex string (32 chars + null)
+#define ROOT_DIR "./www"
 
 /**
  * @enum httpType_s
