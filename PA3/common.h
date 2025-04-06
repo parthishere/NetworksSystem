@@ -62,8 +62,6 @@
  */
 #define BLOCKLIST_FILE_NAME "./blocklist.cfg"
 #define CACHE_ROOT "./cache"
-#define USE_SENDFILE 1          /* Enable zero-copy file transfers */
-#define ROOT_DIR "./www"        /* Web root directory */
 #define MAX_SIZE (1024 * 30)    /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE   /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE  /* Transmit buffer size */
