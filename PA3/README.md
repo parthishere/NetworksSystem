@@ -166,15 +166,47 @@ or
 ```bash
 make run
 ```
+Default port for ```make run``` is 8080!
 
 Where:
 - `PORT`: Port number to listen on
 - `CACHE_TIMEOUT`: Cache entry expiration time in seconds
 
 ### Configuration
+
+#### Blocklist Configuration
 - Blocklist patterns are defined in the `blocklist` file
 - Each line contains one pattern
 - Wildcard patterns supported (e.g., `*.example.com`)
+- rerun the program after updating blocklist file
+
+#### Proxy Configuration
+- **Browser Configuration**: Configure your web browser to use the proxy
+  - In most browsers: Settings/Preferences > Network > Proxy
+  - Set HTTP proxy to: `localhost:8080` (or your server IP)
+  - Set port to: whatever port you specified when starting the proxy
+- **Command Line Configuration**: Use `-x` flag with curl
+  ```bash
+  curl -x http://localhost:8080 http://example.com/
+  ```
+- **Environment Variables**: Set HTTP_PROXY for command-line tools
+  ```bash
+  export HTTP_PROXY=http://localhost:8080
+  ```
+
+#### Server Configuration Constants
+The proxy server uses the following configuration constants (defined in common.h):
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `BLOCKLIST_FILE_NAME` | `./blocklist` | Path to the blocklist file |
+| `CACHE_ROOT` | `./cache` | Directory for cached content |
+| `MAX_SIZE` | `30720` (30KB) | Maximum buffer size |
+| `USE_FORK` | `0` | Use threading instead of forking |
+| `TOTAL_THREADS` | `10` | Number of worker threads |
+| `MAX_THREAD_IN_POOL` | `200` | Maximum thread pool size |
+| `TIMEOUT_HTTP_SEC` | `10` | Connection timeout in seconds |
+| `HASH_TABLE_SIZE` | `1024` | Size of hash table for caching |
 
 ## Performance Considerations
 
