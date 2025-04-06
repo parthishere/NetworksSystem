@@ -13,7 +13,8 @@ typedef struct {
     char *base_port;
     sockdetails_t *sd;
     char *http_version_str;
+    int keep_open_connection;
 } prefetcher_t;
 
 void *prefetch_thread_func(void *);
-char** extract_links(const char* html_content, int* link_count);
+char** extract_links(const char* html_content, int* link_count);    

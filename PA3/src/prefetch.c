@@ -26,7 +26,8 @@ void *prefetch_thread_func(void *data)
         memset(&temp_sd, 0, sizeof(sockdetails_t));
 
         temp_sd.timeout = prefetch_data->sd->timeout;
-        temp_sd.client_sock_fd = -1; 
+        temp_sd.client_sock_fd = -1;
+        temp_header.connection_keep_alive = prefetch_data->keep_open_connection; 
 
         // Check if link is absolute or relative
         if (strncmp(prefetch_data->links[i], "http://", 7) == 0)

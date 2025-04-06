@@ -79,6 +79,7 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
     data->base_url = strdup(header->hostname_str);
     data->base_port = header->hostname_port_str ? strdup(header->hostname_port_str) : NULL;
     data->http_version_str = strdup(header->http_version_str);
+    data->keep_open_connection = header->connection_keep_alive;
 
     pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
     pthread_detach(prefetch_thread);
@@ -192,9 +193,9 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         printf(YEL"Existing connection found %d \n"RESET, sockfd);
     }
    
-
-    const char *connection_type = "Connection: close";
-    // const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
+    header->connection_keep_alive = 0;
+    // const char *connection_type = "Connection: close";
+    const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
     char *send_req;
     // free
     if (header->extra_header)
@@ -228,7 +229,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     int total_bytes = 0;
     while (1)
     {
-
+        printf("%d) Waiting the fuck \n", gettid());
         memset(recieved_buf, 0, sizeof(recieved_buf));
         if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) < 0)
         {
@@ -350,7 +351,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             printf(GRN "[+] (%d) Sent %d bytes directly (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN "[+] (%d) %d bytes Saved to cache ! (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
-        if(total_bytes <= content_length || !strcasestr(recieved_buf, "Transfer-Encoding: chunked"));{
+        if(total_bytes <= content_length || !strcasestr(recieved_buf, "Transfer-Encoding: chunked")){
             printf("End hehe\n\n");
             break;
         }
