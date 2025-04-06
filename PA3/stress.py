@@ -1,24 +1,7 @@
 # #!/usr/bin/python3
 # import socket
 # import threading
-# import time
 
-# """
-# HTTP Server Load Testing Script
-# Copyright (c) 2025 Parth Thakkar
-
-# This script implements a multi-threaded HTTP load tester that:
-# - Creates multiple concurrent connections to an HTTP server
-# - Sends configurable HTTP requests
-# - Measures response times and data sizes
-# - Handles connection timeouts and errors
-
-# The tester supports:
-# - Configurable number of concurrent connections
-# - Multiple requests per connection
-# - Keep-alive connections
-# - Customizable request parameters
-# """
 
 
 # # request = { "GET / HTTP/1.1\r\nHost: localhost:8000\r\nConnection: keep-alive\r\n\r\n",\
@@ -137,17 +120,6 @@
 # import threading
 # import time
 
-# """
-# HTTP Server Load Testing Script
-# Copyright (c) 2025 Parth Thakkar
-
-# This script implements a multi-threaded HTTP load tester that:
-# - Creates multiple concurrent connections to an HTTP server
-# - Sends configurable HTTP requests with edge cases
-# - Measures response times and data sizes
-# - Handles connection timeouts and errors
-# - Supports serial and parallel requests
-# """
 
 # def make_request(host, port, requests):
 #     """
@@ -293,14 +265,14 @@ def make_request(host, port, requests):
                             break  # Connection closed by server
                         response += chunk
                         
-                        # # Check if we've received a complete HTTP response
-                        # if b"\r\n\r\n" in response and (
-                        #     # Either not a chunked response
-                        #     (b"Transfer-Encoding: chunked" not in response) or 
-                        #     # Or chunked response with terminating chunk
-                        #     (b"\r\n0\r\n\r\n" in response)
-                        # ):
-                        #     break 
+                        # Check if we've received a complete HTTP response
+                        if b"\r\n\r\n" in response and (
+                            # Either not a chunked response
+                            (b"Transfer-Encoding: chunked" not in response) or 
+                            # Or chunked response with terminating chunk
+                            (b"\r\n0\r\n\r\n" in response)
+                        ):
+                            break 
                             
                     except socket.timeout:
                         print("Socket timeout while receiving data")
