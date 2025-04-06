@@ -1,7 +1,0 @@
-HTTP/1.1 304 Not Modified
-Date: Sun, 06 Apr 2025 16:32:17 GMT
-Server: Apache/2.4.6 (Red Hat Enterprise Linux)
-Connection: Keep-Alive
-Keep-Alive: timeout=5, max=100
-ETag: "d14-5973d84996d40"
-

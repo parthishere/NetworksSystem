@@ -31,6 +31,15 @@ int main(int argc, char *argv[])
     sockdetails_t sd;
     pthread_mutex_init(&sd.lock, NULL);
     
+    int status = mkdir(CACHE_ROOT, 0777); 
+    if (status == 0) {
+        printf(GRN"[+] Directory '%s' created successfully.\n"RESET, CACHE_ROOT);
+    } else if (errno == EEXIST) {
+        printf(GRN"[+] Directory '%s' already exists.\n"RESET, CACHE_ROOT);
+    } else {
+        perror(RED"[-] Error creating directory");
+        exit(EXIT_FAILURE);
+    }
 
     if (argc != 3)
     {
@@ -48,21 +57,25 @@ int main(int argc, char *argv[])
     }
     
     
-    printf("[+] Cache Timeout is set to %d\n",sd.timeout);
+    printf(GRN"[+] Cache Timeout is set to %d sec\n"RESET,sd.timeout);
     sd.addr_len = sizeof(sd.client_info);
 
     init_cache_table(1);
     init_connection_table(1);  
     init_cache(NULL);
     blocklist_t *bl = init_blocklist(0);
-    printf("[+] Block list updated!\n");
+    printf(GRN"[+] Block list updated!\n"RESET);
     init_socket(&sd, argv[1]);
 
 #if USE_FORK == 0
     threadpool tp = create_threadpool(TOTAL_THREADS);
     if (tp == NULL)
         goto cleanup;
+#else
+    printf(RED"[-] Only supports Threadpool !!!\n"RESET);
+    exit(EXIT_FAILURE);
 #endif
+
 
     while (!shutdown_flag)
     {
