@@ -71,6 +71,7 @@
 #define TOTAL_THREADS 10       /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
 #define TIMEOUT_HTTP_SEC 10      /* Connection timeout in seconds */
+#define HASH_TABLE_SIZE 1024  // Size of hash table
 /** @} */
 
 
@@ -79,9 +80,9 @@
 #endif
 
 /* Terminal Color Definitions
- * ANSI escape sequences for colored output
- * Used to enhance user interface and error reporting
- */
+* ANSI escape sequences for colored output
+* Used to enhance user interface and error reporting
+*/
 #define RED "\x1B[31m"  // Error messages
 #define GRN "\x1B[32m"  // Success messages
 #define YEL "\x1B[33m"  // Warnings and prompts
@@ -92,6 +93,7 @@
 #define RESET "\x1B[0m" // Reset to default color
 
 
+#define HASH_STR_LENGTH 33    // MD5 hex string (32 chars + null)
 
 /**
  * @enum httpType_s

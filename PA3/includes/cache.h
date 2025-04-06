@@ -2,9 +2,6 @@
 
 #include "common.h"
 
-#define HASH_TABLE_SIZE 1024 // Size of hash table (adjust as needed)
-#define HASH_STR_LENGTH 33   // MD5 hex string (32 chars + null)
-
 typedef struct cache_entry
 {
     char url_hash[HASH_STR_LENGTH];

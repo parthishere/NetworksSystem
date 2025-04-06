@@ -9,7 +9,7 @@ ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 
 CC := gcc
 CFLAGS := 
-LDFLAGS := -lpthread -lssl -lcrypto
+LDFLAGS := -lpthread -lssl -lcrypto -g
 INC := -I$(INCLUDE_DIR) -I./ -I$(SRC_DIR) 
 
 ROOT_SRC = $(wildcard *.c)
@@ -28,7 +28,8 @@ ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
 TARGET = proxy
 
 
-all: clean pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) run
+all: clean pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) 
+# run
 
 run: pre-build $(OUTPUT_DIR)/$(TARGET) $(ALL_ASMS) 
 	@$(OUTPUT_DIR)/$(TARGET) $(PORT) $(TIMEOUT)
