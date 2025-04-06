@@ -207,7 +207,7 @@ stateDiagram-v2
     Serve_Cached --> Send_Response
     Update_Cache --> Send_Response
     
-    Send_Response --> Close_Connection: Connection: close
+    Send_Response --> Close_Connection: Connection close
     Send_Response --> Wait_Next_Request: Keep-Alive
     
     Wait_Next_Request --> Parse_Request: New Request
