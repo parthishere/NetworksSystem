@@ -58,6 +58,9 @@ void *prefetch_thread_func(void *data)
                 temp_header.uri_str = strdup(path_start); // Include leading slash
                 *path_start = '/';                        // Restore original string
             }
+            if(strlen(temp_header.uri_str) == 0 || *temp_header.uri_str == '\0'){
+                temp_header.uri_str = strdup("/");
+            }
             temp_header.hostname_port_str = strdup("80");
 
             printf(MAG "[+] (%d) Prefetching absolute URL:\n"
@@ -90,7 +93,9 @@ void *prefetch_thread_func(void *data)
                    "[+] Path: %s\n"RESET,
                    gettid(), temp_header.hostname_str, temp_header.uri_str);
         }
+        if(prefetch_data->http_version_str == NULL) return NULL;
 
+        temp_header.http_version_str = strdup(prefetch_data->http_version_str);
         // Check if dynamic content before making the request
         int dynamic = is_dynamic_content(temp_header.uri_str, NULL);
 

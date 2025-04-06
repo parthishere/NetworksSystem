@@ -78,6 +78,7 @@ void prefetch_thread_create(sockdetails_t *sd, int total_links, char **all_links
 
     data->base_url = strdup(header->hostname_str);
     data->base_port = header->hostname_port_str ? strdup(header->hostname_port_str) : NULL;
+    data->http_version_str = strdup(header->http_version_str);
 
     pthread_create(&prefetch_thread, NULL, prefetch_thread_func, data);
     pthread_detach(prefetch_thread);
@@ -109,11 +110,13 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     
     if(strcmp(header->hostname_port_str, "8080") == 0 && ((strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0)) && send_to_client)
     {
-        char *send_req = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\n\r\n cannot req proxy";
+        char *send_req;
+        asprintf(&send_req, "%s 404 Not Found\r\nContent-Type: text/plain\r\n\r\n cannot req proxy", header->http_version_str);
         if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
         {
             fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
         }
+        free(send_req);
         return -1;
     }
 
@@ -123,11 +126,15 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     {
         fprintf(stderr, RED "getaddrinfo\n" RESET); // this will print error to stderr fd
         if(sd->client_sock_fd > 0 && send_to_client){
-            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked";
+            char *send_req;
+       
+            asprintf(&send_req, "%s 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked", header->http_version_str);
+     
             if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
             }
+            free(send_req);
         }
     
         return -1;
@@ -156,7 +163,8 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     if (temp == NULL)
     {
         if(sd->client_sock_fd > 0 && send_to_client){
-            char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nConnect Failed\r\n\r\n";
+            char *send_req;
+            asprintf(&send_req, "%s 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked", header->http_version_str);
             if ((send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0))
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
@@ -182,12 +190,12 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     // free
     if (header->extra_header)
     {
-        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n%s\r\n", header->uri_str, header->hostname_str, connection_type, header->extra_header);
+        asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n%s\r\n", header->uri_str, header->http_version_str,header->hostname_str, connection_type, header->extra_header);
         // asprintf(&send_req, "GET %s %s\r\n%s\r\nHost: %s\r\n%s\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type,header->extra_header);
     }
     else
     {
-        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->hostname_str, connection_type);
+        asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
         // asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
     }  
     printf("[+] Sent request %s \n\r", send_req);
@@ -203,7 +211,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     free(send_req);
 
-    // pthread_mutex_lock(&sd->lock);
+    pthread_mutex_lock(&sd->lock);
     int initial = 1;
     while (1)
     {
@@ -218,19 +226,19 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             fprintf(stderr, "[-] Connetion close proxy <-> server \n\r");
             break;
         }
-         // if(initial == 1){
-        //     // manipulate recieved buffer according to us; 
-        //     // recieved_buf;
+         if(initial == 1){
+            // manipulate recieved buffer according to us; 
+            // recieved_buf;
 
-        //     // content length
-        //     // keep-alive
-        //     char *content_length = strstr(recieved_buf, "Content-Length: ");
-        //     printf("content length %s \n", content_length);
+            // content length
+            // keep-alive
+            char *content_length = strstr(recieved_buf, "Content-Length: ");
+            printf("content length %s \n", content_length);
 
-        //     char *eoh = strstr(recieved_buf, "\r\n\r\n");
-        //     // memcpy(recieved_buf, eoh, sizoef(eoh));
-        //     initial = 0;
-        // }
+            char *eoh = strstr(recieved_buf, "\r\n\r\n");
+            // memcpy(recieved_buf, eoh, sizoef(eoh));
+            initial = 0;
+        }
         write(file_fd, recieved_buf, numbytes);
 
         int link_count = 0;
@@ -245,7 +253,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array (requested %zu bytes)\n" RESET, 
                        gettid(), (total_links + link_count) * sizeof(char *));
                 free(chunk_links);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             // Copy pointers to the new links
@@ -269,14 +277,14 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                 close(file_fd);
                 close(sockfd);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN"[+] (%d) Sent %d bytes directly (%s %s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN"[+] (%d) %d bytes Saved to cache ! (%s %s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
     }
-    // pthread_mutex_unlock(&sd->lock);
+    pthread_mutex_unlock(&sd->lock);
 
     
     close(file_fd);
@@ -311,7 +319,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     char **all_links = NULL;
     int total_links = 0;
     
-    // pthread_mutex_lock(&sd->lock);
+    pthread_mutex_lock(&sd->lock);
     // Get file size
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
     
@@ -340,7 +348,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (!all_links) {
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
                 free(chunk_links);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
 
@@ -363,13 +371,13 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN"[+] (%d) Sent %d bytes from cache (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
-    // pthread_mutex_unlock(&sd->lock);
+    pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {

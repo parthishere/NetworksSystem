@@ -12,6 +12,7 @@ typedef struct {
     char *base_url;
     char *base_port;
     sockdetails_t *sd;
+    char *http_version_str;
 } prefetcher_t;
 
 void *prefetch_thread_func(void *);

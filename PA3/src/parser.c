@@ -167,7 +167,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         {
             if(strncmp(method, reqMethod[GET], strlen(method)) == 0){
                 header->method = i;
-                header->method_str = reqMethod[i];
+                header->method_str = strdup(reqMethod[i]);
                 valid_method = 1;
                 valid_header = 1;
             }
@@ -189,6 +189,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         header->parser_error |= METHOD_NOT_ALLOWED;
         return SOME_ERROR;
     }
+    
     
     // Get URI
     uri = strtok_r(NULL, " ", &token_ctx);
@@ -258,11 +259,11 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     {
         case '1':
         header->http_version = HTTP1_1;
-        header->http_version_str = http_type[HTTP1_1];
+        header->http_version_str = strdup(http_type[HTTP1_1]);
         break;
         case '0':
         header->http_version = HTTP1_0;
-        header->http_version_str = http_type[HTTP1_0];
+        header->http_version_str = strdup(http_type[HTTP1_0]);
         break;
         default:
         printf(RED"[-] (%d)somthing wrong in version\n"RESET, gettid());
@@ -272,6 +273,14 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     
     header->current_state = host_parse;
     header->connection_close = 1;
+
+
+    if(header->http_version_str == NULL){
+        printf(RED"[-] (%d)no valid method \n"RESET, gettid());
+        header->parser_error |= METHOD_NOT_ALLOWED;
+        return SOME_ERROR;
+    }
+
 
     // Parse remaining headers
     for (int i = 1; i < line_count; i++)
