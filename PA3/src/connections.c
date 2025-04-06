@@ -43,8 +43,8 @@ connection_table_t *init_connection_table(int global) {
     // Start cleanup thread if global table and not already running
     if (global && !cleanup_thread_running) {
         cleanup_thread_running = 1;
-        // pthread_create(&cleanup_thread, NULL, connection_cleanup_thread, NULL);
-        // pthread_detach(cleanup_thread);
+        pthread_create(&cleanup_thread, NULL, connection_cleanup_thread, NULL);
+        pthread_detach(cleanup_thread);
     }
     
     return table;
@@ -66,17 +66,23 @@ void *connection_cleanup_thread(void *arg) {
         // Check each bucket
         for (int i = 0; i < HASH_TABLE_SIZE; i++) {
             connection_entry_t *entry = global_conn_table->buckets[i];
-            
-            if (entry) {
+            if (entry != NULL && entry->hostname) {
                 // Check if connection has timed out
-                if (current_time - entry->timestamp > TIMEOUT_HTTP_SEC) {
+                if (current_time - entry->timestamp >= TIMEOUT_HTTP_SEC) {
                     // Remove from list
                     // Close socket and free resources
-                    printf("[Cleanup] Closing idle connection to %s (idle for %ld seconds)\n", 
-                           entry->hostname, current_time - entry->timestamp);
+                    printf(MAG"[~] (%d) Cleanup: Closing idle connection to %s (idle for %ld seconds)\n"RESET, 
+                           gettid(), entry->hostname, current_time - entry->timestamp);
                     
                     close(entry->sockfd);
-                    free(entry->hostname);
+                    if(entry->hostname) {
+                        free(entry->hostname);
+                        entry->hostname = NULL;
+                    }
+                    if(entry){
+                        free(entry);
+                        entry = NULL;
+                    }
                 } 
             }
         }
@@ -130,7 +136,7 @@ int save_connection(connection_table_t *table, char *hostname, int sockfd) {
     
     // pthread_mutex_unlock(&table_to_use->lock);
     
-    printf(GRN"[+][Connection] Saved connection to %s (socket %d)\n"RESET, hostname, sockfd);
+    printf(GRN"[+] (%d) Socket fd Saved connection to %s (socket %d)\n"RESET, gettid(), hostname, sockfd);
     return 0;
 }
 
@@ -174,7 +180,7 @@ int get_connection(connection_table_t *table, char *hostname) {
         printf(GRN"[+][Connection] Found existing connection to %s (socket %d)\n"RESET, hostname, sockfd);
     }
     else{
-        printf(RED"[-] Connection not found to %s (socket %d)\n"RESET, hostname, sockfd);
+        printf(YEL"[-] (%d) Connection not found to %s (socket %d)\n"RESET, gettid(), hostname, sockfd);
     }
     
     return sockfd;
@@ -208,7 +214,7 @@ int remove_connection(connection_table_t *table, char *hostname, int close_socke
 
     connection_entry_t *entry = table_to_use->buckets[index];
     
-    if (entry) {
+    if (entry && entry->host_hash) {
         if (strcmp(entry->host_hash, host_hash) == 0) {
             sockfd = entry->sockfd;
             free(entry->hostname);

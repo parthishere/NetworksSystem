@@ -182,8 +182,8 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         char s[INET6_ADDRSTRLEN];
         inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
         printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] Server IP address: %s:%s\n" RESET,
-               gettid(), header->hostname_str, s,
+                   "[+] (%d) Server IP address: %s:%s\n" RESET,
+               gettid(), header->hostname_str, gettid(), s,
                header->hostname_port_str ? header->hostname_port_str : "80");
 
         save_connection(NULL, header->hostname_str, sockfd);
@@ -210,7 +210,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         // asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
     }
 
-    printf("[+] Sent request %s \n\r", send_req);
+    printf(MAG"[+] (%d) Sent request \n%s \n\r"RESET, gettid(), send_req);
     if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
     {
         fprintf(stderr, RED "[-] (%d) send failed for server %d \n" RESET, gettid(), errno);
@@ -234,16 +234,15 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     while (1)
     {
-        printf("%d) Waiting the fuck \n", gettid());
         memset(recieved_buf, 0, sizeof(recieved_buf));
         if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) < 0)
         {
-            fprintf(stderr, "[-] Recv failed for proxy <-> server \n\r");
+            fprintf(stderr, "[-] (%d) Recv failed for proxy <-> server \n\r", gettid());
             break;
         }
         else if (numbytes == 0)
         {
-            fprintf(stderr, "[-] Connetion close proxy <-> server \n\r");
+            fprintf(stderr, "[-] (%d) Connetion close proxy <-> server \n\r", gettid());
             break;
         }
 
@@ -259,7 +258,6 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 if (strcasestr(recieved_buf, "Transfer-Encoding: chunked"))
                 {
                     chunked_encoding = 1;
-                    printf("[+] Detected chunked encoding\n");
 
                     // Check for end chunk in first response
                     if (strstr(recieved_buf, "\r\n0\r\n\r\n"))
@@ -277,7 +275,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                     if (cl_end)
                     {
                         content_length = atoi(cl_header + 16); // Skip "Content-Length: "
-                        printf("[+] Detected Content-Length: %d\n", content_length);
+                        printf(GRN"[+] Detected Content-Length: %d\n"RESET, content_length);
                     }
                 }
 
@@ -294,16 +292,18 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                         {
                             memcpy(content_type, ct_header + 13, ct_len);
                             content_type[ct_len] = '\0';
-                            printf("[+] Detected Content-Type: %s\n", content_type);
+                            printf(GRN"[+] Detected Content-Type: %s\n"RESET, content_type);
                         }
                     }
                 }
 
-                
-                if (content_length == -1 && !chunked_encoding) {
+                if (content_length == -1 && !chunked_encoding)
+                {
                     // We'll need to buffer the entire response, but can't do that yet
                     // Just note that we're missing Content-Length
-                    printf("[!] Missing Content-Length in non-chunked response\n");
+                    printf(RED"[-] (%d) Missing Content-Length in non-chunked response\n"RESET, gettid());
+
+                    return -1;
                 }
             }
         }
@@ -312,19 +312,18 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             total_bytes += numbytes;
 
             // Check for end chunk marker in chunked encoding
-            if (chunked_encoding && strstr(recieved_buf, "\r\n0\r\n\r\n")) {
+            if (chunked_encoding && strstr(recieved_buf, "\r\n0\r\n\r\n"))
+            {
                 found_end_chunk = 1;
-                printf("[+] Found end chunk marker\n");
+                printf(GRN"[+] (%d) Found end chunk marker\n"RESET, gettid());
             }
         }
         write(file_fd, recieved_buf, numbytes);
 
         int link_count = 0;
         char **chunk_links = extract_links(recieved_buf, &link_count);
-        printf(" linkcount %d link chunks %p\n", link_count, chunk_links);
         if (link_count > 0 && chunk_links != NULL)
         {
-            printf("found link\n");
             // Resize the all_links array to accommodate new links
             all_links = realloc(all_links, (total_links + link_count) * sizeof(char *));
 
@@ -368,13 +367,14 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         // 1. Content-Length met
         // 2. Found end chunk in chunked encoding
         // 3. Connection closed by server (handled at start of loop)
-        
+
         if ((content_length > 0 && body_bytes >= content_length) ||
-        (chunked_encoding && found_end_chunk)) {
-        printf("[+] Response complete (bytes: %d, expected: %d)\n", 
-            body_bytes, content_length);
-        break;
-}
+            (chunked_encoding && found_end_chunk))
+        {
+            printf("[+] Response complete (bytes: %d, expected: %d)\n",
+                   body_bytes, content_length);
+            break;
+        }
     }
     if (content_type)
     {
@@ -389,7 +389,6 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         remove_connection(NULL, header->hostname_str, 1);
     }
 
-    printf("nc All links = %p, prefetch %d \n", all_links, prefetch);
     if (all_links != NULL && prefetch)
     {
         printf(GRN "[+] (%d) Prefetching for %s:%s/%s \n" RESET, gettid(), header->hostname_str, header->hostname_port_str, header->uri_str);
@@ -480,7 +479,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
 
     pthread_mutex_unlock(&sd->lock);
 
-    printf("c All links = %p, prefetch %d \n", all_links, prefetch);
+
     if (all_links != NULL && prefetch)
     {
         printf(GRN "[+] (%d) Prefetching for %s:%s/%s \n" RESET, gettid(), header->hostname_str, header->hostname_port_str, header->uri_str);

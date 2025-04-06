@@ -1,31 +1,11 @@
  HTTP Status Codes Implementation Analysis
 
-  Your proxy correctly handles several HTTP status codes, but there are some inconsistencies and areas for improvement. Here's a detailed
-   breakdown:
 
   Correctly Implemented Status Codes:
 
-  1. 403 Forbidden:
-    - Properly sent when domains are in blocklist
-    - Correctly sent when connection to server fails
-    - Format: HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked
-  2. 404 Not Found:
-    - Used when parsing errors occur
-    - Used when localhost:8080 tries to access the proxy itself
-    - Format: HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 19\r\n\r\nSomthing went wrong
 
   Issues and Missing Error Responses:
 
-  1. Inconsistent HTTP Version in Responses:
-    - Some responses use hardcoded HTTP/1.0 instead of the client's requested version (header->http_version_str)
-    - Example: Line 521 uses HTTP/1.0 instead of dynamically using the client's HTTP version
-  2. Missing Status Codes:
-    - 400 Bad Request: Detected in parser but not properly sent to client
-    - 405 Method Not Allowed: Detected but same error as 404 is sent
-    - 500 Internal Server Error: Not implemented for server-side issues
-    - 502 Bad Gateway: Not implemented for upstream connection failures
-    - 504 Gateway Timeout: Not implemented for server response timeouts
-    - 505 HTTP Version Not Supported: Detected but not properly sent to client
   3. Inconsistent Content-Length Headers:
     - Some responses include Content-Length (line 521) while others don't (line 534)
     - Missing Content-Length can cause problems with persistent connections
@@ -35,39 +15,11 @@
   5. Malformed Responses:
     - Line 131-132: Uses asprintf(&send_req, "%s 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked", header->http_version_str);
     - This is missing a space after HTTP version - should be HTTP/1.1 403 not HTTP/1.1403
-  6. Timeout Handling:
-    - Socket timeouts don't send HTTP/1.1 504 Gateway Timeout to client
-  7. Missing Content-Type Headers:
-    - Some responses lack Content-Type headers
 
-  Specific Recommendations:
 
-  1. Create standardized error response functions:
-  void send_error_response(int client_fd, const char *http_version, int status_code, const char *message) {
-      char *response;
-      char *status_text = get_status_text(status_code);
-      int length = strlen(message);
 
-      asprintf(&response, "%s %d %s\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
-              http_version, status_code, status_text, length, message);
-
-      send(client_fd, response, strlen(response), 0);
-      free(response);
-  }
-  2. Map parser errors to appropriate status codes:
-    - PARSE_ERROR_INVALID_METHOD → 405 Method Not Allowed
-    - PARSE_ERROR_INVALID_VERSION → 505 HTTP Version Not Supported
-    - PARSE_ERROR_INVALID_URI → 400 Bad Request
-  3. Add proper error handling for network failures:
-    - Connection timeouts → 504 Gateway Timeout
-    - Failed connections → 502 Bad Gateway
-    - Server errors → 500 Internal Server Error
-  4. Fix the format of HTTP responses:
-    - Ensure space after HTTP version
-    - Include all required headers
-    - Add Content-Length to all responses
   5. Implement consistent logging of error conditions:
-    - Log the specific error and response sent for troubleshooting
+
 
   These improvements will make your proxy more robust and standards-compliant, providing clearer error information to clients and better
   diagnostic capabilities.
