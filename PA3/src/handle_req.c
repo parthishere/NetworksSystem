@@ -220,7 +220,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     free(send_req);
 
-    // pthread_mutex_lock(&sd->lock);
+    pthread_mutex_lock(&sd->lock);
     int initial = 1;
     while (1)
     {
@@ -265,7 +265,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array (requested %zu bytes)\n" RESET,
                         gettid(), (total_links + link_count) * sizeof(char *));
                 free(chunk_links);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             // Copy pointers to the new links
@@ -289,14 +289,28 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                 close(file_fd);
                 close(sockfd);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN "[+] (%d) Sent %d bytes directly (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN "[+] (%d) %d bytes Saved to cache ! (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
     }
-    // pthread_mutex_unlock(&sd->lock);
+    // if (send_to_client)
+    // {
+    //     memset(recieved_buf, 0, sizeof(recieved_buf));
+    //     strcpy(recieved_buf, "\r\n0\r\n\r\n");
+    //     if (send(sd->client_sock_fd, recieved_buf, 7, MSG_NOSIGNAL) < 0)
+    //     {
+    //         fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
+    //         close(file_fd);
+    //         close(sockfd);
+ 
+    //         return -1;
+    //     }
+    //     printf(GRN "[+] (%d) Sent end directly (%s %s) !\n" RESET, gettid(), header->hostname_str, header->uri_str);
+    // }
+    pthread_mutex_unlock(&sd->lock);
 
     close(file_fd);
 
@@ -333,7 +347,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     char **all_links = NULL;
     int total_links = 0;
 
-    // pthread_mutex_lock(&sd->lock);
+    pthread_mutex_lock(&sd->lock);
     // Get file size
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
 
@@ -363,7 +377,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             {
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
                 free(chunk_links);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
 
@@ -386,13 +400,26 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-                // pthread_mutex_unlock(&sd->lock);
+                pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN "[+] (%d) Sent %d bytes from cache (%s/%s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
-    // pthread_mutex_unlock(&sd->lock);
+    // if (send_to_client)
+    // {
+    //     memset(recieved_buf, 0, sizeof(recieved_buf));
+    //     strcpy(recieved_buf, "\r\n0\r\n\r\n");
+    //     if (send(sd->client_sock_fd, recieved_buf, 7, MSG_NOSIGNAL) < 0)
+    //     {
+    //         fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
+    //         close(file_fd);
+ 
+    //         return -1;
+    //     }
+    //     printf(GRN "[+] (%d) Sent end from cache directly (%s %s) !\n" RESET, gettid(), header->hostname_str, header->uri_str);
+    // }
+    pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {
