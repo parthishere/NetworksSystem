@@ -176,17 +176,21 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     freeaddrinfo(servinfo);
 
-    const char *connection_type = header->connection_keep_alive ? "Connection: Keep-alive" : "Connection: close";
+    const char *connection_type = "Connection: close";
+    // const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
     char *send_req;
     // free
     if (header->extra_header)
     {
-        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n", header->uri_str, header->hostname_str, header->extra_header);
+        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n%s\r\n", header->uri_str, header->hostname_str, connection_type, header->extra_header);
+        // asprintf(&send_req, "GET %s %s\r\n%s\r\nHost: %s\r\n%s\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type,header->extra_header);
     }
     else
     {
-        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\r\n\n", header->uri_str, header->hostname_str);
-    }
+        asprintf(&send_req, "GET %s HTTP/1.0\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->hostname_str, connection_type);
+        // asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
+    }  
+    printf("[+] Sent request %s \n\r", send_req);
 
     if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
     {
@@ -199,15 +203,34 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     free(send_req);
 
-    pthread_mutex_lock(&sd->lock);
+    // pthread_mutex_lock(&sd->lock);
+    int initial = 1;
     while (1)
     {
         
         memset(recieved_buf, 0, sizeof(recieved_buf));
-        if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) <= 0)
+        if ((numbytes = recv(sockfd, recieved_buf, RECIEVE_SIZE, 0)) < 0)
         {
+            fprintf(stderr, "[-] Recv failed for proxy <-> server \n\r");
             break;
         }
+        else if(numbytes == 0){
+            fprintf(stderr, "[-] Connetion close proxy <-> server \n\r");
+            break;
+        }
+         // if(initial == 1){
+        //     // manipulate recieved buffer according to us; 
+        //     // recieved_buf;
+
+        //     // content length
+        //     // keep-alive
+        //     char *content_length = strstr(recieved_buf, "Content-Length: ");
+        //     printf("content length %s \n", content_length);
+
+        //     char *eoh = strstr(recieved_buf, "\r\n\r\n");
+        //     // memcpy(recieved_buf, eoh, sizoef(eoh));
+        //     initial = 0;
+        // }
         write(file_fd, recieved_buf, numbytes);
 
         int link_count = 0;
@@ -222,6 +245,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed for links array (requested %zu bytes)\n" RESET, 
                        gettid(), (total_links + link_count) * sizeof(char *));
                 free(chunk_links);
+                // pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             // Copy pointers to the new links
@@ -238,20 +262,21 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             free(chunk_links);
         }
 
-        if (send_to_client && sd->client_sock_fd > 0)
+        if (send_to_client)
         {
             if (send(sd->client_sock_fd, recieved_buf, numbytes, MSG_NOSIGNAL) < 0)
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                 close(file_fd);
                 close(sockfd);
+                // pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
-            printf(GRN"[+] (%d) Sent %d bytes directly (%s/%s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
+            printf(GRN"[+] (%d) Sent %d bytes directly (%s %s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
-        printf(GRN"[+] (%d) %d bytes Saved to cache ! (%s/%s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
+        printf(GRN"[+] (%d) %d bytes Saved to cache ! (%s %s) !\n"RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
     }
-    pthread_mutex_unlock(&sd->lock);
+    // pthread_mutex_unlock(&sd->lock);
 
     
     close(file_fd);
@@ -286,7 +311,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
     char **all_links = NULL;
     int total_links = 0;
     
-    pthread_mutex_lock(&sd->lock);
+    // pthread_mutex_lock(&sd->lock);
     // Get file size
     long file_size = lseek(file_fd, 0, SEEK_END) > 0 ? lseek(file_fd, 0, SEEK_CUR) : 0;
     
@@ -315,6 +340,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (!all_links) {
                 fprintf(stderr, RED "[-] (%d) Memory allocation failed\n" RESET, gettid());
                 free(chunk_links);
+                // pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
 
@@ -337,12 +363,13 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             if (send(sd->client_sock_fd, recieved_buf, numbytes, 0) < 0)
             {
                 fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
+                // pthread_mutex_unlock(&sd->lock);
                 return -1;
             }
             printf(GRN"[+] (%d) Sent %d bytes from cache (%s/%s) !\n"RESET,gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
-    pthread_mutex_unlock(&sd->lock);
+    // pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
     {
@@ -502,7 +529,7 @@ void *handle_req(sockdetails_t *sd)
                     fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
                     goto cleanup;
                 }
-                // goto cleanup;
+                goto cleanup;
             }
 
             int returnval = check_and_send_from_cache(&header, sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);

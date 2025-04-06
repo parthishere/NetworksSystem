@@ -7,13 +7,15 @@
 	.string	"://"
 .LC2:
 	.string	"/"
-	.align 8
 .LC3:
-	.string	"\033[35m[+] (%d) Prefetching absolute URL:\n[+] Host: %s\n[+] Path: %s\n\033[0m"
+	.string	"80"
+	.align 8
 .LC4:
+	.string	"\033[35m[+] (%d) Prefetching absolute URL:\n[+] Host: %s\n[+] Path: %s\n\033[0m"
+.LC5:
 	.string	"/%s"
 	.align 8
-.LC5:
+.LC6:
 	.string	"\033[35m[+] (%d) Prefetching relative URL:\n[+] Host: %s\n[+] Path: %s\n\033[0m"
 	.text
 	.globl	prefetch_thread_func
@@ -148,13 +150,17 @@ prefetch_thread_func:
 	movq	-384(%rbp), %rax
 	movb	$47, (%rax)
 .L11:
+	leaq	.LC3(%rip), %rax
+	movq	%rax, %rdi
+	call	strdup@PLT
+	movq	%rax, -336(%rbp)
 	movq	-352(%rbp), %r12
 	movq	-344(%rbp), %rbx
 	call	gettid@PLT
 	movq	%r12, %rcx
 	movq	%rbx, %rdx
 	movl	%eax, %esi
-	leaq	.LC3(%rip), %rax
+	leaq	.LC4(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -195,7 +201,7 @@ prefetch_thread_func:
 	addq	%rdx, %rax
 	movq	(%rax), %rdx
 	leaq	-424(%rbp), %rax
-	leaq	.LC4(%rip), %rcx
+	leaq	.LC5(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -203,17 +209,6 @@ prefetch_thread_func:
 	movq	-424(%rbp), %rax
 	movq	%rax, -352(%rbp)
 .L14:
-	movq	-352(%rbp), %r12
-	movq	-344(%rbp), %rbx
-	call	gettid@PLT
-	movq	%r12, %rcx
-	movq	%rbx, %rdx
-	movl	%eax, %esi
-	leaq	.LC5(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-.L12:
 	movq	-416(%rbp), %rax
 	movq	24(%rax), %rax
 	testq	%rax, %rax
@@ -227,6 +222,17 @@ prefetch_thread_func:
 	movl	$0, %eax
 .L16:
 	movq	%rax, -336(%rbp)
+	movq	-352(%rbp), %r12
+	movq	-344(%rbp), %rbx
+	call	gettid@PLT
+	movq	%r12, %rcx
+	movq	%rbx, %rdx
+	movl	%eax, %esi
+	leaq	.LC6(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+.L12:
 	movq	-352(%rbp), %rax
 	movl	$0, %esi
 	movq	%rax, %rdi
@@ -330,14 +336,14 @@ prefetch_thread_func:
 .LFE6:
 	.size	prefetch_thread_func, .-prefetch_thread_func
 	.section	.rodata
-.LC6:
-	.string	"href=[\"']([^\"']+)[\"']"
 .LC7:
-	.string	"#"
+	.string	"href=[\"']([^\"']+)[\"']"
 .LC8:
+	.string	"#"
+.LC9:
 	.string	"https://"
 	.align 8
-.LC9:
+.LC10:
 	.string	"\033[31m[-] (%d) Memory allocation failed for links array\n\033[0m"
 	.text
 	.globl	extract_links
@@ -360,7 +366,7 @@ extract_links:
 	movq	$0, -128(%rbp)
 	movq	-160(%rbp), %rax
 	movl	$0, (%rax)
-	leaq	.LC6(%rip), %rax
+	leaq	.LC7(%rip), %rax
 	movq	%rax, -112(%rbp)
 	movq	-112(%rbp), %rcx
 	leaq	-96(%rbp), %rax
@@ -410,14 +416,14 @@ extract_links:
 	call	strlen@PLT
 	movq	%rax, %rdx
 	movq	-104(%rbp), %rax
-	leaq	.LC7(%rip), %rcx
+	leaq	.LC8(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
 	testl	%eax, %eax
 	je	.L32
 	movq	-104(%rbp), %rax
-	leaq	.LC8(%rip), %rdx
+	leaq	.LC9(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strstr@PLT
@@ -438,7 +444,7 @@ extract_links:
 	call	gettid@PLT
 	movl	%eax, %edx
 	movq	stderr(%rip), %rax
-	leaq	.LC9(%rip), %rcx
+	leaq	.LC10(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
