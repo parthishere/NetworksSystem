@@ -60,7 +60,7 @@
  * @name Server Configuration Constants
  * @{
  */
-#define BLOCKLIST_FILE_NAME "./blocklist.cfg"
+#define BLOCKLIST_FILE_NAME "./blocklist"
 #define CACHE_ROOT "./cache"
 #define MAX_SIZE (1024 * 30)    /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE   /* Receive buffer size */
