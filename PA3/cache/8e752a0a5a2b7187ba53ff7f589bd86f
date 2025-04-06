@@ -1,8 +1,8 @@
 HTTP/1.1 200 OK
-Date: Sun, 06 Apr 2025 12:26:31 GMT
+Date: Sun, 06 Apr 2025 12:55:18 GMT
 Content-Type: text/html; charset=utf-8
 Content-Length: 9593
-Connection: close
+Connection: keep-alive
 Server: gunicorn/19.9.0
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Credentials: true

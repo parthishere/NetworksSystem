@@ -330,8 +330,8 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         
         else if (strcasecmp(key, "Connection") == 0)
         {
-            header->connection_keep_alive = (strcasecmp(value, "keep-alive") == 0);
-            header->connection_close = (strcasecmp(value, "Close") == 0);
+            if(strcasecmp(value, "keep-alive") == 0) header->connection_keep_alive = 1;
+            else header->connection_close = 1;
         }
         else if (strcasecmp(key, "Cache-Control") == 0){
            

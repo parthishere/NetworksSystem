@@ -65,33 +65,19 @@ void *connection_cleanup_thread(void *arg) {
         
         // Check each bucket
         for (int i = 0; i < HASH_TABLE_SIZE; i++) {
-            connection_entry_t *prev = NULL;
             connection_entry_t *entry = global_conn_table->buckets[i];
             
-            while (entry) {
+            if (entry) {
                 // Check if connection has timed out
                 if (current_time - entry->timestamp > TIMEOUT_HTTP_SEC) {
                     // Remove from list
-                    if (prev) {
-                        prev->next = entry->next;
-                    } else {
-                        global_conn_table->buckets[i] = entry->next;
-                    }
-                    
                     // Close socket and free resources
                     printf("[Cleanup] Closing idle connection to %s (idle for %ld seconds)\n", 
                            entry->hostname, current_time - entry->timestamp);
                     
                     close(entry->sockfd);
                     free(entry->hostname);
-                    
-                    connection_entry_t *to_free = entry;
-                    entry = entry->next;
-                    free(to_free);
-                } else {
-                    prev = entry;
-                    entry = entry->next;
-                }
+                } 
             }
         }
         
@@ -133,7 +119,6 @@ int save_connection(connection_table_t *table, char *hostname, int sockfd) {
     entry->hostname = strdup(hostname);
     entry->sockfd = sockfd;
     entry->timestamp = time(NULL);
-    entry->next = NULL;
     
     free(host_hash);  // Hash copied to entry, can free original
     
@@ -141,7 +126,6 @@ int save_connection(connection_table_t *table, char *hostname, int sockfd) {
     // pthread_mutex_lock(&table_to_use->lock);
     
     // Add at beginning of list (most recent connections first)
-    entry->next = table_to_use->buckets[index];
     table_to_use->buckets[index] = entry;
     
     // pthread_mutex_unlock(&table_to_use->lock);
@@ -175,14 +159,12 @@ int get_connection(connection_table_t *table, char *hostname) {
     
     // Search in bucket
     connection_entry_t *entry = table_to_use->buckets[index];
-    while (entry && entry->host_hash) {
+    if (entry && entry->host_hash) {
         if (strcmp(entry->host_hash, host_hash) == 0) {
             // Found entry, update timestamp
             entry->timestamp = time(NULL);
             sockfd = entry->sockfd;
-            break;
         }
-        entry = entry->next;
     }
     
     // pthread_mutex_unlock(&table_to_use->lock);
@@ -223,26 +205,15 @@ int remove_connection(connection_table_t *table, char *hostname, int close_socke
     // pthread_mutex_lock(&table_to_use->lock);
     
     // Search in bucket
-    connection_entry_t *prev = NULL;
+
     connection_entry_t *entry = table_to_use->buckets[index];
     
-    while (entry) {
+    if (entry) {
         if (strcmp(entry->host_hash, host_hash) == 0) {
-            // Found entry, remove from list
-            if (prev) {
-                prev->next = entry->next;
-            } else {
-                table_to_use->buckets[index] = entry->next;
-            }
-            
             sockfd = entry->sockfd;
             free(entry->hostname);
             free(entry);
-            break;
         }
-        
-        prev = entry;
-        entry = entry->next;
     }
     
     // pthread_mutex_unlock(&table_to_use->lock);
@@ -281,15 +252,12 @@ void cleanup_connection_table(connection_table_t *table) {
     // Free all entries
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
         connection_entry_t *entry = table_to_use->buckets[i];
-        while (entry) {
-            connection_entry_t *next = entry->next;
+        if (entry) {
             
             // Close socket and free entry
             close(entry->sockfd);
             free(entry->hostname);
             free(entry);
-            
-            entry = next;
         }
         table_to_use->buckets[i] = NULL;
     }

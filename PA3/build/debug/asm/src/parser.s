@@ -167,17 +167,15 @@ extract_uri_path:
 .LC33:
 	.string	"keep-alive"
 .LC34:
-	.string	"Close"
-.LC35:
 	.string	"Cache-Control"
 	.align 8
-.LC36:
+.LC35:
 	.string	"[-] (%d) key:value not found in header!\033[0m"
 	.align 8
-.LC37:
+.LC36:
 	.string	"\033[31m[-] (%d) Memory allocation failed\n\033[0m"
 	.align 8
-.LC38:
+.LC37:
 	.string	"[-] (%d) No host in HTTP/1.1 header\n\033[0m"
 	.text
 	.globl	parse_request_line_thread_safe
@@ -814,7 +812,7 @@ parse_request_line_thread_safe:
 	movl	$1, -220(%rbp)
 	.loc 1 286 5
 	jmp	.L42
-.L60:
+.L61:
 .LBB4:
 	.loc 1 288 34
 	movl	-220(%rbp), %eax
@@ -844,10 +842,10 @@ parse_request_line_thread_safe:
 	movq	%rax, -192(%rbp)
 	.loc 1 292 12
 	cmpq	$0, -128(%rbp)
-	je	.L64
+	je	.L65
 	.loc 1 292 18 discriminator 2
 	cmpq	$0, -192(%rbp)
-	je	.L64
+	je	.L65
 	.loc 1 298 15
 	jmp	.L46
 .L47:
@@ -969,37 +967,28 @@ parse_request_line_thread_safe:
 	.loc 1 331 17 discriminator 1
 	testl	%eax, %eax
 	jne	.L53
-	.loc 1 333 46
+	.loc 1 333 16
 	movq	-192(%rbp), %rax
 	leaq	.LC33(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
-	.loc 1 333 78 discriminator 1
+	.loc 1 333 15 discriminator 1
 	testl	%eax, %eax
-	sete	%al
-	movzbl	%al, %edx
-	.loc 1 333 43 discriminator 1
+	jne	.L54
+	.loc 1 333 84 discriminator 1
 	movq	-256(%rbp), %rax
-	movl	%edx, 88(%rax)
-	.loc 1 334 41
-	movq	-192(%rbp), %rax
-	leaq	.LC34(%rip), %rdx
-	movq	%rdx, %rsi
-	movq	%rax, %rdi
-	call	strcasecmp@PLT
-	.loc 1 334 68 discriminator 1
-	testl	%eax, %eax
-	sete	%al
-	movzbl	%al, %edx
-	.loc 1 334 38 discriminator 1
+	movl	$1, 88(%rax)
+	jmp	.L52
+.L54:
+	.loc 1 334 43
 	movq	-256(%rbp), %rax
-	movl	%edx, 92(%rax)
+	movl	$1, 92(%rax)
 	jmp	.L52
 .L53:
 	.loc 1 336 18
 	movq	-128(%rbp), %rax
-	leaq	.LC35(%rip), %rdx
+	leaq	.LC34(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcasecmp@PLT
@@ -1008,7 +997,7 @@ parse_request_line_thread_safe:
 	je	.L52
 	.loc 1 341 15
 	cmpq	$0, -136(%rbp)
-	je	.L54
+	je	.L55
 	.loc 1 341 25 discriminator 1
 	movq	-136(%rbp), %rax
 	movl	$58, %esi
@@ -1016,13 +1005,13 @@ parse_request_line_thread_safe:
 	call	strchr@PLT
 	.loc 1 341 22 discriminator 1
 	testq	%rax, %rax
-	jne	.L55
-.L54:
+	jne	.L56
+.L55:
 	.loc 1 342 17
 	call	gettid@PLT
 	.loc 1 342 17 is_stmt 0 discriminator 1
 	movl	%eax, %esi
-	leaq	.LC36(%rip), %rax
+	leaq	.LC35(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1032,13 +1021,13 @@ parse_request_line_thread_safe:
 	.loc 1 344 24
 	movl	$-1, %eax
 	jmp	.L12
-.L55:
+.L56:
 	.loc 1 347 22
 	movq	-256(%rbp), %rax
 	movq	112(%rax), %rax
 	.loc 1 347 15
 	testq	%rax, %rax
-	jne	.L56
+	jne	.L57
 	.loc 1 348 47
 	movq	-136(%rbp), %rax
 	movq	%rax, %rdi
@@ -1056,13 +1045,13 @@ parse_request_line_thread_safe:
 	movq	112(%rax), %rax
 	.loc 1 349 19
 	testq	%rax, %rax
-	jne	.L57
+	jne	.L58
 	.loc 1 350 21
 	call	gettid@PLT
 	movl	%eax, %edx
 	.loc 1 350 21 is_stmt 0 discriminator 1
 	movq	stderr(%rip), %rax
-	leaq	.LC37(%rip), %rcx
+	leaq	.LC36(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1072,8 +1061,8 @@ parse_request_line_thread_safe:
 	movq	%rax, %rdi
 	call	free@PLT
 	.loc 1 352 21
-	jmp	.L58
-.L57:
+	jmp	.L59
+.L58:
 	.loc 1 354 17
 	movq	-256(%rbp), %rax
 	movq	112(%rax), %rax
@@ -1091,7 +1080,7 @@ parse_request_line_thread_safe:
 	movw	$2573, (%rax)
 	movb	$0, 2(%rax)
 	jmp	.L52
-.L56:
+.L57:
 	.loc 1 357 34 is_stmt 1
 	movq	-256(%rbp), %rax
 	movq	112(%rax), %rax
@@ -1138,20 +1127,20 @@ parse_request_line_thread_safe:
 	movq	%rax, -104(%rbp)
 	.loc 1 362 19
 	cmpq	$0, -104(%rbp)
-	jne	.L59
+	jne	.L60
 	.loc 1 363 21
 	call	gettid@PLT
 	movl	%eax, %edx
 	.loc 1 363 21 is_stmt 0 discriminator 1
 	movq	stderr(%rip), %rax
-	leaq	.LC37(%rip), %rcx
+	leaq	.LC36(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
 	.loc 1 364 21 is_stmt 1
-	jmp	.L58
-.L59:
+	jmp	.L59
+.L60:
 	.loc 1 367 42
 	movq	-256(%rbp), %rax
 	movq	-104(%rbp), %rdx
@@ -1179,7 +1168,7 @@ parse_request_line_thread_safe:
 	movq	%rax, %rdi
 	call	free@PLT
 	jmp	.L45
-.L64:
+.L65:
 	.loc 1 294 13
 	nop
 .L45:
@@ -1190,26 +1179,26 @@ parse_request_line_thread_safe:
 	.loc 1 286 23 discriminator 1
 	movl	-220(%rbp), %eax
 	cmpl	-236(%rbp), %eax
-	jl	.L60
-.L58:
+	jl	.L61
+.L59:
 .LBE3:
 	.loc 1 379 15
 	movq	-256(%rbp), %rax
 	movl	(%rax), %eax
 	.loc 1 379 8
 	cmpl	$1, %eax
-	jne	.L61
+	jne	.L62
 	.loc 1 379 51 discriminator 1
 	movq	-256(%rbp), %rax
 	movq	24(%rax), %rax
 	.loc 1 379 41 discriminator 1
 	testq	%rax, %rax
-	jne	.L61
+	jne	.L62
 	.loc 1 381 9
 	call	gettid@PLT
 	.loc 1 381 9 is_stmt 0 discriminator 1
 	movl	%eax, %esi
-	leaq	.LC38(%rip), %rax
+	leaq	.LC37(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1219,7 +1208,7 @@ parse_request_line_thread_safe:
 	.loc 1 383 16
 	movl	$-1, %eax
 	jmp	.L12
-.L61:
+.L62:
 	.loc 1 386 12
 	movl	$0, %eax
 .L12:
@@ -1227,9 +1216,9 @@ parse_request_line_thread_safe:
 	.loc 1 387 1
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L63
+	je	.L64
 	call	__stack_chk_fail@PLT
-.L63:
+.L64:
 	leaq	-16(%rbp), %rsp
 	popq	%rbx
 	popq	%r12
@@ -1255,79 +1244,79 @@ cleanup_header:
 	movq	%rdi, -8(%rbp)
 	.loc 1 401 8
 	cmpq	$0, -8(%rbp)
-	je	.L72
+	je	.L73
 	.loc 1 403 18
 	movq	-8(%rbp), %rax
 	movq	16(%rax), %rax
 	.loc 1 403 11
 	testq	%rax, %rax
-	je	.L67
+	je	.L68
 	.loc 1 403 48 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	16(%rax), %rax
 	.loc 1 403 29 discriminator 1
 	movq	%rax, %rdi
 	call	free@PLT
-.L67:
+.L68:
 	.loc 1 404 18
 	movq	-8(%rbp), %rax
 	movq	24(%rax), %rax
 	.loc 1 404 11
 	testq	%rax, %rax
-	je	.L68
+	je	.L69
 	.loc 1 404 53 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	24(%rax), %rax
 	.loc 1 404 34 discriminator 1
 	movq	%rax, %rdi
 	call	free@PLT
-.L68:
+.L69:
 	.loc 1 405 18
 	movq	-8(%rbp), %rax
 	movq	32(%rax), %rax
 	.loc 1 405 11
 	testq	%rax, %rax
-	je	.L69
+	je	.L70
 	.loc 1 405 58 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	32(%rax), %rax
 	.loc 1 405 39 discriminator 1
 	movq	%rax, %rdi
 	call	free@PLT
-.L69:
+.L70:
 	.loc 1 406 18
 	movq	-8(%rbp), %rax
 	movq	80(%rax), %rax
 	.loc 1 406 11
 	testq	%rax, %rax
-	je	.L70
+	je	.L71
 	.loc 1 406 56 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	80(%rax), %rax
 	.loc 1 406 37 discriminator 1
 	movq	%rax, %rdi
 	call	free@PLT
-.L70:
+.L71:
 	.loc 1 407 18
 	movq	-8(%rbp), %rax
 	movq	112(%rax), %rax
 	.loc 1 407 11
 	testq	%rax, %rax
-	je	.L71
+	je	.L72
 	.loc 1 407 53 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	112(%rax), %rax
 	.loc 1 407 34 discriminator 1
 	movq	%rax, %rdi
 	call	free@PLT
-.L71:
+.L72:
 	.loc 1 409 9
 	movq	-8(%rbp), %rax
 	movl	$120, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-.L72:
+.L73:
 	.loc 1 411 1
 	nop
 	leave

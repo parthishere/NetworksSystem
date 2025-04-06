@@ -7,7 +7,6 @@ typedef struct connection_entry {
     char *hostname;           // Original hostname for reference
     int sockfd;               // Socket to origin server
     time_t timestamp;         // Last activity timestamp
-    struct connection_entry *next;  // For handling collisions
 } connection_entry_t;
 
 typedef struct {

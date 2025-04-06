@@ -120,8 +120,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         return -1;
     }
 
-    // int sockfd = get_connection(NULL, header->hostname_str);
-    int sockfd = -1;
+    int sockfd = get_connection(NULL, header->hostname_str);
     
     if (sockfd < 0)
     {
@@ -194,8 +193,8 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     }
    
 
-    const char *connection_type = "Connection: close";
-    // const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
+    // const char *connection_type = "Connection: close";
+    const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
     char *send_req;
     // free
     if (header->extra_header)
