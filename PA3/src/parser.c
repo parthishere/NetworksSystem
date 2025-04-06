@@ -105,7 +105,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     
     if (!request || !header || strlen(request) > MAX_SIZE)
     {
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         printf(RED "[-] (%d) Parse error: %s\n" RESET, gettid(), 
                !request ? "Empty request" : 
                !header ? "Invalid header pointer" : 
@@ -140,7 +140,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         printf(RED"\n[-] (%d) ERROR: HTTP request has no valid lines\n"
                "------------------------------------------------------------\n"RESET, 
                gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -152,7 +152,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (!method)
     {
         printf(RED"[-] (%d) no method \n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -181,12 +181,12 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (!valid_header)
     {
         printf(RED"[-] (%d)no valid header \n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     else if(!valid_method){
         printf(RED"[-] (%d)no valid method \n"RESET, gettid());
-        header->parser_error |= METHOD_NOT_ALLOWED;
+        header->parser_error = METHOD_NOT_ALLOWED;
         return SOME_ERROR;
     }
     
@@ -196,7 +196,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (!uri)
     {
         printf(RED"[-] (%d)no valid uri \n"RESET, gettid());
-        header->parser_error |= PARSE_ERROR_INVALID_URI;
+        header->parser_error = PARSE_ERROR_INVALID_URI;
         return SOME_ERROR;
     }
     
@@ -206,7 +206,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     {
         
         printf(RED"[-] (%d)uri len =0 \n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -215,7 +215,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     {
         
         printf(RED"[-] (%d)uri has .. \n"RESET, gettid());
-        header->parser_error |= FORBIDDEN;
+        header->parser_error = FORBIDDEN;
         return SOME_ERROR;
     }
     
@@ -224,7 +224,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (!header->uri_str)
     {
         printf(RED"[-] (%d)uri str null \n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -233,7 +233,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (!version)
     {
         printf(RED"[-] (%d)no version found\n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -244,14 +244,14 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (strncmp(version, "HTTP/1.", 7) != 0)
     {
         printf(RED"[-] (%d)wrong thing found\n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
     
     if (strlen(version) > 8 || strlen(version) < 7){
         printf(RED"[-] (%d)somthing wrong in version\n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR;
     }
     
@@ -267,7 +267,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
         break;
         default:
         printf(RED"[-] (%d)somthing wrong in version\n"RESET, gettid());
-        header->parser_error |= VERSION_NOT_SUPPORTED;
+        header->parser_error = VERSION_NOT_SUPPORTED;
         return SOME_ERROR;
     }
     
@@ -277,7 +277,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
     if(header->http_version_str == NULL){
         printf(RED"[-] (%d)no valid method \n"RESET, gettid());
-        header->parser_error |= METHOD_NOT_ALLOWED;
+        header->parser_error = METHOD_NOT_ALLOWED;
         return SOME_ERROR;
     }
 
@@ -305,7 +305,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             
             if(!key){
                 printf(RED"[-] (%d)no host\n"RESET, gettid());
-                header->parser_error |= BAD_REQ;
+                header->parser_error = BAD_REQ;
                 return SOME_ERROR;
             }
             
@@ -313,7 +313,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
             
             if (!header->hostname_str) {
                 printf(RED"[-] (%d) no host\n"RESET, gettid());
-                header->parser_error |= BAD_REQ;
+                header->parser_error = BAD_REQ;
                 return SOME_ERROR;
             }
             
@@ -340,7 +340,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
 
             if(!line || strstr(line, ":") == NULL){
                 printf("[-] (%d) key:value not found in header!"RESET, gettid());
-                header->parser_error |= BAD_REQ;
+                header->parser_error = BAD_REQ;
                 return SOME_ERROR;
             }
             
@@ -379,7 +379,7 @@ int parse_request_line_thread_safe(char *request, HttpHeader_t *header)
     if (header->http_version == HTTP1_1 && !header->hostname_str)
     {
         printf("[-] (%d) No host in HTTP/1.1 header\n"RESET, gettid());
-        header->parser_error |= BAD_REQ;
+        header->parser_error = BAD_REQ;
         return SOME_ERROR; // Host is required for HTTP/1.1
     }
 

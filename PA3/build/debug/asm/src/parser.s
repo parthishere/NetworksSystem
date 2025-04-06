@@ -201,11 +201,7 @@ parse_request_line_thread_safe:
 	jbe	.L7
 .L6:
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	cmpq	$0, -248(%rbp)
 	je	.L8
 	cmpq	$0, -256(%rbp)
@@ -337,11 +333,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L20:
@@ -365,11 +357,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L21:
@@ -439,11 +427,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L28:
@@ -456,11 +440,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$16, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$16, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L29:
@@ -480,11 +460,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$-2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$-2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L30:
@@ -501,11 +477,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L31:
@@ -523,11 +495,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$4, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$4, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L32:
@@ -547,11 +515,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L33:
@@ -571,11 +535,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L34:
@@ -594,11 +554,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L35:
@@ -620,11 +576,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L37:
@@ -663,11 +615,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$32, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$32, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L40:
@@ -686,11 +634,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$16, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$16, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L41:
@@ -765,11 +709,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L49:
@@ -790,11 +730,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L50:
@@ -867,11 +803,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L55:
@@ -1007,11 +939,7 @@ parse_request_line_thread_safe:
 	movl	$0, %eax
 	call	printf@PLT
 	movq	-256(%rbp), %rax
-	movl	96(%rax), %eax
-	orl	$2, %eax
-	movl	%eax, %edx
-	movq	-256(%rbp), %rax
-	movl	%edx, 96(%rax)
+	movl	$2, 96(%rax)
 	movl	$-1, %eax
 	jmp	.L12
 .L61:
