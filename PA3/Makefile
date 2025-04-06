@@ -3,7 +3,7 @@ INCLUDE_DIR = includes
 PORT ?= 8080
 TIMEOUT ?= 60
 
-OUTPUT_DIR = ./build/debug
+OUTPUT_DIR = ./
 OBJ_DIR = $(OUTPUT_DIR)/obj $(OUTPUT_DIR)/obj/$(SRC_DIR)
 ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 

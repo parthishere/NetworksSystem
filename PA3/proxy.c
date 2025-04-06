@@ -43,8 +43,11 @@ int main(int argc, char *argv[])
         }
         
     }
+    else{
+        sd.timeout = atoi(argv[2]);
+    }
     
-    sd.timeout = atoi(argv[2]);
+    
     printf("[+] Cache Timeout is set to %d\n",sd.timeout);
     sd.addr_len = sizeof(sd.client_info);
 
