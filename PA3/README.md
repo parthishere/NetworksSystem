@@ -2,7 +2,7 @@
 
 A high-performance HTTP proxy server implementation with advanced features including caching, content filtering, and prefetching.
 
-![Proxy Server Overview](https://mermaid.ink/img/pako:eNqNkk9rwzAMxb-K0Wk9tLBDYYcVeutht8IOg2BMrMQM_5mxnUFpvvtsp2lKO9iBLyb-PZ70JLuyyhXBkn2qfY_aKfSB5Qe0nZGbR01GdvEeWp8YPsHGl2gZlqqzdLO2aaWa-NU2jTtQoEZEKLcg2TqczwFH-ij-OZ1Dgi3eLbNBcwTWtqECYTQOPJsVjqI0WlqCITZSgSWTmNvhTHzc4BOq8k5OMJJhLzk3Q1mALSK5vgCZ-Hhf9OgcHIIPuEaB3nwdtUWNu0rQ6TQZYIvxe36xkRrURkQS0GlSidoRTDQk65Ffs58PPi64YPkPD5xn9TOIYk4vBThOCUFGlnNezsrlgme8yOZZlmfz1fJtVvKMTx8b-_GcjPxrQ9t7Ob3DzKJj2Eo1R4eK9rSb4sFtqTLUBZbacuQtGWnXSJ2P1lBFYWm1QXtEHWgz9YWlWLfKI9m08mMVXjKJXSRbf51NmXuRJfQf6qpjsQ)
+![Proxy Server Overview](./flowchart.png)
 
 ## Overview
 
