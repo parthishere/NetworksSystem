@@ -295,6 +295,9 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             printf(GRN "[+] (%d) Sent %d bytes directly (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN "[+] (%d) %d bytes Saved to cache ! (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
+        if(strstr(recieved_buf, "\0"));{
+            break;
+        }
     }
     // if (send_to_client)
     // {
