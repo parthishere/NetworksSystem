@@ -265,7 +265,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                         int ct_len = ct_end - (ct_header + 13);  // Skip "Content-Type: "
                         content_type = malloc(ct_len + 1);
                         if (content_type) {
-                            strncpy(content_type, ct_header + 13, ct_len);
+                            memcpy(content_type, ct_header + 13, ct_len);
                             content_type[ct_len] = '\0';
                             printf("[+] Detected Content-Type: %s\n", content_type);
                         }
@@ -273,14 +273,14 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 }
                 
                 // If Content-Length is missing but needed, modify the response
-                if (content_length == -1 && strcasestr(recieved_buf, "Transfer-Encoding: chunked") == NULL) {
+                if (content_length == -1 && !strcasestr(recieved_buf, "Transfer-Encoding: chunked")) {
                     // Need to buffer the entire response to calculate content length
                     char *modified_response = malloc(RECIEVE_SIZE);
                     printf("Content lenth %d\n", numbytes - headers_end_pos);
                     if (modified_response) {
                         printf("2");
                         // Copy headers
-                        strncpy(modified_response, recieved_buf, headers_end_pos);
+                        memcpy(modified_response, recieved_buf, headers_end_pos);
                         
                         // Add Content-Length header
                         sprintf(modified_response + headers_end_pos - 2, 
@@ -350,10 +350,10 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             printf(GRN "[+] (%d) Sent %d bytes directly (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN "[+] (%d) %d bytes Saved to cache ! (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
-        if(total_bytes >= content_length);{
-            printf("End hehe\n\n");
-            break;
-        }
+        // if(total_bytes <= content_length || strcasestr(recieved_buf, "Transfer-Encoding: chunked"));{
+        //     printf("End hehe\n\n");
+        //     break;
+        // }
     }
     if (content_type) {
         free(content_type);
