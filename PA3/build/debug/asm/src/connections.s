@@ -168,7 +168,7 @@ connection_cleanup_thread:
 	movq	-32(%rbp), %rdx
 	subq	%rax, %rdx
 	.loc 1 71 20
-	cmpq	$10, %rdx
+	cmpq	$9, %rdx
 	jle	.L11
 	.loc 1 75 75
 	movq	-24(%rbp), %rax

@@ -510,9 +510,11 @@ prefetch_thread_func:
 .LC9:
 	.string	"https://"
 .LC10:
+	.string	"mailto:"
+.LC11:
 	.string	"malyu \n\r"
 	.align 8
-.LC11:
+.LC12:
 	.string	"\033[31m[-] (%d) Memory allocation failed for links array\n\033[0m"
 	.text
 	.globl	extract_links
@@ -622,8 +624,17 @@ extract_links:
 	.loc 1 159 51 discriminator 1
 	testq	%rax, %rax
 	jne	.L36
+	.loc 1 159 90 discriminator 2
+	movq	-104(%rbp), %rax
+	leaq	.LC10(%rip), %rdx
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	strstr@PLT
+	.loc 1 159 87 discriminator 1
+	testq	%rax, %rax
+	jne	.L36
 	.loc 1 161 13
-	leaq	.LC10(%rip), %rax
+	leaq	.LC11(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -648,7 +659,7 @@ extract_links:
 	movl	%eax, %edx
 	.loc 1 166 17 is_stmt 0 discriminator 1
 	movq	stderr(%rip), %rax
-	leaq	.LC11(%rip), %rcx
+	leaq	.LC12(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax

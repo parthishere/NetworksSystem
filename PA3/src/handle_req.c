@@ -112,7 +112,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     if (strcmp(header->hostname_port_str, "8080") == 0 && ((strcmp(header->hostname_str, "localhost") == 0 || strcmp(header->hostname_str, "127.0.1.1") == 0)) && send_to_client)
     {
         char *send_req;
-        asprintf(&send_req, "%s 404 Not Found\r\nContent-Type: text/plain\r\n\r\n cannot req proxy", header->http_version_str);
+        asprintf(&send_req, "%s 403 Forbidden\r\nContent-Type: text/plain\r\n\r\n cannot req proxy", header->http_version_str);
         if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
         {
             fprintf(stderr, RED "[-] send-server failed for server %d\n" RESET, errno);
@@ -301,9 +301,9 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
                 {
                     // We'll need to buffer the entire response, but can't do that yet
                     // Just note that we're missing Content-Length
-                    printf(RED"[-] (%d) Missing Content-Length in non-chunked response\n"RESET, gettid());
-
-                    return -1;
+                    printf(RED"[-] (%d) Missing Content-Length in non-chunked response, Response: \n%s\n"RESET, gettid(), recieved_buf);
+                    chunked_encoding = 1;
+                    // return -1;
                 }
             }
         }
@@ -406,6 +406,15 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     return 1;
 }
+
+// 1. 400 Bad Request: Detected but sent as 404
+// 2. 405 Method Not Allowed: Detected but sent as 404
+// 3. 408 Request Timeout: Not implemented
+// 4. 500 Internal Server Error: Not implemented for internal errors
+// 5. 502 Bad Gateway: Not implemented (using 403 instead)
+// 6. 504 Gateway Timeout: Not implemented
+// 7. 505 HTTP Version Not Supported: Detected but sent as 404
+// 8. 508 Loop Detected: Not implemented (using 404)
 
 int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_client, int prefetch)
 {
@@ -690,12 +699,9 @@ void *handle_req(sockdetails_t *sd)
                 printf(RED "[-] (%d) ACCESS DENIED: Domain is in blocklist\n"
                            "[-] Blocked domain: %s\n" RESET,
                        gettid(), header.hostname_str);
-                char *send_req = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nBlocked";
-                if (send(sd->client_sock_fd, send_req, strlen(send_req), 0) < 0)
-                {
-                    fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-                    goto cleanup;
-                }
+                
+                send_error_response(sd->client_sock_fd, header.http_version_str, FORBIDDEN);
+                
                 goto cleanup;
             }
 
