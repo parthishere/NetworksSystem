@@ -156,8 +156,9 @@ char **extract_links(const char *html_content, int *link_count)
         // if(strncmp(link, "", strlen(link)) == 0) continue;
 
         // Check if this is a link we want to keep (not a fragment or HTTPS)
-        if (strncmp(link, "#", strlen(link)) != 0 && strstr(link, "https://") == NULL && strstr(link, "mailto") == NULL)
+        if (strncmp(link, "#", strlen(link)) != 0 && strstr(link, "https://") == NULL)
         {
+            printf("malyu \n\r");
             // Add to links array
             links = realloc(links, (*link_count + 1) * sizeof(char *));
             if (!links) {

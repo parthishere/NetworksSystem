@@ -510,7 +510,7 @@ prefetch_thread_func:
 .LC9:
 	.string	"https://"
 .LC10:
-	.string	"mailto"
+	.string	"malyu \n\r"
 	.align 8
 .LC11:
 	.string	"\033[31m[-] (%d) Memory allocation failed for links array\n\033[0m"
@@ -622,78 +622,74 @@ extract_links:
 	.loc 1 159 51 discriminator 1
 	testq	%rax, %rax
 	jne	.L36
-	.loc 1 159 90 discriminator 2
-	movq	-104(%rbp), %rax
-	leaq	.LC10(%rip), %rdx
-	movq	%rdx, %rsi
+	.loc 1 161 13
+	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
-	call	strstr@PLT
-	.loc 1 159 87 discriminator 1
-	testq	%rax, %rax
-	jne	.L36
-	.loc 1 162 37
+	movl	$0, %eax
+	call	printf@PLT
+	.loc 1 163 37
 	movq	-160(%rbp), %rax
 	movl	(%rax), %eax
-	.loc 1 162 49
+	.loc 1 163 49
 	addl	$1, %eax
 	cltq
-	.loc 1 162 21
+	.loc 1 163 21
 	leaq	0(,%rax,8), %rdx
 	movq	-128(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	realloc@PLT
 	movq	%rax, -128(%rbp)
-	.loc 1 163 16
+	.loc 1 164 16
 	cmpq	$0, -128(%rbp)
 	jne	.L37
-	.loc 1 165 17
+	.loc 1 166 17
 	call	gettid@PLT
 	movl	%eax, %edx
-	.loc 1 165 17 is_stmt 0 discriminator 1
+	.loc 1 166 17 is_stmt 0 discriminator 1
 	movq	stderr(%rip), %rax
 	leaq	.LC11(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
-	.loc 1 166 17 is_stmt 1
+	.loc 1 167 17 is_stmt 1
 	movq	-104(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	.loc 1 167 24
+	.loc 1 168 24
 	movl	$0, %eax
 	jmp	.L40
 .L37:
-	.loc 1 169 19
+	.loc 1 170 19
 	movq	-160(%rbp), %rax
 	movl	(%rax), %eax
 	cltq
-	.loc 1 169 18
+	.loc 1 170 18
 	leaq	0(,%rax,8), %rdx
 	movq	-128(%rbp), %rax
 	addq	%rax, %rdx
-	.loc 1 169 32
+	.loc 1 170 32
 	movq	-104(%rbp), %rax
 	movq	%rax, (%rdx)
-	.loc 1 170 14
+	.loc 1 171 14
 	movq	-160(%rbp), %rax
 	movl	(%rax), %eax
-	.loc 1 170 26
+	.loc 1 171 26
 	leal	1(%rax), %edx
 	movq	-160(%rbp), %rax
 	movl	%edx, (%rax)
 	jmp	.L38
 .L36:
-	.loc 1 175 13
+	.loc 1 176 13
 	movq	-104(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L38:
-	.loc 1 179 29
+	.loc 1 180 29
 	movl	-28(%rbp), %eax
 	cltq
-	.loc 1 179 16
+	.loc 1 180 16
 	addq	%rax, -120(%rbp)
 .L35:
 .LBE8:
@@ -709,14 +705,14 @@ extract_links:
 	.loc 1 145 51 discriminator 1
 	testl	%eax, %eax
 	je	.L39
-	.loc 1 182 5
+	.loc 1 183 5
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	regfree@PLT
-	.loc 1 183 12
+	.loc 1 184 12
 	movq	-128(%rbp), %rax
 .L40:
-	.loc 1 184 1
+	.loc 1 185 1
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
 	je	.L41
@@ -732,7 +728,7 @@ extract_links:
 	.type	free_links, @function
 free_links:
 .LFB8:
-	.loc 1 187 1
+	.loc 1 188 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -744,42 +740,42 @@ free_links:
 	movq	%rdi, -24(%rbp)
 	movl	%esi, -28(%rbp)
 .LBB9:
-	.loc 1 188 14
+	.loc 1 189 14
 	movl	$0, -4(%rbp)
-	.loc 1 188 5
+	.loc 1 189 5
 	jmp	.L43
 .L44:
-	.loc 1 190 19
+	.loc 1 191 19
 	movl	-4(%rbp), %eax
 	cltq
 	leaq	0(,%rax,8), %rdx
 	movq	-24(%rbp), %rax
 	addq	%rdx, %rax
-	.loc 1 190 9
+	.loc 1 191 9
 	movq	(%rax), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	.loc 1 191 14
+	.loc 1 192 14
 	movl	-4(%rbp), %eax
 	cltq
 	leaq	0(,%rax,8), %rdx
 	movq	-24(%rbp), %rax
 	addq	%rdx, %rax
-	.loc 1 191 18
+	.loc 1 192 18
 	movq	$0, (%rax)
-	.loc 1 188 39 discriminator 3
+	.loc 1 189 39 discriminator 3
 	addl	$1, -4(%rbp)
 .L43:
-	.loc 1 188 23 discriminator 1
+	.loc 1 189 23 discriminator 1
 	movl	-4(%rbp), %eax
 	cmpl	-28(%rbp), %eax
 	jl	.L44
 .LBE9:
-	.loc 1 193 5
+	.loc 1 194 5
 	movq	-24(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	.loc 1 194 1
+	.loc 1 195 1
 	nop
 	leave
 	.cfi_def_cfa 7, 8
@@ -2282,7 +2278,7 @@ free_links:
 	.uleb128 0x28
 	.long	.LASF226
 	.byte	0x1
-	.byte	0xba
+	.byte	0xbb
 	.byte	0x6
 	.quad	.LFB8
 	.quad	.LFE8-.LFB8
@@ -2291,7 +2287,7 @@ free_links:
 	.long	0xbf7
 	.uleb128 0x10
 	.long	.LASF175
-	.byte	0xba
+	.byte	0xbb
 	.byte	0x18
 	.long	0x3c9
 	.uleb128 0x2
@@ -2299,7 +2295,7 @@ free_links:
 	.sleb128 -40
 	.uleb128 0x10
 	.long	.LASF199
-	.byte	0xba
+	.byte	0xbb
 	.byte	0x23
 	.long	0x66
 	.uleb128 0x2
@@ -2310,7 +2306,7 @@ free_links:
 	.quad	.LBE9-.LBB9
 	.uleb128 0x15
 	.string	"i"
-	.byte	0xbc
+	.byte	0xbd
 	.byte	0xe
 	.long	0x66
 	.uleb128 0x2
