@@ -226,12 +226,12 @@ int remove_connection(connection_table_t *table, char *hostname, int close_socke
     free(host_hash);
     
     if (sockfd != -1) {
-        printf("[Connection] Removed connection to %s (socket %d)\n", hostname, sockfd);
+        // printf("[+] (%d) Socket connection removed connection to %s (socket %d)\n", hostname, sockfd);
         
         // Close socket if requested
         if (close_socket) {
             close(sockfd);
-            printf("[Connection] Closed socket %d\n", sockfd);
+            printf("[+] (%d) Socket connection closed socket %d\n", sockfd);
         }
     }
     

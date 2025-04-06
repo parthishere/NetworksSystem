@@ -231,6 +231,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     int body_bytes = 0;
     int chunked_encoding = 0;
     int found_end_chunk = 0;
+    int from_server_close = 0;
 
     while (1)
     {
@@ -254,6 +255,10 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             if (headers_end)
             {
                 headers_end_pos = headers_end - recieved_buf + 4; // +4 for \r\n\r\n
+
+                if(strcasecmp(recieved_buf, "Connection: close")){
+                    from_server_close = 1;
+                }
 
                 if (strcasestr(recieved_buf, "Transfer-Encoding: chunked"))
                 {
@@ -384,7 +389,7 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     close(file_fd);
 
-    if (!header->connection_keep_alive)
+    if (!header->connection_keep_alive || from_server_close)
     {
         remove_connection(NULL, header->hostname_str, 1);
     }
