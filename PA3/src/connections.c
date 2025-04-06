@@ -258,12 +258,12 @@ void cleanup_connection_table(connection_table_t *table) {
     // Free all entries
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
         connection_entry_t *entry = table_to_use->buckets[i];
-        if (entry) {
+        if (entry && entry->hostname) {
             
             // Close socket and free entry
             close(entry->sockfd);
-            free(entry->hostname);
-            free(entry);
+            if(entry->hostname) free(entry->hostname);
+            if(entry) free(entry);
         }
         table_to_use->buckets[i] = NULL;
     }
@@ -273,6 +273,6 @@ void cleanup_connection_table(connection_table_t *table) {
     // Destroy mutex and free table if not global
     if (table_to_use != global_conn_table) {
         // pthread_mutex_destroy(&table_to_use->lock);
-        free(table_to_use);
+        if(table_to_use) free(table_to_use);
     }
 }
