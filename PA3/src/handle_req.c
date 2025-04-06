@@ -193,8 +193,8 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
     }
    
 
-    // const char *connection_type = "Connection: close";
-    const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
+    const char *connection_type = "Connection: close";
+    // const char *connection_type = header->connection_keep_alive ? "Connection: keep-alive" : "Connection: close";
     char *send_req;
     // free
     if (header->extra_header)
@@ -207,8 +207,8 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
         asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
         // asprintf(&send_req, "GET %s %s\r\nHost: %s\r\n%s\r\n\r\n", header->uri_str, header->http_version_str, header->hostname_str, connection_type);
     }
+    
     printf("[+] Sent request %s \n\r", send_req);
-
     if (send(sockfd, send_req, strlen(send_req), MSG_NOSIGNAL) < 0)
     {
         fprintf(stderr, RED "[-] (%d) send failed for server %d \n" RESET, gettid(), errno);
@@ -222,6 +222,10 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
 
     pthread_mutex_lock(&sd->lock);
     int initial = 1;
+    int content_length = -1;
+    char *content_type = NULL;
+    int headers_end_pos = 0;
+    int total_bytes = 0;
     while (1)
     {
 
@@ -236,19 +240,70 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             fprintf(stderr, "[-] Connetion close proxy <-> server \n\r");
             break;
         }
+        
+
         if (initial == 1)
         {
-            // manipulate recieved buffer according to us;
-            // recieved_buf;
+            initial = 0;
 
-            // content length
-            // keep-alive
-            // char *content_length = strstr(recieved_buf, "Content-Length: ");
-            // printf("content length %s \n", content_length);
-
-            // char *eoh = strstr(recieved_buf, "\r\n\r\n");
-            // // memcpy(recieved_buf, eoh, sizoef(eoh));
-            // initial = 0;
+            char *headers_end = strstr(recieved_buf, "\r\n\r\n");
+            if (headers_end) {
+                headers_end_pos = headers_end - recieved_buf + 4;  // +4 for \r\n\r\n
+                
+                // Extract Content-Length
+                char *cl_header = strcasestr(recieved_buf, "Content-Length:");
+                if (cl_header) {
+                    content_length = atoi(cl_header + 15);  // Skip "Content-Length: "
+                    printf("[+] Detected Content-Length: %d\n", content_length);
+                }
+                
+                // Extract Content-Type
+                char *ct_header = strcasestr(recieved_buf, "Content-Type:");
+                if (ct_header) {
+                    char *ct_end = strstr(ct_header, "\r\n");
+                    if (ct_end) {
+                        int ct_len = ct_end - (ct_header + 13);  // Skip "Content-Type: "
+                        content_type = malloc(ct_len + 1);
+                        if (content_type) {
+                            strncpy(content_type, ct_header + 13, ct_len);
+                            content_type[ct_len] = '\0';
+                            printf("[+] Detected Content-Type: %s\n", content_type);
+                        }
+                    }
+                }
+                
+                // If Content-Length is missing but needed, modify the response
+                if (content_length == -1 && strcasestr(recieved_buf, "Transfer-Encoding: chunked") == NULL) {
+                    // Need to buffer the entire response to calculate content length
+                    char *modified_response = malloc(RECIEVE_SIZE);
+                    printf("Content lenth %d\n", numbytes - headers_end_pos);
+                    if (modified_response) {
+                        printf("2");
+                        // Copy headers
+                        strncpy(modified_response, recieved_buf, headers_end_pos);
+                        
+                        // Add Content-Length header
+                        sprintf(modified_response + headers_end_pos - 2, 
+                                "Content-Length: %d\r\n\r\n", numbytes - headers_end_pos);
+                        
+                        // Append body
+                        memcpy(modified_response + strlen(modified_response), 
+                            recieved_buf + headers_end_pos, 
+                            numbytes - headers_end_pos);
+                        
+                        // Replace original buffer with modified one
+                        int new_size = strlen(modified_response);
+                        memcpy(recieved_buf, modified_response, new_size);
+                        numbytes = new_size;
+                        
+                        free(modified_response);
+                    }
+                }
+                
+            }
+        }   
+        else{
+            total_bytes += numbytes;
         }
         write(file_fd, recieved_buf, numbytes);
 
@@ -295,24 +350,14 @@ int if_not_cached(HttpHeader_t *header, sockdetails_t *sd, int send_to_client, i
             printf(GRN "[+] (%d) Sent %d bytes directly (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
         printf(GRN "[+] (%d) %d bytes Saved to cache ! (%s %s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
-        if(strstr(recieved_buf, "\0"));{
+        if(total_bytes >= content_length);{
+            printf("End hehe\n\n");
             break;
         }
     }
-    // if (send_to_client)
-    // {
-    //     memset(recieved_buf, 0, sizeof(recieved_buf));
-    //     strcpy(recieved_buf, "\r\n0\r\n\r\n");
-    //     if (send(sd->client_sock_fd, recieved_buf, 7, MSG_NOSIGNAL) < 0)
-    //     {
-    //         fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-    //         close(file_fd);
-    //         close(sockfd);
- 
-    //         return -1;
-    //     }
-    //     printf(GRN "[+] (%d) Sent end directly (%s %s) !\n" RESET, gettid(), header->hostname_str, header->uri_str);
-    // }
+    if (content_type) {
+        free(content_type);
+    }
     pthread_mutex_unlock(&sd->lock);
 
     close(file_fd);
@@ -409,19 +454,7 @@ int if_cached(HttpHeader_t *header, sockdetails_t *sd, int file_fd, int send_to_
             printf(GRN "[+] (%d) Sent %d bytes from cache (%s/%s) !\n" RESET, gettid(), numbytes, header->hostname_str, header->uri_str);
         }
     }
-    // if (send_to_client)
-    // {
-    //     memset(recieved_buf, 0, sizeof(recieved_buf));
-    //     strcpy(recieved_buf, "\r\n0\r\n\r\n");
-    //     if (send(sd->client_sock_fd, recieved_buf, 7, MSG_NOSIGNAL) < 0)
-    //     {
-    //         fprintf(stderr, RED "[-] (%d) send-server failed for server %d\n" RESET, gettid(), errno);
-    //         close(file_fd);
- 
-    //         return -1;
-    //     }
-    //     printf(GRN "[+] (%d) Sent end from cache directly (%s %s) !\n" RESET, gettid(), header->hostname_str, header->uri_str);
-    // }
+    
     pthread_mutex_unlock(&sd->lock);
 
     if (all_links != NULL && prefetch)
@@ -467,7 +500,6 @@ int check_and_send_from_cache(HttpHeader_t *header, sockdetails_t *sd, int dynam
         // Don't close file_fd here as it's already closed in if_cached
     }
     return result;
-    // if(!prefetch) pthread_mutex_unlock(&sd->lock);
 
     // No need to close file_fd here as it's closed in both if_cached and if_not_cached
     // Removing the potential double-close that could cause issues
@@ -644,7 +676,6 @@ void *handle_req(sockdetails_t *sd)
                 goto cleanup;
             }
 
-            // pthread_mutex_lock(&sd->lock);
             int returnval = check_and_send_from_cache(&header, sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
 
             /* Check if connection should be closed */
