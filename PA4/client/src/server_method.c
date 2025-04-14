@@ -22,29 +22,33 @@
  */
 commands_t whichcmd(char *cmd)
 {
-    if (strncmp(cmd, "ls\n", strlen(cmd)) == 0)
+    if (strncmp(cmd, "ls", strlen("ls")) == 0 || strncmp(cmd, "list", strlen("list")) == 0)
     {
         return LS;
     }
-    else if (strncmp(cmd, "get ", strlen("get ")) == 0)
+    else if (strncmp(cmd, "get", strlen("get")) == 0 && strlen(cmd) == strlen("get"))
     {
         return GET;
     }
-    else if (strncmp(cmd, "put ", strlen("put ")) == 0)
+    else if (strncmp(cmd, "put", strlen("put")) == 0 && strlen(cmd) == strlen("put"))
     {
         return PUT;
     }
-    else if (strncmp(cmd, "exit\n", strlen(cmd)) == 0)
+    else if (strncmp(cmd, "exit", strlen("exit")) == 0 && strlen(cmd) == strlen("exit"))
     {
         return EXIT;
     }
-    else if (strncmp(cmd, "delete ", strlen("delete ")) == 0)
+    else if (strncmp(cmd, "delete", strlen("delete")) == 0 && strlen(cmd) == strlen("delete"))
     {
         return DELETE;
     }
-    else if (strncmp(cmd, "server info\n", strlen("server info\n")) == 0)
+    else if (strncmp(cmd, "serverinfo", strlen("serverinfo")) == 0 && strlen(cmd) == strlen("serverinfo"))
     {
         return SERVER_INFO;
+    }
+    else if (strncmp(cmd, "help", strlen("help")) == 0 && strlen(cmd) == strlen("help"))
+    {
+        return HELP;
     }
     else
     {

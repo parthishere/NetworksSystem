@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
     // }
 
     /* Validate command line arguments */
-    if (argc != 3)
+    if (argc != 3 && argc != 2)
     {
         printf(RED "[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n" RESET);
         print_menu();
@@ -255,6 +255,10 @@ int main(int argc, char *argv[])
     }
 
     read_server_conf(&sd);
+
+    commands_t cmd = whichcmd(argv[1]);
+    printf("Command %d %s\n", cmd, argv[1]);
+
 
 
     /*

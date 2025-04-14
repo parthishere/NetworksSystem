@@ -123,6 +123,7 @@ typedef enum
     LS,     // List directory contents
     EXIT,   // Terminate connection
     SERVER_INFO,
+    HELP,
     number_of_command, // Total number of commands (used for validation)
 } commands_t;
 
