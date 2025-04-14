@@ -202,15 +202,15 @@ void read_server_conf(sockDetails_t *sd){
         tok = strtok_r(NULL, " ", &saved_remaining_line);
         sscanf(tok, "dfs%d", &dfs_no);
         tok = strtok_r(NULL, ":", &saved_remaining_line);
-        // printf("Token %s %s\n\n", tok, saved_remaining_line);
-
-        current->server_port = strndup(saved_remaining_line, strlen(saved_remaining_line)-1);
-        if(current->server_port == NULL) exit(EXIT_FAILURE);
+        
         current->server_ip = strndup(tok, strlen(tok));
         if(current->server_ip == NULL) exit(EXIT_FAILURE);
         
+        tok = strtok_r(NULL, "\n", &saved_remaining_line);
+        current->server_port = strndup(tok, strlen(tok));
+        printf("ip %s| port %s|\n", current->server_ip, current->server_port);
+        if(current->server_port == NULL) exit(EXIT_FAILURE);
 
-        printf("current -> prev %p \n", current);
         current->dfsno = dfs_no;
         sd->number_of_servers++;
 
