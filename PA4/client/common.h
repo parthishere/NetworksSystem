@@ -160,13 +160,13 @@ typedef enum
 
 
 
-typedef struct clientdetails_s {
+typedef struct serverDetails_t {
     int client_sock_fd;
-    char *client_port;
-    char *client_ip;
+    char *server_port; // need to free it afterwards - server port to connect to
+    char *server_ip;  // need to free it afterwards - client ip to connect to 
     int dfsno;
-    struct clientdetails_s *next;
-}clientdetails_t;
+    struct serverDetails_t *next; // need to free it afterwards, next element - link list
+}serverDetails_t;
 
 /**
  * @struct sockdetails_t
@@ -178,15 +178,13 @@ typedef struct clientdetails_s {
 typedef struct
 {
     int sockfd; // Socket file descriptor
-    // int client_sock_fd;
-    // struct sockaddr_storage client_info; // Client address information
-    clientdetails_t *client_details;
-    int number_of_clients;
-    struct addrinfo *server_info;        // Client address information
+    char *command; // no need to free it afterwards
+    serverDetails_t *servers_details;
+    int number_of_servers;
+    struct addrinfo *connect_to_info;        // Client address information
     int timeout;
     pthread_mutex_t lock;
-
-} sockdetails_t;
+} sockDetails_t;
 
 
 /**

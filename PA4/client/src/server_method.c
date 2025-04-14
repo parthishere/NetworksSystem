@@ -20,18 +20,23 @@
  *
  * Note: Uses strncmp for command matching to prevent buffer overflows
  */
-commands_t whichcmd(char *cmd)
+commands_t whichcmd(int argc, char *argv[], char **filename)
 {
+    char *cmd = argv[1];
     if (strncmp(cmd, "ls", strlen("ls")) == 0 || strncmp(cmd, "list", strlen("list")) == 0)
     {
         return LS;
     }
     else if (strncmp(cmd, "get", strlen("get")) == 0 && strlen(cmd) == strlen("get"))
     {
+        if(argc != 3) goto error;
+        *filename = argv[2];
         return GET;
     }
     else if (strncmp(cmd, "put", strlen("put")) == 0 && strlen(cmd) == strlen("put"))
     {
+        if(argc != 3) goto error;
+        *filename = argv[2];
         return PUT;
     }
     else if (strncmp(cmd, "exit", strlen("exit")) == 0 && strlen(cmd) == strlen("exit"))
@@ -40,6 +45,8 @@ commands_t whichcmd(char *cmd)
     }
     else if (strncmp(cmd, "delete", strlen("delete")) == 0 && strlen(cmd) == strlen("delete"))
     {
+        if(argc != 3) goto error;
+        *filename = argv[2];
         return DELETE;
     }
     else if (strncmp(cmd, "serverinfo", strlen("serverinfo")) == 0 && strlen(cmd) == strlen("serverinfo"))
@@ -50,11 +57,12 @@ commands_t whichcmd(char *cmd)
     {
         return HELP;
     }
-    else
-    {
-        printf(RED "[-] Wrong command ! \n\r" RESET);
-        return -1;
-    }
+
+    
+    
+error:;    
+    printf(RED "[-] Wrong command ! \n\r" RESET);
+    return -1;
 }
 
 
@@ -73,7 +81,7 @@ commands_t whichcmd(char *cmd)
  *
  * @param sd  Pointer to socket details structure
  */
-void list_files(sockdetails_t *sd)
+void list_files(sockDetails_t *sd)
 {
     // set_timeout(sd, TIMEOUT);
 
@@ -102,7 +110,7 @@ void list_files(sockdetails_t *sd)
  * @param sd        Pointer to socket details structure
  * @param filename  Name of file to download
  */
-void get_file(sockdetails_t *sd, char *filename)
+void get_file(sockDetails_t *sd, char *filename)
 {
     // set_timeout(sd, TIMEOUT);
     printf("\n\nGET\n\n");
@@ -134,7 +142,7 @@ void get_file(sockdetails_t *sd, char *filename)
  * @param recieve_buffer Buffer containing filename or manual input
  * @return              0 on success, -1 on error/manual mode
  */
-int put_file_file(sockdetails_t *sd, char *recieve_buffer)
+int put_file_file(sockDetails_t *sd, char *recieve_buffer)
 {
     // set_timeout(sd, TIMEOUT);
     // printf("\n\PUT\n\n");
@@ -155,7 +163,7 @@ int put_file_file(sockdetails_t *sd, char *recieve_buffer)
  * @param sd        Pointer to socket details structure
  * @param filename  Name of file to delete
  */
-void delete_file(sockdetails_t *sd, char *filename)
+void delete_file(sockDetails_t *sd, char *filename)
 {
     // set_timeout(sd, TIMEOUT);
     printf("\n\nDELETE\n\n");
@@ -176,7 +184,7 @@ void delete_file(sockdetails_t *sd, char *filename)
  *
  * @param sd  Pointer to socket details structure
  */
-void cleanup_resources(sockdetails_t *sd)
+void cleanup_resources(sockDetails_t *sd)
 {
 
     char recieve_buffer[RECIEVE_SIZE];

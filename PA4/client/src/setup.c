@@ -51,7 +51,7 @@ void *getin_addr(struct sockaddr *sa)
  * @note Port number must be > 1024 (non-privileged ports)
  * @note Supports both IPv4 and IPv6
  */
-void init_socket(sockdetails_t *sd, char *port)
+void init_socket(sockDetails_t *sd, char *port)
 {
     struct addrinfo hints, *temp;
     char ip[INET6_ADDRSTRLEN];
@@ -76,7 +76,7 @@ void init_socket(sockdetails_t *sd, char *port)
     /* Validate and set port number */
 
     /* Get address information */
-    if ((status = getaddrinfo(NULL, server_port, &hints, &sd->server_info)) < 0)
+    if ((status = getaddrinfo(NULL, server_port, &hints, &sd->connect_to_info)) < 0)
     {
         fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
         exit(EXIT_FAILURE);                                                   // exit if there is an error
@@ -84,7 +84,7 @@ void init_socket(sockdetails_t *sd, char *port)
     printf(GRN "[+] getaddrinfo call successful\n" RESET);
 
     /* Create and configure socket */
-    for (temp = sd->server_info; temp != NULL; temp = temp->ai_next)
+    for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
     {
         /*
         int socket(int domain, int type, int protocol);

@@ -1,4 +1,6 @@
 #include "common.h"
+#include "server_method.h"
+#include "handle_req.h"
 
 char *str2md5(char *str, int length)
 {
@@ -41,7 +43,7 @@ char *str2md5(char *str, int length)
 // #define FGETS 1
 
 void print_menu();
-commands_t whichcmd(char *cmd);
+
 
 
 
@@ -58,7 +60,7 @@ commands_t whichcmd(char *cmd);
  * - EAGAIN/EWOULDBLOCK: Indicates timeout condition
  * - Other errors: Sends ERROR_FOR_DYNAMIC_DATA to peer
  */
-// void error(sockdetails_t *sd, char *msg)
+// void error(sockDetails_t *sd, char *msg)
 // {
 //     printf(RED "[-] Error somewhere ! Check below message to see details \n" RESET);
 
@@ -90,7 +92,7 @@ commands_t whichcmd(char *cmd);
  *
  * Note: Updates sd->sentBytes with the number of bytes sent
  */
-// void _send(sockdetails_t *sd, int size, void *packet)
+// void _send(sockDetails_t *sd, int size, void *packet)
 // {
 //     if ((sd->sentBytes = sendto(sd->sockfd, packet, size, 0, (struct sockaddr *)sd->their_addr, sd->addr_len)) < 0)
 //     {
@@ -110,7 +112,7 @@ commands_t whichcmd(char *cmd);
  *
  * Note: Updates sd->recvBytes with the number of bytes received
  */
-// void _recv(sockdetails_t *sd, int size, void *packet)
+// void _recv(sockDetails_t *sd, int size, void *packet)
 // {
 //     if ((sd->recvBytes = recvfrom(sd->sockfd, packet, size, 0, (struct sockaddr *)sd->their_addr, &sd->addr_len)) < 0)
 //     {
@@ -132,7 +134,7 @@ commands_t whichcmd(char *cmd);
  * - Sets microseconds to 0 (timeout precision in seconds only)
  * - Applies timeout using setsockopt with SO_RCVTIMEO
  */
-// void set_timeout(sockdetails_t *sd, int sec)
+// void set_timeout(sockDetails_t *sd, int sec)
 // {
 
 //     struct timeval timeout;
@@ -158,7 +160,7 @@ commands_t whichcmd(char *cmd);
  * - Sets both seconds and microseconds to 0
  * - Effectively removes any timeout on receive operations
  */
-// void remove_timeout(sockdetails_t *sd)
+// void remove_timeout(sockDetails_t *sd)
 // {
 //     struct timeval timeout;
 //     timeout.tv_sec = 0;
@@ -173,21 +175,22 @@ commands_t whichcmd(char *cmd);
 
 
 
-void read_server_conf(sockdetails_t *sd){
+void read_server_conf(sockDetails_t *sd){
     FILE *fs = fopen(SERVER_CONF, "r");
     char line[1024];
     
     int i = 0;
     char *saved_remaining_line;
 
-    clientdetails_t *current = NULL;
-    clientdetails_t *prev = NULL;
+    serverDetails_t *current = NULL;
+    serverDetails_t *prev = NULL;
     while(fgets(line, sizeof(line)-1, fs) != NULL){
         int dfs_no;
 
-        current = malloc(sizeof(clientdetails_t));
-        if(sd->client_details = NULL){
-            sd->client_details = current;
+        current = malloc(sizeof(serverDetails_t));
+        if(sd->servers_details == NULL){
+            printf("saved first occurance \n\r");
+            sd->servers_details = current;
         }
 
         char *line_dup = strdup(line);
@@ -196,13 +199,16 @@ void read_server_conf(sockdetails_t *sd){
         tok = strtok_r(NULL, " ", &saved_remaining_line);
         sscanf(tok, "dfs%d", &dfs_no);
         tok = strtok_r(NULL, ":", &saved_remaining_line);
-        printf("Token %s %s\n\n", tok, saved_remaining_line);
+        // printf("Token %s %s\n\n", tok, saved_remaining_line);
 
-        current->client_port = strdup(saved_remaining_line);
-        current->client_ip = strdup(tok);
+        current->server_port = strndup(saved_remaining_line, strlen(saved_remaining_line)-1);
+        if(current->server_port == NULL) exit(EXIT_FAILURE);
+        current->server_ip = strndup(tok, strlen(tok));
+        if(current->server_ip == NULL) exit(EXIT_FAILURE);
         current->next = prev;
+
         current->dfsno = dfs_no;
-        sd->number_of_clients++;
+        sd->number_of_servers++;
 
         prev = current;
         
@@ -231,19 +237,10 @@ void read_server_conf(sockdetails_t *sd){
  */
 int main(int argc, char *argv[])
 {
-    sockdetails_t sd;
+    sockDetails_t sd;
+    sd.servers_details = NULL;
     
     pthread_mutex_init(&sd.lock, NULL);
-    
-    // int status = mkdir(CACHE_ROOT, 0777); 
-    // if (status == 0) {
-    //     printf(GRN"[+] Directory '%s' created successfully.\n"RESET, CACHE_ROOT);
-    // } else if (errno == EEXIST) {
-    //     printf(GRN"[+] Directory '%s' already exists.\n"RESET, CACHE_ROOT);
-    // } else {
-    //     perror(RED"[-] Error creating directory");
-    //     exit(EXIT_FAILURE);
-    // }
 
     /* Validate command line arguments */
     if (argc != 3 && argc != 2)
@@ -255,81 +252,17 @@ int main(int argc, char *argv[])
     }
 
     read_server_conf(&sd);
+    char *filename = NULL;
+    commands_t cmd = whichcmd(argc, argv, &filename);
+    if(filename){
+        handle_req(&sd);
+    }
+    else{
+        exit(EXIT_SUCCESS);
+    }
 
-    commands_t cmd = whichcmd(argv[1]);
-    printf("Command %d %s\n", cmd, argv[1]);
-
-
-
-    /*
-    struct addrinfo {
-               int              ai_flags;
-               int              ai_family;
-               int              ai_socktype;
-               int              ai_protocol;
-               socklen_t        ai_addrlen;
-               struct sockaddr *ai_addr;
-               char            *ai_canonname;
-               struct addrinfo *ai_next;
-           };
 
     
-
-    /* Process user commands through menu interface */
-    // switch (print_menu(filename))
-    // {
-    // case LS:
-    //     /* List directory contents */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "ls");
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     // list files
-    //     list_files(&sd);
-    //     break;
-    // case GET:
-    //     /* Download file from server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     if (filename[0] == '\0') // return error
-    //     {
-    //         printf(RED "[-] File Name is Empty\n" RESET);
-    //         break;
-    //     }
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "get %s", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     get_file(&sd, filename);
-    //     break;
-    // case PUT:
-    //     /* Upload file to server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "put %s", filename);
-    //     printf("put %s\n", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     if (put_file_file(&sd, filename) == -1)
-    //     {
-    //         put_file(&sd); // Fall back to manual input mode
-    //     }
-    //     break;
-
-    // case DELETE:
-    //     /* Delete file from server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "delete %s", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     delete_file(&sd, filename);
-    //     break;
-    // case EXIT:
-    //     /* Clean termination */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "exit");
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     cleanup_resources(&sd);
-    //     break;
-    // case SERVER_INFO:
-    //     // Screen clear requested
-    //     continue;
-    // default:
-    //     break;
-    // }
 
     // close(sockfd);
 

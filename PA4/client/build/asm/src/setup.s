@@ -130,7 +130,7 @@ init_socket:
 .L6:
 	.loc 1 79 19
 	movq	-152(%rbp), %rax
-	leaq	24(%rax), %rcx
+	leaq	32(%rax), %rcx
 	leaq	-112(%rbp), %rdx
 	movq	-120(%rbp), %rax
 	movq	%rax, %rsi
@@ -163,7 +163,7 @@ init_socket:
 	call	printf@PLT
 	.loc 1 87 15
 	movq	-152(%rbp), %rax
-	movq	24(%rax), %rax
+	movq	32(%rax), %rax
 	movq	%rax, -128(%rbp)
 	.loc 1 87 5
 	jmp	.L8
@@ -244,12 +244,12 @@ init_socket:
 	nop
 .L10:
 .LBE2:
-	.loc 1 87 53 discriminator 2
+	.loc 1 87 57 discriminator 2
 	movq	-128(%rbp), %rax
 	movq	40(%rax), %rax
 	movq	%rax, -128(%rbp)
 .L8:
-	.loc 1 87 39 discriminator 1
+	.loc 1 87 43 discriminator 1
 	cmpq	$0, -128(%rbp)
 	jne	.L14
 	jmp	.L13
@@ -357,13 +357,13 @@ init_socket:
 	.file 20 "/usr/include/x86_64-linux-gnu/bits/socket_type.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0xa0c
+	.long	0xa19
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
 	.long	.Ldebug_abbrev0
 	.uleb128 0x18
-	.long	.LASF155
+	.long	.LASF154
 	.byte	0x1d
 	.long	.LASF0
 	.long	.LASF1
@@ -668,7 +668,7 @@ init_socket:
 	.byte	0x19
 	.long	0xc6
 	.uleb128 0x1b
-	.long	.LASF156
+	.long	.LASF155
 	.byte	0x3
 	.byte	0x2b
 	.byte	0xe
@@ -711,7 +711,7 @@ init_socket:
 	.uleb128 0x4
 	.long	0x24d
 	.uleb128 0x1c
-	.long	.LASF157
+	.long	.LASF156
 	.byte	0x11
 	.byte	0x97
 	.byte	0xe
@@ -886,7 +886,7 @@ init_socket:
 	.byte	0x15
 	.long	0xba
 	.uleb128 0x1f
-	.long	.LASF158
+	.long	.LASF157
 	.byte	0x7
 	.byte	0x4
 	.long	0x35
@@ -1274,66 +1274,73 @@ init_socket:
 	.uleb128 0x4
 	.long	0x6ae
 	.uleb128 0x3
-	.long	.LASF125
+	.long	.LASF119
 	.byte	0xf
 	.byte	0xa9
 	.byte	0x2
 	.long	0x6ae
 	.uleb128 0x23
-	.byte	0x50
+	.byte	0x58
 	.byte	0xf
 	.byte	0xb2
 	.byte	0x9
-	.long	0x766
+	.long	0x773
 	.uleb128 0x1
-	.long	.LASF126
+	.long	.LASF125
 	.byte	0xf
 	.byte	0xb4
 	.byte	0x9
 	.long	0x72
 	.byte	0
 	.uleb128 0x1
+	.long	.LASF126
+	.byte	0xf
+	.byte	0xb5
+	.byte	0xb
+	.long	0xa4
+	.byte	0x8
+	.uleb128 0x1
 	.long	.LASF127
 	.byte	0xf
-	.byte	0xb7
+	.byte	0xb6
 	.byte	0x16
-	.long	0x766
-	.byte	0x8
+	.long	0x773
+	.byte	0x10
 	.uleb128 0x1
 	.long	.LASF128
 	.byte	0xf
-	.byte	0xb8
+	.byte	0xb7
 	.byte	0x9
 	.long	0x72
-	.byte	0x10
+	.byte	0x18
 	.uleb128 0x1
 	.long	.LASF129
 	.byte	0xf
-	.byte	0xb9
+	.byte	0xb8
 	.byte	0x16
 	.long	0x68a
-	.byte	0x18
+	.byte	0x20
 	.uleb128 0x1
 	.long	.LASF130
 	.byte	0xf
-	.byte	0xba
+	.byte	0xb9
 	.byte	0x9
 	.long	0x72
-	.byte	0x20
+	.byte	0x28
 	.uleb128 0x1
 	.long	.LASF131
 	.byte	0xf
-	.byte	0xbb
+	.byte	0xba
 	.byte	0x15
 	.long	0x3c4
-	.byte	0x28
+	.byte	0x30
 	.byte	0
 	.uleb128 0x4
 	.long	0x702
 	.uleb128 0x3
 	.long	.LASF132
 	.byte	0xf
-	.byte	0xbd
+	.byte	0xbb
 	.byte	0x3
 	.long	0x70e
 	.uleb128 0xb
@@ -1342,7 +1349,7 @@ init_socket:
 	.value	0x128
 	.byte	0xc
 	.long	0x72
-	.long	0x793
+	.long	0x7a0
 	.uleb128 0x2
 	.long	0x72
 	.uleb128 0x2
@@ -1352,7 +1359,7 @@ init_socket:
 	.long	.LASF138
 	.byte	0xe
 	.value	0x29a
-	.long	0x7a5
+	.long	0x7b2
 	.uleb128 0x2
 	.long	0x68a
 	.byte	0
@@ -1362,7 +1369,7 @@ init_socket:
 	.byte	0x40
 	.byte	0x14
 	.long	0x2ae
-	.long	0x7ca
+	.long	0x7d7
 	.uleb128 0x2
 	.long	0x72
 	.uleb128 0x2
@@ -1378,7 +1385,7 @@ init_socket:
 	.value	0x166
 	.byte	0xc
 	.long	0x72
-	.long	0x7e1
+	.long	0x7ee
 	.uleb128 0x2
 	.long	0x72
 	.byte	0
@@ -1388,7 +1395,7 @@ init_socket:
 	.byte	0x70
 	.byte	0xc
 	.long	0x72
-	.long	0x801
+	.long	0x80e
 	.uleb128 0x2
 	.long	0x72
 	.uleb128 0x2
@@ -1402,7 +1409,7 @@ init_socket:
 	.value	0x115
 	.byte	0xc
 	.long	0x72
-	.long	0x82c
+	.long	0x839
 	.uleb128 0x2
 	.long	0x72
 	.uleb128 0x2
@@ -1418,7 +1425,7 @@ init_socket:
 	.long	.LASF139
 	.byte	0x11
 	.value	0x364
-	.long	0x83e
+	.long	0x84b
 	.uleb128 0x2
 	.long	0x2ae
 	.byte	0
@@ -1428,7 +1435,7 @@ init_socket:
 	.byte	0x66
 	.byte	0xc
 	.long	0x72
-	.long	0x85e
+	.long	0x86b
 	.uleb128 0x2
 	.long	0x72
 	.uleb128 0x2
@@ -1442,7 +1449,7 @@ init_socket:
 	.value	0x16b
 	.byte	0xc
 	.long	0x72
-	.long	0x876
+	.long	0x883
 	.uleb128 0x2
 	.long	0x2ae
 	.uleb128 0x15
@@ -1453,7 +1460,7 @@ init_socket:
 	.value	0x165
 	.byte	0xc
 	.long	0x72
-	.long	0x893
+	.long	0x8a0
 	.uleb128 0x2
 	.long	0x2b8
 	.uleb128 0x2
@@ -1466,7 +1473,7 @@ init_socket:
 	.value	0x29d
 	.byte	0x14
 	.long	0x2ae
-	.long	0x8aa
+	.long	0x8b7
 	.uleb128 0x2
 	.long	0x72
 	.byte	0
@@ -1476,7 +1483,7 @@ init_socket:
 	.value	0x294
 	.byte	0xc
 	.long	0x72
-	.long	0x8d0
+	.long	0x8dd
 	.uleb128 0x2
 	.long	0x2b3
 	.uleb128 0x2
@@ -1484,18 +1491,18 @@ init_socket:
 	.uleb128 0x2
 	.long	0x694
 	.uleb128 0x2
-	.long	0x8d5
+	.long	0x8e2
 	.byte	0
 	.uleb128 0x4
 	.long	0x68a
 	.uleb128 0xd
-	.long	0x8d0
+	.long	0x8dd
 	.uleb128 0x24
 	.long	.LASF145
 	.byte	0x12
 	.value	0x2f4
 	.byte	0xd
-	.long	0x8ed
+	.long	0x8fa
 	.uleb128 0x2
 	.long	0x72
 	.byte	0
@@ -1505,7 +1512,7 @@ init_socket:
 	.byte	0x69
 	.byte	0xc
 	.long	0x72
-	.long	0x903
+	.long	0x910
 	.uleb128 0x2
 	.long	0x2ae
 	.byte	0
@@ -1515,7 +1522,7 @@ init_socket:
 	.byte	0x3d
 	.byte	0xe
 	.long	0x3c
-	.long	0x923
+	.long	0x930
 	.uleb128 0x2
 	.long	0x3c
 	.uleb128 0x2
@@ -1524,7 +1531,7 @@ init_socket:
 	.long	0x2e
 	.byte	0
 	.uleb128 0x25
-	.long	.LASF153
+	.long	.LASF152
 	.byte	0x1
 	.byte	0x36
 	.byte	0x6
@@ -1532,12 +1539,12 @@ init_socket:
 	.quad	.LFE321-.LFB321
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x9ce
+	.long	0x9db
 	.uleb128 0x16
 	.string	"sd"
 	.byte	0x36
 	.byte	0x21
-	.long	0x9ce
+	.long	0x9db
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -168
@@ -1570,7 +1577,7 @@ init_socket:
 	.string	"ip"
 	.byte	0x39
 	.byte	0xa
-	.long	0x9d3
+	.long	0x9e0
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -80
@@ -1583,7 +1590,7 @@ init_socket:
 	.byte	0x91
 	.sleb128 -148
 	.uleb128 0xf
-	.long	.LASF126
+	.long	.LASF125
 	.byte	0x3c
 	.byte	0x9
 	.long	0x72
@@ -1591,7 +1598,7 @@ init_socket:
 	.byte	0x91
 	.sleb128 -152
 	.uleb128 0xf
-	.long	.LASF152
+	.long	.LASF121
 	.byte	0x44
 	.byte	0xb
 	.long	0xa4
@@ -1611,16 +1618,16 @@ init_socket:
 	.byte	0
 	.byte	0
 	.uleb128 0x4
-	.long	0x76b
+	.long	0x778
 	.uleb128 0x7
 	.long	0xae
-	.long	0x9e3
+	.long	0x9f0
 	.uleb128 0x8
 	.long	0x2e
 	.byte	0x2d
 	.byte	0
 	.uleb128 0x28
-	.long	.LASF154
+	.long	.LASF153
 	.byte	0x1
 	.byte	0x19
 	.byte	0x7
@@ -2253,15 +2260,15 @@ init_socket:
 	.string	"printf"
 .LASF12:
 	.string	"__off_t"
-.LASF66:
-	.string	"__size"
+.LASF129:
+	.string	"connect_to_info"
 .LASF17:
 	.string	"_IO_read_ptr"
 .LASF29:
 	.string	"_chain"
 .LASF95:
 	.string	"sin6_addr"
-.LASF152:
+.LASF121:
 	.string	"server_port"
 .LASF106:
 	.string	"__in6_u"
@@ -2275,9 +2282,13 @@ init_socket:
 	.string	"_shortbuf"
 .LASF135:
 	.string	"close"
+.LASF132:
+	.string	"sockDetails_t"
+.LASF6:
+	.string	"signed char"
 .LASF8:
 	.string	"__uint8_t"
-.LASF155:
+.LASF154:
 	.string	"GNU C17 14.2.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF23:
 	.string	"_IO_buf_base"
@@ -2287,8 +2298,6 @@ init_socket:
 	.string	"long long unsigned int"
 .LASF98:
 	.string	"in_addr_t"
-.LASF129:
-	.string	"server_info"
 .LASF54:
 	.string	"__next"
 .LASF72:
@@ -2297,13 +2306,15 @@ init_socket:
 	.string	"next"
 .LASF38:
 	.string	"_codecvt"
-.LASF126:
+.LASF125:
 	.string	"sockfd"
 .LASF49:
 	.string	"long long int"
-.LASF6:
-	.string	"signed char"
-.LASF153:
+.LASF127:
+	.string	"servers_details"
+.LASF128:
+	.string	"number_of_servers"
+.LASF152:
 	.string	"init_socket"
 .LASF30:
 	.string	"_fileno"
@@ -2331,10 +2342,6 @@ init_socket:
 	.string	"_offset"
 .LASF55:
 	.string	"__pthread_list_t"
-.LASF119:
-	.string	"clientdetails_s"
-.LASF125:
-	.string	"clientdetails_t"
 .LASF56:
 	.string	"__pthread_mutex_s"
 .LASF108:
@@ -2347,8 +2354,6 @@ init_socket:
 	.string	"port"
 .LASF150:
 	.string	"temp"
-.LASF122:
-	.string	"client_ip"
 .LASF46:
 	.string	"_IO_marker"
 .LASF76:
@@ -2361,12 +2366,12 @@ init_socket:
 	.string	"_freeres_buf"
 .LASF142:
 	.string	"fprintf"
+.LASF126:
+	.string	"command"
 .LASF110:
 	.string	"ai_socktype"
 .LASF2:
 	.string	"long unsigned int"
-.LASF127:
-	.string	"client_details"
 .LASF65:
 	.string	"__data"
 .LASF21:
@@ -2383,6 +2388,8 @@ init_socket:
 	.string	"listen"
 .LASF25:
 	.string	"_IO_save_base"
+.LASF119:
+	.string	"serverDetails_t"
 .LASF107:
 	.string	"addrinfo"
 .LASF70:
@@ -2401,14 +2408,10 @@ init_socket:
 	.string	"perror"
 .LASF87:
 	.string	"sin_family"
-.LASF128:
-	.string	"number_of_clients"
 .LASF92:
 	.string	"sin6_family"
 .LASF144:
 	.string	"getaddrinfo"
-.LASF132:
-	.string	"sockdetails_t"
 .LASF22:
 	.string	"_IO_write_end"
 .LASF42:
@@ -2417,13 +2420,13 @@ init_socket:
 	.string	"ai_protocol"
 .LASF138:
 	.string	"freeaddrinfo"
-.LASF156:
+.LASF155:
 	.string	"_IO_lock_t"
-.LASF154:
+.LASF153:
 	.string	"getin_addr"
 .LASF51:
 	.string	"_IO_FILE"
-.LASF158:
+.LASF157:
 	.string	"__socket_type"
 .LASF78:
 	.string	"SOCK_DCCP"
@@ -2435,6 +2438,8 @@ init_socket:
 	.string	"ai_addrlen"
 .LASF43:
 	.string	"_mode"
+.LASF122:
+	.string	"server_ip"
 .LASF88:
 	.string	"sin_port"
 .LASF84:
@@ -2477,8 +2482,6 @@ init_socket:
 	.string	"__lock"
 .LASF71:
 	.string	"uint32_t"
-.LASF121:
-	.string	"client_port"
 .LASF118:
 	.string	"long double"
 .LASF14:
@@ -2513,7 +2516,7 @@ init_socket:
 	.string	"sa_family_t"
 .LASF44:
 	.string	"_unused2"
-.LASF157:
+.LASF156:
 	.string	"stderr"
 .LASF147:
 	.string	"memset"
@@ -2531,6 +2534,8 @@ init_socket:
 	.string	"setsockopt"
 .LASF86:
 	.string	"sockaddr_in"
+.LASF66:
+	.string	"__size"
 .LASF69:
 	.string	"uint8_t"
 .LASF60:

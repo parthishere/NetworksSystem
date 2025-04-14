@@ -12,4 +12,4 @@
 
 #include "common.h"
 
-void init_socket(sockdetails_t *sd, char *port);
+void init_socket(sockDetails_t *sd, char *port);

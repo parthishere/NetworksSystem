@@ -37,6 +37,6 @@
  * Threading: This function is designed to be thread-safe and can be
  * called by multiple threads simultaneously with different connections.
  */   
-void *handle_req(sockdetails_t *sd);
+void *handle_req(sockDetails_t *sd);
 
 
