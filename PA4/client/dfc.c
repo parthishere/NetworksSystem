@@ -192,6 +192,9 @@ void read_server_conf(sockDetails_t *sd){
             printf("saved first occurance \n\r");
             sd->servers_details = current;
         }
+        else{
+            prev->next = current;
+        }
 
         char *line_dup = strdup(line);
         char *tok = strtok_r(line, " ", &saved_remaining_line);
@@ -205,8 +208,9 @@ void read_server_conf(sockDetails_t *sd){
         if(current->server_port == NULL) exit(EXIT_FAILURE);
         current->server_ip = strndup(tok, strlen(tok));
         if(current->server_ip == NULL) exit(EXIT_FAILURE);
-        current->next = prev;
+        
 
+        printf("current -> prev %p \n", current);
         current->dfsno = dfs_no;
         sd->number_of_servers++;
 

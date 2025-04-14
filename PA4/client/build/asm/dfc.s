@@ -146,6 +146,8 @@ str2md5:
 	.string	"dfs%d"
 .LC6:
 	.string	":"
+.LC7:
+	.string	"current -> prev %p \n"
 	.text
 	.globl	read_server_conf
 	.type	read_server_conf, @function
@@ -180,7 +182,7 @@ read_server_conf:
 	movq	$0, -1080(%rbp)
 	.loc 1 187 10
 	jmp	.L11
-.L15:
+.L16:
 .LBB3:
 	.loc 1 190 19
 	movl	$40, %edi
@@ -201,13 +203,19 @@ read_server_conf:
 	movq	-1112(%rbp), %rax
 	movq	-1064(%rbp), %rdx
 	movq	%rdx, 16(%rax)
+	jmp	.L13
 .L12:
-	.loc 1 196 26
+	.loc 1 196 24
+	movq	-1080(%rbp), %rax
+	movq	-1064(%rbp), %rdx
+	movq	%rdx, 32(%rax)
+.L13:
+	.loc 1 199 26
 	leaq	-1040(%rbp), %rax
 	movq	%rax, %rdi
 	call	strdup@PLT
 	movq	%rax, -1056(%rbp)
-	.loc 1 197 21
+	.loc 1 200 21
 	leaq	-1088(%rbp), %rdx
 	leaq	-1040(%rbp), %rax
 	leaq	.LC4(%rip), %rcx
@@ -215,7 +223,7 @@ read_server_conf:
 	movq	%rax, %rdi
 	call	strtok_r@PLT
 	movq	%rax, -1048(%rbp)
-	.loc 1 199 15
+	.loc 1 202 15
 	leaq	-1088(%rbp), %rax
 	movq	%rax, %rdx
 	leaq	.LC4(%rip), %rax
@@ -223,7 +231,7 @@ read_server_conf:
 	movl	$0, %edi
 	call	strtok_r@PLT
 	movq	%rax, -1048(%rbp)
-	.loc 1 200 9
+	.loc 1 203 9
 	leaq	-1096(%rbp), %rdx
 	movq	-1048(%rbp), %rax
 	leaq	.LC5(%rip), %rcx
@@ -231,7 +239,7 @@ read_server_conf:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	__isoc23_sscanf@PLT
-	.loc 1 201 15
+	.loc 1 204 15
 	leaq	-1088(%rbp), %rax
 	movq	%rax, %rdx
 	leaq	.LC6(%rip), %rax
@@ -239,77 +247,80 @@ read_server_conf:
 	movl	$0, %edi
 	call	strtok_r@PLT
 	movq	%rax, -1048(%rbp)
-	.loc 1 204 62
+	.loc 1 207 62
 	movq	-1088(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 204 32 discriminator 1
+	.loc 1 207 32 discriminator 1
 	leaq	-1(%rax), %rdx
 	movq	-1088(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strndup@PLT
 	movq	%rax, %rdx
-	.loc 1 204 30 discriminator 2
+	.loc 1 207 30 discriminator 2
 	movq	-1064(%rbp), %rax
 	movq	%rdx, 8(%rax)
-	.loc 1 205 19
+	.loc 1 208 19
 	movq	-1064(%rbp), %rax
 	movq	8(%rax), %rax
-	.loc 1 205 11
+	.loc 1 208 11
 	testq	%rax, %rax
-	jne	.L13
-	.loc 1 205 42 discriminator 1
+	jne	.L14
+	.loc 1 208 42 discriminator 1
 	movl	$1, %edi
 	call	exit@PLT
-.L13:
-	.loc 1 206 30
+.L14:
+	.loc 1 209 30
 	movq	-1048(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
 	movq	%rax, %rdx
-	.loc 1 206 30 is_stmt 0 discriminator 1
+	.loc 1 209 30 is_stmt 0 discriminator 1
 	movq	-1048(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strndup@PLT
 	movq	%rax, %rdx
-	.loc 1 206 28 is_stmt 1 discriminator 2
+	.loc 1 209 28 is_stmt 1 discriminator 2
 	movq	-1064(%rbp), %rax
 	movq	%rdx, 16(%rax)
-	.loc 1 207 19
+	.loc 1 210 19
 	movq	-1064(%rbp), %rax
 	movq	16(%rax), %rax
-	.loc 1 207 11
+	.loc 1 210 11
 	testq	%rax, %rax
-	jne	.L14
-	.loc 1 207 40 discriminator 1
+	jne	.L15
+	.loc 1 210 40 discriminator 1
 	movl	$1, %edi
 	call	exit@PLT
-.L14:
-	.loc 1 208 23
+.L15:
+	.loc 1 213 9
 	movq	-1064(%rbp), %rax
-	movq	-1080(%rbp), %rdx
-	movq	%rdx, 32(%rax)
-	.loc 1 210 24
+	movq	%rax, %rsi
+	leaq	.LC7(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	.loc 1 214 24
 	movl	-1096(%rbp), %edx
 	movq	-1064(%rbp), %rax
 	movl	%edx, 24(%rax)
-	.loc 1 211 11
+	.loc 1 215 11
 	movq	-1112(%rbp), %rax
 	movl	24(%rax), %eax
-	.loc 1 211 30
+	.loc 1 215 30
 	leal	1(%rax), %edx
 	movq	-1112(%rbp), %rax
 	movl	%edx, 24(%rax)
-	.loc 1 213 14
+	.loc 1 217 14
 	movq	-1064(%rbp), %rax
 	movq	%rax, -1080(%rbp)
-	.loc 1 215 9
+	.loc 1 219 9
 	movq	-1056(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
-	.loc 1 216 10
+	.loc 1 220 10
 	addl	$1, -1092(%rbp)
 .L11:
 .LBE3:
@@ -321,18 +332,18 @@ read_server_conf:
 	call	fgets@PLT
 	.loc 1 187 43 discriminator 1
 	testq	%rax, %rax
-	jne	.L15
-	.loc 1 220 5
+	jne	.L16
+	.loc 1 224 5
 	movq	-1072(%rbp), %rax
 	movq	%rax, %rdi
 	call	fclose@PLT
-	.loc 1 221 1
+	.loc 1 225 1
 	nop
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
-	je	.L16
+	je	.L17
 	call	__stack_chk_fail@PLT
-.L16:
+.L17:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -341,14 +352,14 @@ read_server_conf:
 	.size	read_server_conf, .-read_server_conf
 	.section	.rodata
 	.align 8
-.LC7:
+.LC8:
 	.string	"\033[31m[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n\033[0m"
 	.text
 	.globl	main
 	.type	main, @function
 main:
 .LFB322:
-	.loc 1 239 1
+	.loc 1 243 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -359,43 +370,43 @@ main:
 	addq	$-128, %rsp
 	movl	%edi, -116(%rbp)
 	movq	%rsi, -128(%rbp)
-	.loc 1 239 1
+	.loc 1 243 1
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-	.loc 1 241 24
+	.loc 1 245 24
 	movq	$0, -80(%rbp)
-	.loc 1 243 5
+	.loc 1 247 5
 	leaq	-96(%rbp), %rax
 	addq	$48, %rax
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	pthread_mutex_init@PLT
-	.loc 1 246 8
+	.loc 1 250 8
 	cmpl	$3, -116(%rbp)
-	je	.L18
-	.loc 1 246 19 discriminator 1
+	je	.L19
+	.loc 1 250 19 discriminator 1
 	cmpl	$2, -116(%rbp)
-	je	.L18
-	.loc 1 248 9
-	leaq	.LC7(%rip), %rax
+	je	.L19
+	.loc 1 252 9
+	leaq	.LC8(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 249 9
+	.loc 1 253 9
 	movl	$0, %eax
 	call	print_menu
-	.loc 1 251 9
+	.loc 1 255 9
 	movl	$1, %edi
 	call	exit@PLT
-.L18:
-	.loc 1 254 5
+.L19:
+	.loc 1 258 5
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	read_server_conf
-	.loc 1 255 11
+	.loc 1 259 11
 	movq	$0, -104(%rbp)
-	.loc 1 256 22
+	.loc 1 260 22
 	leaq	-104(%rbp), %rdx
 	movq	-128(%rbp), %rcx
 	movl	-116(%rbp), %eax
@@ -403,30 +414,30 @@ main:
 	movl	%eax, %edi
 	call	whichcmd@PLT
 	movl	%eax, -108(%rbp)
-	.loc 1 257 8
+	.loc 1 261 8
 	movq	-104(%rbp), %rax
-	.loc 1 257 7
+	.loc 1 261 7
 	testq	%rax, %rax
-	je	.L19
-	.loc 1 258 9
+	je	.L20
+	.loc 1 262 9
 	leaq	-96(%rbp), %rax
 	movq	%rax, %rdi
 	call	handle_req@PLT
-	.loc 1 269 12
+	.loc 1 273 12
 	movl	$0, %eax
-	.loc 1 270 1
+	.loc 1 274 1
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L22
-	jmp	.L23
-.L19:
-	.loc 1 261 9
+	je	.L23
+	jmp	.L24
+.L20:
+	.loc 1 265 9
 	movl	$0, %edi
 	call	exit@PLT
-.L23:
-	.loc 1 270 1
+.L24:
+	.loc 1 274 1
 	call	__stack_chk_fail@PLT
-.L22:
+.L23:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -435,40 +446,40 @@ main:
 	.size	main, .-main
 	.section	.rodata
 	.align 8
-.LC8:
+.LC9:
 	.string	"\033[33m\n\nThis client can support distributed FTP\n"
 	.align 8
-.LC9:
+.LC10:
 	.string	"Currently this program can support following commands "
 	.align 8
-.LC10:
+.LC11:
 	.string	"get <filename>   : Get the file name in server and print the file"
 	.align 8
-.LC11:
+.LC12:
 	.string	"put <filename>   : if filename does not exists on server, create one. "
 	.align 8
-.LC12:
+.LC13:
 	.string	"delete <filename>: if filename does exists on server, delete that file"
 	.align 8
-.LC13:
+.LC14:
 	.string	"ls               : get the list of all the files/chunks in all server and print it"
 	.align 8
-.LC14:
+.LC15:
 	.string	"exit             : exit from the client program and free the resources in client and server"
 	.align 8
-.LC15:
+.LC16:
 	.string	"server info      : get to know server info"
 	.align 8
-.LC16:
-	.string	"help             : print this help "
 .LC17:
+	.string	"help             : print this help "
+.LC18:
 	.string	"\n\033[0m"
 	.text
 	.globl	print_menu
 	.type	print_menu, @function
 print_menu:
 .LFB323:
-	.loc 1 283 1
+	.loc 1 287 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -476,48 +487,48 @@ print_menu:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	.loc 1 285 5
-	leaq	.LC8(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 286 5
+	.loc 1 289 5
 	leaq	.LC9(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 288 5
+	.loc 1 290 5
 	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 289 5
+	.loc 1 292 5
 	leaq	.LC11(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 290 5
+	.loc 1 293 5
 	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 291 5
+	.loc 1 294 5
 	leaq	.LC13(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 292 5
+	.loc 1 295 5
 	leaq	.LC14(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 293 5
+	.loc 1 296 5
 	leaq	.LC15(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 294 5
+	.loc 1 297 5
 	leaq	.LC16(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 295 5
+	.loc 1 298 5
 	leaq	.LC17(%rip), %rax
+	movq	%rax, %rdi
+	call	puts@PLT
+	.loc 1 299 5
+	leaq	.LC18(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 296 1
+	.loc 1 300 1
 	nop
 	popq	%rbp
 	.cfi_def_cfa 7, 8
@@ -548,7 +559,7 @@ print_menu:
 	.file 21 "/usr/include/openssl/evp.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0xaa4
+	.long	0xaa6
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
@@ -1629,7 +1640,7 @@ print_menu:
 	.uleb128 0x26
 	.long	.LASF151
 	.byte	0x1
-	.value	0x11a
+	.value	0x11e
 	.byte	0x6
 	.quad	.LFB323
 	.quad	.LFE323-.LFB323
@@ -1638,17 +1649,17 @@ print_menu:
 	.uleb128 0x27
 	.long	.LASF152
 	.byte	0x1
-	.byte	0xee
+	.byte	0xf2
 	.byte	0x5
 	.long	0x66
 	.quad	.LFB322
 	.quad	.LFE322-.LFB322
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x930
+	.long	0x932
 	.uleb128 0x15
 	.long	.LASF132
-	.byte	0xee
+	.byte	0xf2
 	.byte	0xe
 	.long	0x66
 	.uleb128 0x3
@@ -1656,7 +1667,7 @@ print_menu:
 	.sleb128 -132
 	.uleb128 0x15
 	.long	.LASF133
-	.byte	0xee
+	.byte	0xf2
 	.byte	0x1a
 	.long	0x3fe
 	.uleb128 0x3
@@ -1664,31 +1675,32 @@ print_menu:
 	.sleb128 -144
 	.uleb128 0xa
 	.string	"sd"
-	.byte	0xf0
+	.byte	0xf4
 	.byte	0x13
 	.long	0x648
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -112
-	.uleb128 0x7
+	.uleb128 0x28
 	.long	.LASF134
-	.byte	0xff
+	.byte	0x1
+	.value	0x103
 	.byte	0xb
 	.long	0x8c
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -120
-	.uleb128 0x28
+	.uleb128 0x29
 	.string	"cmd"
 	.byte	0x1
-	.value	0x100
+	.value	0x104
 	.byte	0x10
 	.long	0x572
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -124
 	.byte	0
-	.uleb128 0x29
+	.uleb128 0x2a
 	.long	.LASF141
 	.byte	0x1
 	.byte	0xb2
@@ -1697,7 +1709,7 @@ print_menu:
 	.quad	.LFE321-.LFB321
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x9f3
+	.long	0x9f5
 	.uleb128 0x19
 	.string	"sd"
 	.byte	0xb2
@@ -1718,7 +1730,7 @@ print_menu:
 	.long	.LASF135
 	.byte	0xb4
 	.byte	0xa
-	.long	0x9f3
+	.long	0x9f5
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -1056
@@ -1767,7 +1779,7 @@ print_menu:
 	.sleb128 -1112
 	.uleb128 0x7
 	.long	.LASF140
-	.byte	0xc4
+	.byte	0xc7
 	.byte	0xf
 	.long	0x8c
 	.uleb128 0x3
@@ -1775,7 +1787,7 @@ print_menu:
 	.sleb128 -1072
 	.uleb128 0xa
 	.string	"tok"
-	.byte	0xc5
+	.byte	0xc8
 	.byte	0xf
 	.long	0x8c
 	.uleb128 0x3
@@ -1785,12 +1797,12 @@ print_menu:
 	.byte	0
 	.uleb128 0x9
 	.long	0x96
-	.long	0xa04
-	.uleb128 0x2a
+	.long	0xa06
+	.uleb128 0x2b
 	.long	0x3a
 	.value	0x3ff
 	.byte	0
-	.uleb128 0x2b
+	.uleb128 0x2c
 	.long	.LASF142
 	.byte	0x1
 	.byte	0x5
@@ -2459,7 +2471,7 @@ print_menu:
 	.uleb128 0x34
 	.byte	0
 	.uleb128 0x3
-	.uleb128 0x8
+	.uleb128 0xe
 	.uleb128 0x3a
 	.uleb128 0xb
 	.uleb128 0x3b
@@ -2473,6 +2485,23 @@ print_menu:
 	.byte	0
 	.byte	0
 	.uleb128 0x29
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0x8
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
+	.uleb128 0x5
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.uleb128 0x2a
 	.uleb128 0x2e
 	.byte	0x1
 	.uleb128 0x3f
@@ -2499,7 +2528,7 @@ print_menu:
 	.uleb128 0x13
 	.byte	0
 	.byte	0
-	.uleb128 0x2a
+	.uleb128 0x2b
 	.uleb128 0x21
 	.byte	0
 	.uleb128 0x49
@@ -2508,7 +2537,7 @@ print_menu:
 	.uleb128 0x5
 	.byte	0
 	.byte	0
-	.uleb128 0x2b
+	.uleb128 0x2c
 	.uleb128 0x2e
 	.byte	0x1
 	.uleb128 0x3f
