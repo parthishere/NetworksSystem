@@ -19,7 +19,7 @@
  #define __COMMON_H__
  
  /* System Headers
-  * Core system functionality for memory, I/O, and string operations
+  * Core system functionality for memory, I/O, and string operations    
   */
  #define _GNU_SOURCE
  #include <stdio.h>   // Standard I/O operations
@@ -53,15 +53,15 @@
  /* File Transfer Optimization */
  #include <sys/sendfile.h>     /* Zero-copy file transfer */
  
- #include <glob.h>
+ #include <openssl/md5.h>
+#include <openssl/evp.h>
  
  
  /**
   * @name Server Configuration Constants
   * @{
   */
- #define BLOCKLIST_FILE_NAME "./blocklist"
- #define CACHE_ROOT "./cache"
+ #define SERVER_CONF "./dfc.conf"
  #define MAX_SIZE (1024 * 30)    /* Maximum buffer size (30KB) */
  #define RECIEVE_SIZE MAX_SIZE   /* Receive buffer size */
  #define TRANSMIT_SIZE MAX_SIZE  /* Transmit buffer size */
@@ -69,7 +69,6 @@
  #define TOTAL_THREADS 10       /* Number of worker threads */
  #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
  #define TIMEOUT_HTTP_SEC 10      /* Connection timeout in seconds */
- #define HASH_TABLE_SIZE 1024  // Size of hash table
  /** @} */
  
  
@@ -90,52 +89,31 @@
  #define WHT "\x1B[37m"  // Standard output
  #define RESET "\x1B[0m" // Reset to default color
  
+ /* Screen Management
+ * Terminal control sequence for clearing screen
+ */
+#define clrscr ({printf("\033[2J\033[H");\
+    fflush(stdout); })
  
  #define HASH_STR_LENGTH 33    // MD5 hex string (32 chars + null)
- #define ROOT_DIR "./www"
  
+
  /**
-  * @enum httpType_s
-  * @brief Supported HTTP protocol versions
-  */
- typedef enum httpType_s
- {
-     HTTP1_0,                    /* HTTP/1.0 protocol */
-     HTTP1_1,                    /* HTTP/1.1 protocol */
-     ERROR_VERSION,              /* Invalid/unsupported version */
-     supported_http_protocols    /* Count of supported protocols */
- } httpType_t;
- 
- /**
-  * @enum statusCode_s
-  * @brief HTTP response status codes
-  */
- typedef enum statusCode_s
- {
-     OK = 1 << 0,                         /* 200 OK */
-     BAD_REQ = 1 << 1,                    /* 400 Bad Request */
-     FORBIDDEN = 1 << 2,                  /* 403 Forbidden */
-     NOT_FOUND = 1 << 3,                  /* 404 Not Found */
-     METHOD_NOT_ALLOWED = 1 << 4,         /* 405 Method Not Allowed */
-     VERSION_NOT_SUPPORTED = 1 << 5,      /* 505 HTTP Version Not Supported */
-     total_status_codes,         /* Count of status codes */
- } statusCode_t;
- 
- 
- /**
-  * @enum method_s
-  * @brief Supported HTTP methods
-  */
- typedef enum method_s
- {
-     GET,                        /* HTTP GET method */
-     POST,                       /* HTTP POST method */
-     PUT,                        /* HTTP PUT method */
-     DELETE,                     /* HTTP DELETE method */
-     PATCH,                      /* HTTP PATCH method */
-     HEAD,                       /* HTTP HEAD method */
-     total_req_methods,          /* Count of supported methods */
- } method_t;
+ * Command Enumeration
+ * Defines supported FTP commands for the client
+ */
+typedef enum
+{
+    GET,               // Download file from server
+    PUT,               // Upload file to server
+    DELETE,            // Remove file from server
+    LS,                // List directory contents
+    EXIT,              // Terminate connection
+    SERVER_INFO,
+    number_of_command, // Total number of commands (used for validation)
+} commands_t;
+
+
  
  /**
   * @enum contentType_s
@@ -169,51 +147,7 @@
      PARSE_ERROR_BUFFER_OVERFLOW = -5      /* Request too large */
  } parse_result_t;
  
- 
- /**
-  * @struct req_header_s
-  * @brief HTTP request header structure
-  * 
-  * Contains parsed HTTP request information including:
-  * - Protocol version
-  * - URI and hostname
-  * - Content type
-  * - Request method
-  * - Status codes
-  * - Connection state
-  */
- typedef struct req_header_s
- {
-     httpType_t http_version;           /* Protocol version enum */
-     char *http_version_str;            /* Protocol version string */
- 
-     char *uri_str;                     /* Request URI */
-     char *hostname_str;                /* Host header value */
-     char *hostname_port_str;
- 
-     contentType_t content_type;        /* Response content type enum */
-     char *content_type_str;            /* Content type string */
- 
-     method_t method;                   /* Request method enum */
-     char *method_str;                  /* Method string */
- 
-     statusCode_t *status_code;         /* Response status enum */
-     char *status_code_str;             /* Status string */
- 
-     int connection_keep_alive;         /* Keep-alive flag */
-     int connection_close;              /* Connection: close flag */
- 
-     int parser_error;                  /* Parser error code */
-     int current_state;
- 
-     int open_file_fd;
- 
-     int max_age;
- 
-     char *extra_header; // free this
- } HttpHeader_t;
- 
- 
+
  
  
  /**

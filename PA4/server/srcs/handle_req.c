@@ -732,3 +732,78 @@ cleanup:;
 
     return NULL;
 }
+
+
+
+/**
+ * Process Client Commands and Handle Responses
+ * 
+ * Main command processing function that receives client commands,
+ * identifies the requested operation, and dispatches to appropriate handlers.
+ * Supports GET, PUT, DELETE, LS, and EXIT operations.
+ * 
+ * Protocol Flow:
+ * 1. Receive command from client
+ * 2. Extract client IP and command
+ * 3. Parse and validate command
+ * 4. Dispatch to appropriate handler
+ * 
+ * @param sockfd Socket file descriptor for client communication
+ */
+void recieve_and_send(int sockfd)
+{
+    /* Initialize buffers and structures */
+    char recieve_buffer[RECIEVE_SIZE]; // 256bytes
+    char transmit_buffer[TRANSMIT_SIZE];
+    char ip[INET6_ADDRSTRLEN];
+
+    int recvBytes, sentBytes;
+
+    /* Set up socket details structure */
+    sockdetails_t sd;
+    sd.sockfd = sockfd;
+    sd.addr_len = sizeof(sd.their_addr);
+
+    bzero(recieve_buffer, RECIEVE_SIZE);
+    _recv(&sd, RECIEVE_SIZE, recieve_buffer);
+
+    /* Log client information */
+    char *temp_ip = getin_addr((struct sockaddr *)&sd.their_addr);
+    printf(GRN "\n\n[+] Recieved Command \"%s\" from IP %s\n" RESET, recieve_buffer, inet_ntop(sd.their_addr.ss_family, temp_ip, ip, sizeof ip));
+
+     /* Parse command and dispatch to handler */
+    commands_t cmd = whichcmd(recieve_buffer);
+    switch (cmd)
+    {
+    case LS:
+        list_files(&sd);
+        break;
+
+    case GET:
+        get_file(&sd, recieve_buffer);
+        break;
+
+    case PUT:
+        put_file(&sd, recieve_buffer);
+        break;
+
+    case EXIT:
+        cleanup_client_resouces(&sd);
+        break;
+
+    case DELETE:
+        delete_file(&sd, recieve_buffer);
+        break;
+
+    default:
+        _send(&sd, strlen(WRONG_COMMAND), WRONG_COMMAND);
+        break;
+    }
+
+    /*
+    ssize_t sendto(int sockfd, const void buf[.len], size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+
+    */
+}
+

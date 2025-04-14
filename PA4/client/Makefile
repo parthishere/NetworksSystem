@@ -25,7 +25,7 @@ SRC_DIR_ASMS = $(patsubst $(SRC_DIR)/%.c, $(OUTPUT_DIR)/asm/$(SRC_DIR)/%.s, $(SR
 ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
 
 
-TARGET = proxy
+TARGET = dfc
 
 
 all: clean pre-build $(TARGET) $(ALL_ASMS) 
