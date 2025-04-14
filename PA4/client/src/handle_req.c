@@ -16,11 +16,9 @@
 
 #include "handle_req.h"
 
-
-
-
-uint64_t str2md5(char *str, int length)
+uint32_t str2md5(char *str, int length)
 {
+    printf("filename %s, len %d\n", str, length);
 
     EVP_MD_CTX *context = EVP_MD_CTX_new();
     const EVP_MD *md = EVP_md5();
@@ -43,14 +41,14 @@ uint64_t str2md5(char *str, int length)
     }
     EVP_DigestFinal_ex(context, digest, &md_len);
     EVP_MD_CTX_free(context);
-    uint64_t hash;
+    uint32_t hash = 0;
     for (int n = 0; n < md_len; ++n)
     {
-        hash += (unsigned int)digest[n];
+        hash += digest[n];
     }
+
     return hash;
 }
-
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -62,21 +60,22 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-
-void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_length, char *message){
+void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_length, char *message)
+{
     serverDetails_t *current = sd->servers_details;
     int i = 0;
-    while(current){
+    while (current)
+    {
 
-        if(i >= arr_length || servers_to_connect_to[i] == 0) goto next;
-        
-        
+        if (i >= arr_length || servers_to_connect_to[i] == 0)
+            goto next;
+
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
-    
+
         int status;
         int sockfd;
-    
+
         /* Configure address hints structure */
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;
@@ -91,7 +90,7 @@ void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_l
         if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
         {
             fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                               // exit if there is an error
+            goto next;                                                            // exit if there is an error
         }
 
         for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
@@ -100,7 +99,6 @@ void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_l
             {
                 perror(RED "server: socket");
                 goto next;
-
             }
 
             if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
@@ -109,10 +107,10 @@ void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_l
                 close(current->client_sock_fd);
                 goto next;
             }
-            
+
             break;
         }
-        
+
         if (temp == NULL)
         {
             fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
@@ -125,15 +123,16 @@ void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_l
                    "[+] (%d) Server IP address: %s:%s\n" RESET,
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
-        
-        if(send(current->client_sock_fd, message, strlen(message), 0) < 0){
+
+        if (send(current->client_sock_fd, message, strlen(message), 0) < 0)
+        {
             fprintf(stderr, "sent failed %d", errno);
             goto next;
         }
 
-next:;
+    next:;
         i++;
-        current = current -> next;
+        current = current->next;
     }
 }
 
@@ -151,16 +150,19 @@ next:;
 //     }
 // }
 
-void recv_and_showing(sockDetails_t *sd){
+void recv_and_showing(sockDetails_t *sd)
+{
     serverDetails_t *current = sd->servers_details;
-    while(current){
+    while (current)
+    {
 
-        if(send(current->client_sock_fd, "ls", 2, 0) < 0){
-            fprintf(stderr, RED"[-] send failed %d \n"RESET, errno);
+        if (send(current->client_sock_fd, "ls", 2, 0) < 0)
+        {
+            fprintf(stderr, RED "[-] send failed %d \n" RESET, errno);
             goto next;
         }
         printf("Sent \n");
-next:;
+    next:;
         current = current->next;
     }
 }
@@ -184,7 +186,7 @@ next:;
 void *handle_req(sockDetails_t *sd)
 {
     int numbytes;                     /* Number of bytes received */
-    char recieved_buf[RECIEVE_SIZE]; /* Buffer for incoming requests */
+    char recieved_buf[RECIEVE_SIZE];  /* Buffer for incoming requests */
     char transmit_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
     fd_set readfds;                   /* File descriptor set for select() */
     int file_fd;
@@ -195,41 +197,85 @@ void *handle_req(sockDetails_t *sd)
     /* Set timeout period for idle connections */
     struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
 
-    
-
-    int servers[] = {0, 0, 0, 0};
-    connect_save_send(sd, servers, 4, "ls");
     // connect_save_and_send(sd, "ls");
-    
+
+    int servers[] = {1, 1, 1, 1};
     /* Process user commands through menu interface */
     switch (sd->command_int)
     {
-        case LS:
+    case LS:
         /* List directory contents */
-        int servers[] = {1, 1, 1, 1};
         connect_save_send(sd, servers, 4, "ls");
-        
-        
+
         break;
     case GET:
         /* Download file from server */
-        
+
         break;
     case PUT:
         /* Upload file to server */
         
-     
+        FILE *fs = fopen(sd->filename, "rb");
+        if(fs == NULL){
+            fprintf(stderr, "[-] Error opening file %d \n"RESET, errno);
+        }
+        uint32_t buf = str2md5(sd->filename, strlen(sd->filename));
+        printf("Buf %lu %d\n\r", buf, buf%4);
+        
+        fseek(fs, 0L, SEEK_END);
+        int size = ftell(fs);
+        
+        fseek(fs, 0, SEEK_SET);
+        
+        int chunk1_size = size/4;
+        int chunk2_size = size/4;
+        int chunk3_size = size/4;
+        int chunk4_size = size - chunk1_size - chunk2_size - chunk3_size;
+
+        printf("size %d %d %d %d %d %d\n", size, chunk1_size, chunk2_size, chunk3_size, chunk4_size, chunk1_size+ chunk2_size+ chunk3_size+ chunk4_size);
+        char *chunk1 = malloc(chunk1_size);
+        char *chunk2 = malloc(chunk2_size);
+        char *chunk3 = malloc(chunk3_size);
+        char *chunk4 = malloc(chunk4_size);
+        
+        fseek(fs, 0, SEEK_SET);
+        fread(chunk1, 1, chunk1_size, fs);
+
+        fseek(fs, chunk1_size, SEEK_SET);
+        fread(chunk2, 1, chunk2_size, fs);
+
+        fseek(fs, chunk1_size+chunk2_size, SEEK_SET);
+        fread(chunk3, 1, chunk3_size, fs);
+        
+        fseek(fs, chunk1_size+chunk2_size+chunk3_size, SEEK_SET);
+        fread(chunk4, 1, chunk4_size, fs);
+        
+        FILE *out_file = fopen("reconstructed_file", "wb");
+        if (out_file) {
+            fwrite(chunk1, 1, chunk1_size, out_file);
+            fwrite(chunk2, 1, chunk2_size, out_file);
+            fwrite(chunk3, 1, chunk3_size, out_file);
+            fwrite(chunk4, 1, chunk4_size, out_file);
+            fclose(out_file);
+            printf("File reconstructed successfully\n");
+        }
+        fclose(fs);
+
+        printf("chunks ::: \n%s%s%s%s\n----\n", chunk1, chunk2, chunk3, chunk4);
+
+
+
+        connect_save_send(sd, servers, 4, "put");
+
         break;
 
     case DELETE:
         /* Delete file from server */
-        
-       
+
         break;
     case EXIT:
         /* Clean termination */
-        
-        
+
         break;
     case SERVER_INFO:
         // Screen clear requested

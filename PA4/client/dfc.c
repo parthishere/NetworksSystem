@@ -226,6 +226,7 @@ int main(int argc, char *argv[])
     read_server_conf(&sd);
     char *filename = NULL;
     sd.command_int = whichcmd(argc, argv, &filename);
+    sd.filename = filename;
     
     if(filename){
         handle_req(&sd);

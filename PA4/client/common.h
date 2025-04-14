@@ -179,6 +179,7 @@ typedef struct
 {
     int sockfd; // Socket file descriptor
     char *command; // no need to free it afterwards
+    char *filename;
     commands_t command_int;
     serverDetails_t *servers_details;
     int number_of_servers;

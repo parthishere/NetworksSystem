@@ -493,7 +493,7 @@ cleanup_resources:
 	.file 13 "/usr/include/string.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0x67a
+	.long	0x687
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
@@ -903,11 +903,11 @@ cleanup_resources:
 	.byte	0x2
 	.long	0x2ce
 	.uleb128 0x19
-	.byte	0x60
+	.byte	0x68
 	.byte	0xb
 	.byte	0xb2
 	.byte	0x9
-	.long	0x3a0
+	.long	0x3ad
 	.uleb128 0x1
 	.long	.LASF60
 	.byte	0xb
@@ -926,81 +926,88 @@ cleanup_resources:
 	.long	.LASF62
 	.byte	0xb
 	.byte	0xb6
-	.byte	0x10
-	.long	0x2c2
+	.byte	0xb
+	.long	0x72
 	.byte	0x10
 	.uleb128 0x1
 	.long	.LASF63
 	.byte	0xb
 	.byte	0xb7
-	.byte	0x16
-	.long	0x3a0
+	.byte	0x10
+	.long	0x2c2
 	.byte	0x18
 	.uleb128 0x1
 	.long	.LASF64
 	.byte	0xb
 	.byte	0xb8
-	.byte	0x9
-	.long	0x64
+	.byte	0x16
+	.long	0x3ad
 	.byte	0x20
 	.uleb128 0x1
 	.long	.LASF65
 	.byte	0xb
 	.byte	0xb9
-	.byte	0x16
-	.long	0x26a
+	.byte	0x9
+	.long	0x64
 	.byte	0x28
 	.uleb128 0x1
 	.long	.LASF66
 	.byte	0xb
 	.byte	0xba
-	.byte	0x9
-	.long	0x64
+	.byte	0x16
+	.long	0x26a
 	.byte	0x30
 	.uleb128 0x1
 	.long	.LASF67
 	.byte	0xb
 	.byte	0xbb
+	.byte	0x9
+	.long	0x64
+	.byte	0x38
+	.uleb128 0x1
+	.long	.LASF68
+	.byte	0xb
+	.byte	0xbc
 	.byte	0x15
 	.long	0x18c
-	.byte	0x38
+	.byte	0x40
 	.byte	0
 	.uleb128 0x4
 	.long	0x322
 	.uleb128 0x5
-	.long	.LASF68
+	.long	.LASF69
 	.byte	0xb
-	.byte	0xbc
+	.byte	0xbd
 	.byte	0x3
 	.long	0x32e
 	.uleb128 0x11
-	.long	.LASF69
+	.long	.LASF70
 	.byte	0xc
 	.value	0x16b
 	.byte	0xc
 	.long	0x64
-	.long	0x3c9
+	.long	0x3d6
 	.uleb128 0xa
 	.long	0x8f
 	.uleb128 0x1a
 	.byte	0
 	.uleb128 0x11
-	.long	.LASF70
+	.long	.LASF71
 	.byte	0xd
 	.value	0x197
 	.byte	0xf
 	.long	0x2e
-	.long	0x3e0
+	.long	0x3ed
 	.uleb128 0xa
 	.long	0x8f
 	.byte	0
 	.uleb128 0x1b
-	.long	.LASF71
+	.long	.LASF72
 	.byte	0xd
 	.byte	0x9f
 	.byte	0xc
 	.long	0x64
-	.long	0x400
+	.long	0x40d
 	.uleb128 0xa
 	.long	0x8f
 	.uleb128 0xa
@@ -1009,18 +1016,18 @@ cleanup_resources:
 	.long	0x3a
 	.byte	0
 	.uleb128 0xe
-	.long	.LASF72
+	.long	.LASF73
 	.byte	0xbb
 	.quad	.LFB325
 	.quad	.LFE325-.LFB325
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x43c
+	.long	0x449
 	.uleb128 0xb
 	.string	"sd"
 	.byte	0xbb
 	.byte	0x27
-	.long	0x43c
+	.long	0x449
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30760
@@ -1028,38 +1035,38 @@ cleanup_resources:
 	.long	.LASF75
 	.byte	0xbe
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
 	.byte	0
 	.uleb128 0x4
-	.long	0x3a5
+	.long	0x3b2
 	.uleb128 0x8
 	.long	0x77
-	.long	0x452
+	.long	0x45f
 	.uleb128 0x1c
 	.long	0x3a
 	.value	0x77ff
 	.byte	0
 	.uleb128 0xe
-	.long	.LASF73
+	.long	.LASF74
 	.byte	0xa6
 	.quad	.LFB324
 	.quad	.LFE324-.LFB324
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x4ae
+	.long	0x4bb
 	.uleb128 0xb
 	.string	"sd"
 	.byte	0xa6
 	.byte	0x21
-	.long	0x43c
+	.long	0x449
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30760
 	.uleb128 0x7
-	.long	.LASF74
+	.long	.LASF62
 	.byte	0xa6
 	.byte	0x2b
 	.long	0x72
@@ -1070,7 +1077,7 @@ cleanup_resources:
 	.long	.LASF75
 	.byte	0xab
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1078,7 +1085,7 @@ cleanup_resources:
 	.long	.LASF76
 	.byte	0xac
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1093,12 +1100,12 @@ cleanup_resources:
 	.quad	.LFE323-.LFB323
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x4fd
+	.long	0x50a
 	.uleb128 0xb
 	.string	"sd"
 	.byte	0x91
 	.byte	0x22
-	.long	0x43c
+	.long	0x449
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -136
@@ -1114,14 +1121,14 @@ cleanup_resources:
 	.long	.LASF77
 	.byte	0x95
 	.byte	0xa
-	.long	0x4fd
+	.long	0x50a
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -128
 	.byte	0
 	.uleb128 0x8
 	.long	0x77
-	.long	0x50d
+	.long	0x51a
 	.uleb128 0xd
 	.long	0x3a
 	.byte	0x63
@@ -1133,17 +1140,17 @@ cleanup_resources:
 	.quad	.LFE322-.LFB322
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x599
+	.long	0x5a6
 	.uleb128 0xb
 	.string	"sd"
 	.byte	0x71
 	.byte	0x1e
-	.long	0x43c
+	.long	0x449
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30776
 	.uleb128 0x7
-	.long	.LASF74
+	.long	.LASF62
 	.byte	0x71
 	.byte	0x28
 	.long	0x72
@@ -1154,7 +1161,7 @@ cleanup_resources:
 	.long	.LASF75
 	.byte	0x77
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1162,7 +1169,7 @@ cleanup_resources:
 	.long	.LASF76
 	.byte	0x78
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1186,14 +1193,14 @@ cleanup_resources:
 	.long	.LASF77
 	.byte	0x7b
 	.byte	0xa
-	.long	0x599
+	.long	0x5a6
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
 	.byte	0
 	.uleb128 0x8
 	.long	0x77
-	.long	0x5a9
+	.long	0x5b6
 	.uleb128 0xd
 	.long	0x3a
 	.byte	0x3b
@@ -1205,12 +1212,12 @@ cleanup_resources:
 	.quad	.LFE321-.LFB321
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x615
+	.long	0x622
 	.uleb128 0xb
 	.string	"sd"
 	.byte	0x54
 	.byte	0x20
-	.long	0x43c
+	.long	0x449
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30776
@@ -1218,7 +1225,7 @@ cleanup_resources:
 	.long	.LASF75
 	.byte	0x58
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1226,7 +1233,7 @@ cleanup_resources:
 	.long	.LASF76
 	.byte	0x59
 	.byte	0xa
-	.long	0x441
+	.long	0x44e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -1274,7 +1281,7 @@ cleanup_resources:
 	.byte	0x91
 	.sleb128 -48
 	.uleb128 0x7
-	.long	.LASF74
+	.long	.LASF62
 	.byte	0x17
 	.byte	0x34
 	.long	0x1a5
@@ -1812,7 +1819,7 @@ cleanup_resources:
 	.section	.debug_line,"",@progbits
 .Ldebug_line0:
 	.section	.debug_str,"MS",@progbits,1
-.LASF72:
+.LASF73:
 	.string	"cleanup_resources"
 .LASF82:
 	.string	"whichcmd"
@@ -1836,7 +1843,7 @@ cleanup_resources:
 	.string	"__pthread_internal_list"
 .LASF75:
 	.string	"recieve_buffer"
-.LASF74:
+.LASF62:
 	.string	"filename"
 .LASF76:
 	.string	"transmit_buffer"
@@ -1846,7 +1853,7 @@ cleanup_resources:
 	.string	"__int128"
 .LASF20:
 	.string	"__count"
-.LASF71:
+.LASF72:
 	.string	"strncmp"
 .LASF49:
 	.string	"EXIT"
@@ -1854,7 +1861,7 @@ cleanup_resources:
 	.string	"__align"
 .LASF48:
 	.string	"DELETE"
-.LASF64:
+.LASF65:
 	.string	"number_of_servers"
 .LASF14:
 	.string	"__prev"
@@ -1880,7 +1887,7 @@ cleanup_resources:
 	.string	"sockfd"
 .LASF8:
 	.string	"long int"
-.LASF69:
+.LASF70:
 	.string	"printf"
 .LASF50:
 	.string	"SERVER_INFO"
@@ -1918,17 +1925,17 @@ cleanup_resources:
 	.string	"char"
 .LASF22:
 	.string	"__nusers"
-.LASF70:
+.LASF71:
 	.string	"strlen"
 .LASF56:
 	.string	"server_port"
-.LASF67:
+.LASF68:
 	.string	"lock"
-.LASF63:
+.LASF64:
 	.string	"servers_details"
-.LASF62:
+.LASF63:
 	.string	"command_int"
-.LASF73:
+.LASF74:
 	.string	"delete_file"
 .LASF18:
 	.string	"__pthread_mutex_s"
@@ -1936,7 +1943,7 @@ cleanup_resources:
 	.string	"long unsigned int"
 .LASF25:
 	.string	"__elision"
-.LASF68:
+.LASF69:
 	.string	"sockDetails_t"
 .LASF43:
 	.string	"ai_canonname"
@@ -1962,7 +1969,7 @@ cleanup_resources:
 	.string	"get_file"
 .LASF33:
 	.string	"sockaddr"
-.LASF65:
+.LASF66:
 	.string	"connect_to_info"
 .LASF24:
 	.string	"__spins"
@@ -1976,7 +1983,7 @@ cleanup_resources:
 	.string	"put_file_file"
 .LASF61:
 	.string	"command"
-.LASF66:
+.LASF67:
 	.string	"timeout"
 .LASF59:
 	.string	"next"
