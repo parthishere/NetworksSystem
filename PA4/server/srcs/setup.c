@@ -10,6 +10,156 @@
 
 #include "includes/setup.h"
 
+
+/**
+ * Handle network operation errors
+ *
+ * Processes and reports network errors, distinguishing between timeouts
+ * and other error conditions. For timeouts, displays message; for other errors,
+ * notifies client of operation failure.
+ *
+ * @param sd   Pointer to socket details structure
+ * @param msg  Error message to be displayed
+ *
+ * Error Handling:
+ * - Timeout (EAGAIN/EWOULDBLOCK): Display timeout message
+ * - Other errors: Send error notification to client
+ */
+void error(sockdetails_t *sd, char *msg)
+{
+    printf(RED "[-] Error somewhere ! Check below message to see details \n");
+
+    perror(msg); // Print system error message
+
+    if (errno == EAGAIN || errno == EWOULDBLOCK)
+    {
+        /* Handle timeout conditions */
+        printf(RED "[-] Timeout\n" RESET);
+    }
+    else
+    {
+        /* Notify client of error condition */
+        send(sd->client_sock_fd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0);
+        // close(sd->sockfd);
+        // exit(EXIT_FAILURE);
+    }
+}
+
+
+/**
+ * Reliable UDP send wrapper
+ *
+ * Encapsulates UDP packet transmission with error handling.
+ * Updates sent bytes count in socket details structure.
+ *
+ * @param sd      Pointer to socket details structure
+ * @param size    Size of data to send
+ * @param packet  Pointer to data buffer
+ *
+ * Implementation:
+ * - Uses sendto() for UDP transmission
+ * - Updates sentBytes counter
+ * - Handles transmission errors through error()
+ */
+void _send(sockdetails_t *sd, int size, void *packet)
+{
+    if ((sd->sentBytes = send(sd->client_sock_fd, packet, size, 0)) < 0)
+    {
+        error(sd, "[-] send");
+    }
+}
+
+/**
+ * Reliable UDP receive wrapper
+ *
+ * Encapsulates UDP packet reception with error handling.
+ * Updates received bytes count in socket details structure.
+ *
+ * @param sd      Pointer to socket details structure
+ * @param size    Maximum size of data to receive
+ * @param packet  Pointer to receive buffer
+ *
+ * Implementation:
+ * - Uses recvfrom() for UDP reception
+ * - Updates recvBytes counter
+ * - Handles reception errors through error()
+ */
+void _recv(sockdetails_t *sd, int size, void *packet)
+{
+    if ((sd->recvBytes = recv(sd->client_sock_fd, packet, size, 0)) < 0)
+    {
+        error(sd, "[-] recv");
+    }
+}
+
+/**
+ * Configure socket receive timeout
+ *
+ * Sets SO_RCVTIMEO socket option to implement receive timeout.
+ * Configures both seconds and microseconds components.
+ *
+ * @param sd   Pointer to socket details structure
+ * @param sec  Timeout value in seconds
+ *
+ * Error Handling:
+ * - Exits on socket option setting failure
+ *
+ * Implementation Notes:
+ * - Uses timeval structure for timeout specification
+ * - Microseconds component set to 0
+ * - Applies to receive operations only
+ */
+void set_timeout(sockdetails_t *sd, int sec)
+{
+    /* Configure timeout structure */
+    struct timeval timeout;
+    timeout.tv_sec = sec; // Seconds component
+    timeout.tv_usec = 0;  // Microseconds component
+
+    /* Set socket option */
+    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
+    {
+        perror("setsockopt");
+        exit(1);
+    }
+}
+
+/**
+ * Remove socket receive timeout
+ *
+ * Disables SO_RCVTIMEO socket option by setting timeout to zero.
+ * Returns socket to blocking mode.
+ *
+ * @param sd  Pointer to socket details structure
+ *
+ * Error Handling:
+ * - Exits on socket option setting failure
+ *
+ * Implementation Notes:
+ * - Sets both seconds and microseconds to 0
+ * - Effectively disables timeout mechanism
+ */
+void remove_timeout(sockdetails_t *sd)
+{
+    /* Configure timeout structure for no timeout */
+    struct timeval timeout;
+    timeout.tv_sec = 0;  // No seconds timeout
+    timeout.tv_usec = 0; // No microseconds timeout
+
+    /* Remove socket option */
+    if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO,
+                   &timeout, sizeof(timeout)) == -1)
+    {
+        perror("setsockopt");
+        exit(1);
+    }
+}
+
+
+
+
+
+
 /**
  * @function getin_addr
  * @brief Extracts the IP address structure from a sockaddr structure

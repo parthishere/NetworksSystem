@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "sendfile.h": "c",
-        "common.h": "c"
+        "common.h": "c",
+        "cstdlib": "c",
+        "handle_req.h": "c",
+        "server_method.h": "c"
     }
 }

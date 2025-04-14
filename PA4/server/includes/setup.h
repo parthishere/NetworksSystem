@@ -12,4 +12,9 @@
 
 #include "common.h"
 
+
+void _send(sockdetails_t *sd, int size, void *packet);
+void _recv(sockdetails_t *sd, int size, void *packet);
+void set_timeout(sockdetails_t *sd, int sec);
+void remove_timeout(sockdetails_t *sd);
 void init_socket(sockdetails_t *sd, char *port);

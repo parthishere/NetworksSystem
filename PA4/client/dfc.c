@@ -35,24 +35,13 @@ char *str2md5(char *str, int length)
 
 
 
-/* Protocol Message Definitions
- * Standard messages used in the communication protocol
- * All messages are padded with tabs to maintain consistent length
- */
-#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"                                   // Marks end of data stream
-#define ACK "ack\t\t\t\0"                                                   // Positive acknowledgment
-#define NACK "nack\t\t\t\0"                                                 // Negative acknowledgment
-#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0" // Operation failure
-#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"                           // File access error
-#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"                         // File already exists
-
 
 
 // #define SCANF 1
 // #define FGETS 1
 
-// commands_t print_menu();
-// commands_t whichcmd(char *cmd);
+void print_menu();
+commands_t whichcmd(char *cmd);
 
 
 
@@ -184,21 +173,44 @@ char *str2md5(char *str, int length)
 
 
 
-void read_server_conf(void){
+void read_server_conf(sockdetails_t *sd){
     FILE *fs = fopen(SERVER_CONF, "r");
-    char line[50];
-    int which_dfs[10];
-    char which_dfs_ip[10][10];
-    int which_dfs_port[10];
+    char line[1024];
+    
     int i = 0;
-    while(fgets(line, sizeof(line)-1, fs) != NULL){
-        printf("line %s\n", line);
-        char *line_dup = strdup(line);
+    char *saved_remaining_line;
 
-        char *tok = strtok_t();
+    clientdetails_t *current = NULL;
+    clientdetails_t *prev = NULL;
+    while(fgets(line, sizeof(line)-1, fs) != NULL){
+        int dfs_no;
+
+        current = malloc(sizeof(clientdetails_t));
+        if(sd->client_details = NULL){
+            sd->client_details = current;
+        }
+
+        char *line_dup = strdup(line);
+        char *tok = strtok_r(line, " ", &saved_remaining_line);
+        // free(tok);
+        tok = strtok_r(NULL, " ", &saved_remaining_line);
+        sscanf(tok, "dfs%d", &dfs_no);
+        tok = strtok_r(NULL, ":", &saved_remaining_line);
+        printf("Token %s %s\n\n", tok, saved_remaining_line);
+
+        current->client_port = strdup(saved_remaining_line);
+        current->client_ip = strdup(tok);
+        current->next = prev;
+        current->dfsno = dfs_no;
+        sd->number_of_clients++;
+
+        prev = current;
+        
         free(line_dup);
         i++;
     }
+
+    
     fclose(fs);
 }
 
@@ -220,6 +232,7 @@ void read_server_conf(void){
 int main(int argc, char *argv[])
 {
     sockdetails_t sd;
+    
     pthread_mutex_init(&sd.lock, NULL);
     
     // int status = mkdir(CACHE_ROOT, 0777); 
@@ -236,12 +249,12 @@ int main(int argc, char *argv[])
     if (argc != 3)
     {
         printf(RED "[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n" RESET);
-        // print_menu();
+        print_menu();
         
         exit(EXIT_FAILURE);
     }
 
-    read_server_conf();
+    read_server_conf(&sd);
 
 
     /*
@@ -329,24 +342,18 @@ int main(int argc, char *argv[])
  * @param filename  Buffer to store filename parameter if command requires one
  * @return         Command type from commands_t enum
  */
-// commands_t print_menu(char *filename)
-// {
-//     /* Display menu header */
-//     printf(YEL "\n\nThis client can support distributed FTP\n\n");
-//     printf("Currently this program can support following commands \n");
-//     /* Display available commands */
-//     printf("get <filename>   : Get the file name in server and print the file\n");
-//     printf("put <filename>   : if filename does not exists on server, create one. \n");
-//     printf("delete <filename>: if filename does exists on server, delete that file\n");
-//     printf("ls               : get the list of all the files/chunks in all server and print it\n");
-//     printf("exit             : exit from the client program and free the resources in client and server\n");
-//     printf("server info      : get to know server info\n");
-//     printf("help             : print this help \n");
-//     printf("\n" RESET);
-
-//     // argv[2] // filename
-
-//     /* Extract filename if present and return command type */
-//     // sscanf(cmd, "%*s %39[^\n]", filename);
-//     // return whichcmd(argv[1]);
-// }
+void print_menu()
+{
+    /* Display menu header */
+    printf(YEL "\n\nThis client can support distributed FTP\n\n");
+    printf("Currently this program can support following commands \n");
+    /* Display available commands */
+    printf("get <filename>   : Get the file name in server and print the file\n");
+    printf("put <filename>   : if filename does not exists on server, create one. \n");
+    printf("delete <filename>: if filename does exists on server, delete that file\n");
+    printf("ls               : get the list of all the files/chunks in all server and print it\n");
+    printf("exit             : exit from the client program and free the resources in client and server\n");
+    printf("server info      : get to know server info\n");
+    printf("help             : print this help \n");
+    printf("\n" RESET);
+}

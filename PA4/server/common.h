@@ -68,7 +68,8 @@
  #define USE_FORK 0              /* Use threading instead of forking */
  #define TOTAL_THREADS 10       /* Number of worker threads */
  #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
- #define TIMEOUT_HTTP_SEC 10      /* Connection timeout in seconds */
+ #define TIMEOUT_SEC 10      /* Connection timeout in seconds */
+ #define RETRY_COUNT 3
  /** @} */
  
  
@@ -88,6 +89,19 @@
  #define CYN "\x1B[36m"  // Alternative highlighting
  #define WHT "\x1B[37m"  // Standard output
  #define RESET "\x1B[0m" // Reset to default color
+
+
+ /* Protocol Message Definitions
+ * Standard messages used in the communication protocol
+ * Each message is padded with tabs for consistent length
+ */
+#define END_OF_DYNAMIC_DATA "EOF\t\t\t\0"                                   // End of data marker
+#define ACK "ack\t\t\t\0"                                                   // Positive acknowledgment
+#define NACK "nack\t\t\t\0"                                                 // Negative acknowledgment
+#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n\0" // Operation failure
+#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\t\t\n\0"                           // File not found error
+#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\t\t\n\0"                         // File exists error
+#define WRONG_COMMAND "WRONG_COMMAND\t\t\t\n\0"                             // Invalid command error
  
  /* Screen Management
  * Terminal control sequence for clearing screen
