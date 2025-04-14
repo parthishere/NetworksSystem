@@ -16,6 +16,42 @@
 
 #include "handle_req.h"
 
+
+
+
+uint64_t str2md5(char *str, int length)
+{
+
+    EVP_MD_CTX *context = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_md5();
+    EVP_DigestInit_ex(context, md, NULL);
+    int md_len;
+    unsigned char digest[16];
+
+    while (length > 0)
+    {
+        if (length > 512)
+        {
+            EVP_DigestUpdate(context, str, 512);
+        }
+        else
+        {
+            EVP_DigestUpdate(context, str, length);
+        }
+        length -= 512;
+        str += 512;
+    }
+    EVP_DigestFinal_ex(context, digest, &md_len);
+    EVP_MD_CTX_free(context);
+    uint64_t hash;
+    for (int n = 0; n < md_len; ++n)
+    {
+        hash += (unsigned int)digest[n];
+    }
+    return hash;
+}
+
+
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -27,11 +63,14 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 
-void initialize_and_save(sockDetails_t *sd){
+void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_length, char *message){
     serverDetails_t *current = sd->servers_details;
+    int i = 0;
     while(current){
-        printf("hellow \n");
 
+        if(i >= arr_length || servers_to_connect_to[i] == 0) goto next;
+        
+        
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
     
@@ -49,11 +88,10 @@ void initialize_and_save(sockDetails_t *sd){
             exit(EXIT_FAILURE);
         }
 
-        printf("server ip %s, server port %s \n", current->server_ip, current->server_port);
         if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
         {
             fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            exit(EXIT_FAILURE);                                                   // exit if there is an error
+            goto next;                                               // exit if there is an error
         }
 
         for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
@@ -61,14 +99,15 @@ void initialize_and_save(sockDetails_t *sd){
             if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
             {
                 perror(RED "server: socket");
-                continue;
+                goto next;
+
             }
 
             if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
             {
                 fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
                 close(current->client_sock_fd);
-                continue;
+                goto next;
             }
             
             break;
@@ -76,8 +115,8 @@ void initialize_and_save(sockDetails_t *sd){
         
         if (temp == NULL)
         {
-            fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-            exit(EXIT_FAILURE);
+            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+            goto next;
         }
 
         char s[INET6_ADDRSTRLEN];
@@ -86,19 +125,44 @@ void initialize_and_save(sockDetails_t *sd){
                    "[+] (%d) Server IP address: %s:%s\n" RESET,
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
+        
+        if(send(current->client_sock_fd, message, strlen(message), 0) < 0){
+            fprintf(stderr, "sent failed %d", errno);
+            goto next;
+        }
 
-
-
+next:;
+        i++;
         current = current -> next;
     }
 }
 
-void connect_save_and_send(sockDetails_t *sd, char *message){
-    serverDetails_t *current = sd->servers_details;
-    // while(current){
-        // current->client_sock_fd
+// void connect_save_and_send(sockDetails_t *sd, char *message){
+//     serverDetails_t *current = sd->servers_details;
+//     while(current){
 
-    // }
+//         if(send(current->client_sock_fd, "ls", 2, 0) < 0){
+//             fprintf(stderr, RED"[-] send failed %d \n"RESET, errno);
+//             goto next;
+//         }
+//         printf("Sent \n");
+// next:;
+//         current = current->next;
+//     }
+// }
+
+void recv_and_showing(sockDetails_t *sd){
+    serverDetails_t *current = sd->servers_details;
+    while(current){
+
+        if(send(current->client_sock_fd, "ls", 2, 0) < 0){
+            fprintf(stderr, RED"[-] send failed %d \n"RESET, errno);
+            goto next;
+        }
+        printf("Sent \n");
+next:;
+        current = current->next;
+    }
 }
 /**
  * @function handle_req
@@ -131,64 +195,47 @@ void *handle_req(sockDetails_t *sd)
     /* Set timeout period for idle connections */
     struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
 
-    initialize_and_save(sd);
+    
 
+    int servers[] = {0, 0, 0, 0};
+    connect_save_send(sd, servers, 4, "ls");
+    // connect_save_and_send(sd, "ls");
+    
     /* Process user commands through menu interface */
-    // switch (sd->command)
-    // {
-    // case LS:
-    //     /* List directory contents */
+    switch (sd->command_int)
+    {
+        case LS:
+        /* List directory contents */
+        int servers[] = {1, 1, 1, 1};
+        connect_save_send(sd, servers, 4, "ls");
+        
+        
+        break;
+    case GET:
+        /* Download file from server */
+        
+        break;
+    case PUT:
+        /* Upload file to server */
+        
+     
+        break;
 
-    //     connect_save_and_send(sd, "ls");
-    //     bzero(transmit_buf, sizeof transmit_buf);
-    //     snprintf(transmit_buf, sizeof transmit_buf, "ls");
-    //     send(sd, sizeof(transmit_buf), transmit_buffer);
-    //     // list files
-    //     list_files(&sd);
-    //     break;
-    // case GET:
-    //     /* Download file from server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     if (filename[0] == '\0') // return error
-    //     {
-    //         printf(RED "[-] File Name is Empty\n" RESET);
-    //         break;
-    //     }
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "get %s", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     get_file(&sd, filename);
-    //     break;
-    // case PUT:
-    //     /* Upload file to server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "put %s", filename);
-    //     printf("put %s\n", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     if (put_file_file(&sd, filename) == -1)
-    //     {
-    //         put_file(&sd); // Fall back to manual input mode
-    //     }
-    //     break;
-
-    // case DELETE:
-    //     /* Delete file from server */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "delete %s", filename);
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     delete_file(&sd, filename);
-    //     break;
-    // case EXIT:
-    //     /* Clean termination */
-    //     bzero(transmit_buffer, sizeof transmit_buffer);
-    //     snprintf(transmit_buffer, sizeof transmit_buffer, "exit");
-    //     _send(&sd, sizeof transmit_buffer, transmit_buffer);
-    //     cleanup_resources(&sd);
-    //     break;
-    // case SERVER_INFO:
-    //     // Screen clear requested
-    // default:
-    //     break;
-    // }
+    case DELETE:
+        /* Delete file from server */
+        
+       
+        break;
+    case EXIT:
+        /* Clean termination */
+        
+        
+        break;
+    case SERVER_INFO:
+        // Screen clear requested
+    default:
+        break;
+    }
 
     /* Monitor socket for incoming data */
     // int select_status = select(sd->client_sock_fd + 1, &readfds, NULL, NULL, &timeout);

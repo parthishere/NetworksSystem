@@ -2,38 +2,6 @@
 #include "server_method.h"
 #include "handle_req.h"
 
-char *str2md5(char *str, int length)
-{
-
-    EVP_MD_CTX *context = EVP_MD_CTX_new();
-    const EVP_MD *md = EVP_md5();
-    EVP_DigestInit_ex(context, md, NULL);
-    int md_len;
-    char *out = (char *)malloc(33);
-    unsigned char digest[16];
-
-    while (length > 0)
-    {
-        if (length > 512)
-        {
-            EVP_DigestUpdate(context, str, 512);
-        }
-        else
-        {
-            EVP_DigestUpdate(context, str, length);
-        }
-        length -= 512;
-        str += 512;
-    }
-    EVP_DigestFinal_ex(context, digest, &md_len);
-    EVP_MD_CTX_free(context);
-
-    for (int n = 0; n < md_len; ++n)
-    {
-        snprintf(&(out[n * 2]), 16 * 2, "%02x", (unsigned int)digest[n]);
-    }
-    return out;
-}
 
 
 
@@ -208,7 +176,7 @@ void read_server_conf(sockDetails_t *sd){
         
         tok = strtok_r(NULL, "\n", &saved_remaining_line);
         current->server_port = strndup(tok, strlen(tok));
-        printf("ip %s| port %s|\n", current->server_ip, current->server_port);
+        
         if(current->server_port == NULL) exit(EXIT_FAILURE);
 
         current->dfsno = dfs_no;
@@ -257,7 +225,8 @@ int main(int argc, char *argv[])
 
     read_server_conf(&sd);
     char *filename = NULL;
-    commands_t cmd = whichcmd(argc, argv, &filename);
+    sd.command_int = whichcmd(argc, argv, &filename);
+    
     if(filename){
         handle_req(&sd);
     }
