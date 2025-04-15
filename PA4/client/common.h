@@ -69,7 +69,7 @@
 #define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
 #define TIMEOUT_SEC 10         /* Connection timeout in seconds */
 #define RETRY_COUNT 3
-#define MAX_NUMBER_OF_SERVERS 4
+#define MAX_NUMBER_OF_SERVERS 1024
 #define MAX_NUMBER_OF_CHUNKS_PER_SERVER 2
 /** @} */
 

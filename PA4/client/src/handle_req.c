@@ -60,7 +60,7 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-void connect_save_send(sockDetails_t *sd, int servers_to_connect_to[], int arr_length, char *message)
+void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_length, char *message)
 {
     serverDetails_t *current = sd->servers_details;
     int i = 0;
@@ -199,13 +199,15 @@ void *handle_req(sockDetails_t *sd)
 
     // connect_save_and_send(sd, "ls");
 
-    int servers[] = {1, 1, 1, 1};
+    char servers[sd->number_of_servers];
+
+    memset(servers, 1, sd->number_of_servers);
     /* Process user commands through menu interface */
     switch (sd->command_int)
     {
     case LS:
         /* List directory contents */
-        connect_save_send(sd, servers, 4, "ls");
+        connect_save_send(sd, servers, sd->number_of_servers, "ls");
 
         break;
     case GET:
@@ -214,7 +216,7 @@ void *handle_req(sockDetails_t *sd)
         break;
     case PUT:
         /* Upload file to server */
-        
+        // printf("-> %d \n", );
         FILE *fs = fopen(sd->filename, "rb");
         if(fs == NULL){
             fprintf(stderr, "[-] Error opening file %d \n"RESET, errno);
@@ -226,54 +228,75 @@ void *handle_req(sockDetails_t *sd)
         int size = ftell(fs);
         
         fseek(fs, 0, SEEK_SET);
-        
-        int chunk1_size = size/4;
-        int chunk2_size = size/4;
-        int chunk3_size = size/4;
-        int chunk4_size = size - chunk1_size - chunk2_size - chunk3_size;
+        int chunk_sizes[MAX_NUMBER_OF_SERVERS];
+        char *chunks[MAX_NUMBER_OF_SERVERS];
+        int total_chunk_size_until_now = 0;
+        for (int i=0;i<sd->number_of_servers; i++){
+            int chunk_size;
+            if(i == sd->number_of_servers - 1)
+                chunk_size = size - total_chunk_size_until_now;
+            else
+                chunk_size = size/sd->number_of_servers;
+            total_chunk_size_until_now += chunk_size;
 
-        printf("size %d %d %d %d %d %d\n", size, chunk1_size, chunk2_size, chunk3_size, chunk4_size, chunk1_size+ chunk2_size+ chunk3_size+ chunk4_size);
-        char *chunk1 = malloc(chunk1_size+5);
-        char *chunk2 = malloc(chunk2_size+5);
-        char *chunk3 = malloc(chunk3_size+5);
-        char *chunk4 = malloc(chunk4_size+5);
+            chunk_sizes[i] = chunk_size;
+            
+            char *chunk = malloc(chunk_size+5);
+            chunks[i] = chunk;
 
-        *chunk1 = (chunk1_size & 0xFF);
-        *(chunk1+1) = ((chunk1_size >> 8) & 0xFF);
-        *(chunk1+2) = ((chunk1_size >> 16) & 0xFF);
-        *(chunk1+3) = ((chunk1_size >> 24) & 0xFF);
-        *(chunk1+4) = 1;
-        
-        *chunk2 = chunk2_size & 0xFF;
-        *(chunk2+1) = ((chunk2_size >> 8) & 0xFF);
-        *(chunk2+2) = ((chunk2_size >> 16) & 0xFF);
-        *(chunk2+3) = ((chunk2_size >> 24) & 0xFF);
-        *(chunk2+4) = 2;
+            *chunk = (chunk_size & 0xFF);
+            *(chunk+1) = ((chunk_size >> 8) & 0xFF);
+            *(chunk+2) = ((chunk_size >> 16) & 0xFF);
+            *(chunk+3) = ((chunk_size >> 24) & 0xFF);
+            *(chunk+4) = i+1;
+        }
+        // int chunk1_size = size/4;
+        // int chunk2_size = size/4;
+        // int chunk3_size = size/4;
+        // int chunk4_size = size - chunk1_size - chunk2_size - chunk3_size;
 
-        *chunk3 = chunk3_size & 0xFF;
-        *(chunk3+1) = ((chunk3_size >> 8) && 0xFF);
-        *(chunk3+2) = ((chunk3_size >> 16) && 0xFF);
-        *(chunk3+3) = ((chunk3_size >> 24) && 0xFF);
-        *(chunk3+4) = 3;
+        // printf("size %d %d %d %d %d %d\n", size, chunk1_size, chunk2_size, chunk3_size, chunk4_size, chunk1_size+ chunk2_size+ chunk3_size+ chunk4_size);
+        // char *chunk1 = malloc(chunk1_size+5);
+        // char *chunk2 = malloc(chunk2_size+5);
+        // char *chunk3 = malloc(chunk3_size+5);
+        // char *chunk4 = malloc(chunk4_size+5);
 
-        *chunk4 = chunk4_size & 0xFF;
-        *(chunk4+1) = ((chunk4_size >> 8) && 0xFF);
-        *(chunk4+2) = ((chunk4_size >> 16) && 0xFF);
-        *(chunk4+3) = ((chunk4_size >> 24) && 0xFF);
-        *(chunk4+4) = 4;
+        // *chunk1 = (chunk1_size & 0xFF);
+        // *(chunk1+1) = ((chunk1_size >> 8) & 0xFF);
+        // *(chunk1+2) = ((chunk1_size >> 16) & 0xFF);
+        // *(chunk1+3) = ((chunk1_size >> 24) & 0xFF);
+        // *(chunk1+4) = 1;
+        
+        // *chunk2 = chunk2_size & 0xFF;
+        // *(chunk2+1) = ((chunk2_size >> 8) & 0xFF);
+        // *(chunk2+2) = ((chunk2_size >> 16) & 0xFF);
+        // *(chunk2+3) = ((chunk2_size >> 24) & 0xFF);
+        // *(chunk2+4) = 2;
+
+        // *chunk3 = chunk3_size & 0xFF;
+        // *(chunk3+1) = ((chunk3_size >> 8) && 0xFF);
+        // *(chunk3+2) = ((chunk3_size >> 16) && 0xFF);
+        // *(chunk3+3) = ((chunk3_size >> 24) && 0xFF);
+        // *(chunk3+4) = 3;
+
+        // *chunk4 = chunk4_size & 0xFF;
+        // *(chunk4+1) = ((chunk4_size >> 8) && 0xFF);
+        // *(chunk4+2) = ((chunk4_size >> 16) && 0xFF);
+        // *(chunk4+3) = ((chunk4_size >> 24) && 0xFF);
+        // *(chunk4+4) = 4;
         
 
-        fseek(fs, 0, SEEK_SET);
-        fread(chunk1+5, 1, chunk1_size, fs);
+        // fseek(fs, 0, SEEK_SET);
+        // fread(chunk1+5, 1, chunk1_size, fs);
         
-        fseek(fs, chunk1_size, SEEK_SET);
-        fread(chunk2+5, 1, chunk2_size, fs);
+        // fseek(fs, chunk1_size, SEEK_SET);
+        // fread(chunk2+5, 1, chunk2_size, fs);
         
-        fseek(fs, chunk1_size+chunk2_size, SEEK_SET);
-        fread(chunk3+5, 1, chunk3_size, fs);
+        // fseek(fs, chunk1_size+chunk2_size, SEEK_SET);
+        // fread(chunk3+5, 1, chunk3_size, fs);
         
-        fseek(fs, chunk1_size+chunk2_size+chunk3_size, SEEK_SET);
-        fread(chunk4+5, 1, chunk4_size, fs);
+        // fseek(fs, chunk1_size+chunk2_size+chunk3_size, SEEK_SET);
+        // fread(chunk4+5, 1, chunk4_size, fs);
         
         // char *chunk1_2 = malloc(chunk1_size+chunk2_size);
         // char *chunk2_3 = malloc(chunk2_size+chunk3_size);
@@ -298,20 +321,20 @@ void *handle_req(sockDetails_t *sd)
         
         FILE *out_file = fopen("reconstructed_file", "wb");
         if (out_file) {
-            printf("Chunk %d, chunk size %d \n ", *(chunk1+4), (*chunk1 + (*(chunk1+1) << 8) + (*(chunk1+2) << 16) + (*(chunk1+3) << 24)));
-            printf("Chunk %d, chunk size %d \n ", *(chunk2+4), (*chunk2 + (*(chunk2+1) << 8) + (*(chunk2+2) << 16) + (*(chunk2+3) << 24)));
-            printf("Chunk %d, chunk size %d,%d,%d,%d \n ", *(chunk3+4), *chunk3, *(chunk3+1), *(chunk3+2), *(chunk3+3));
-            printf("Chunk %d, chunk size %d,%d,%d,%d \n ", *(chunk4+4), *chunk4, *(chunk4+1), *(chunk4+2), *(chunk4+3));
-            fwrite(chunk1+5, 1, chunk1_size, out_file);
-            fwrite(chunk2+5, 1, chunk2_size, out_file);
-            fwrite(chunk3+5, 1, chunk3_size, out_file);
-            fwrite(chunk4+5, 1, chunk4_size, out_file);
+            // printf("Chunk %d, chunk size %d \n ", *(chunk1+4), (*chunk1 + (*(chunk1+1) << 8) + (*(chunk1+2) << 16) + (*(chunk1+3) << 24)));
+            // printf("Chunk %d, chunk size %d \n ", *(chunk2+4), (*chunk2 + (*(chunk2+1) << 8) + (*(chunk2+2) << 16) + (*(chunk2+3) << 24)));
+            // printf("Chunk %d, chunk size %d,%d,%d,%d \n ", *(chunk3+4), *chunk3, *(chunk3+1), *(chunk3+2), *(chunk3+3));
+            // printf("Chunk %d, chunk size %d,%d,%d,%d \n ", *(chunk4+4), *chunk4, *(chunk4+1), *(chunk4+2), *(chunk4+3));
+            fwrite(chunks[0]+5, 1, chunk_sizes[0], out_file);
+            fwrite(chunks[1]+5, 1, chunk_sizes[1], out_file);
+            fwrite(chunks[2]+5, 1, chunk_sizes[2], out_file);
+            fwrite(chunks[3]+5, 1, chunk_sizes[3], out_file);
             fclose(out_file);
             printf("File reconstructed successfully\n");
         }
         fclose(fs);
 
-        connect_save_send(sd, servers, 4, "put"); 
+        connect_save_send(sd, servers, sd->number_of_servers, "put"); 
 
         break;
 

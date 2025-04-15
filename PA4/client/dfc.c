@@ -152,7 +152,7 @@ void read_server_conf(sockDetails_t *sd){
 
     serverDetails_t *current = NULL;
     serverDetails_t *prev = NULL;
-    while(fgets(line, sizeof(line)-1, fs) != NULL){
+    while(fgets(line, sizeof(line)-1, fs) != NULL && sd->number_of_servers<MAX_NUMBER_OF_SERVERS){
         int dfs_no;
 
         current = malloc(sizeof(serverDetails_t));
@@ -188,7 +188,7 @@ void read_server_conf(sockDetails_t *sd){
         i++;
     }
 
-    
+    printf("Number of servers configured %d \n", sd->number_of_servers);
     fclose(fs);
 }
 

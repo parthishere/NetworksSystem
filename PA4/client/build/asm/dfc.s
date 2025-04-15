@@ -17,6 +17,9 @@
 	.string	":"
 .LC6:
 	.string	"\n"
+	.align 8
+.LC7:
+	.string	"Number of servers configured %d \n"
 	.text
 	.globl	read_server_conf
 	.type	read_server_conf, @function
@@ -52,7 +55,7 @@ read_server_conf:
 	movq	$0, -1080(%rbp)
 	.loc 1 155 10
 	jmp	.L2
-.L7:
+.L8:
 .LBB2:
 	.loc 1 158 19
 	movl	$40, %edi
@@ -201,9 +204,24 @@ read_server_conf:
 	movl	$1023, %esi
 	movq	%rax, %rdi
 	call	fgets@PLT
-	.loc 1 155 43 discriminator 1
+	.loc 1 155 51 discriminator 1
 	testq	%rax, %rax
-	jne	.L7
+	je	.L7
+	.loc 1 155 56 discriminator 1
+	movq	-1112(%rbp), %rax
+	movl	40(%rax), %eax
+	.loc 1 155 51 discriminator 1
+	cmpl	$1023, %eax
+	jle	.L8
+.L7:
+	.loc 1 191 5
+	movq	-1112(%rbp), %rax
+	movl	40(%rax), %eax
+	movl	%eax, %esi
+	leaq	.LC7(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
 	.loc 1 192 5
 	movq	-1072(%rbp), %rax
 	movq	%rax, %rdi
@@ -212,9 +230,9 @@ read_server_conf:
 	nop
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
-	je	.L8
+	je	.L9
 	call	__stack_chk_fail@PLT
-.L8:
+.L9:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -223,7 +241,7 @@ read_server_conf:
 	.size	read_server_conf, .-read_server_conf
 	.section	.rodata
 	.align 8
-.LC7:
+.LC8:
 	.string	"\033[31m[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n\033[0m"
 	.text
 	.globl	main
@@ -255,12 +273,12 @@ main:
 	call	pthread_mutex_init@PLT
 	.loc 1 218 8
 	cmpl	$3, -132(%rbp)
-	je	.L10
+	je	.L11
 	.loc 1 218 19 discriminator 1
 	cmpl	$2, -132(%rbp)
-	je	.L10
+	je	.L11
 	.loc 1 220 9
-	leaq	.LC7(%rip), %rax
+	leaq	.LC8(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -270,7 +288,7 @@ main:
 	.loc 1 223 9
 	movl	$1, %edi
 	call	exit@PLT
-.L10:
+.L11:
 	.loc 1 226 5
 	leaq	-112(%rbp), %rax
 	movq	%rax, %rdi
@@ -293,7 +311,7 @@ main:
 	movq	-120(%rbp), %rax
 	.loc 1 231 7
 	testq	%rax, %rax
-	je	.L11
+	je	.L12
 	.loc 1 232 9
 	leaq	-112(%rbp), %rax
 	movq	%rax, %rdi
@@ -303,16 +321,16 @@ main:
 	.loc 1 244 1
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L14
-	jmp	.L15
-.L11:
+	je	.L15
+	jmp	.L16
+.L12:
 	.loc 1 235 9
 	movl	$0, %edi
 	call	exit@PLT
-.L15:
+.L16:
 	.loc 1 244 1
 	call	__stack_chk_fail@PLT
-.L14:
+.L15:
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -321,33 +339,33 @@ main:
 	.size	main, .-main
 	.section	.rodata
 	.align 8
-.LC8:
+.LC9:
 	.string	"\033[33m\n\nThis client can support distributed FTP\n"
 	.align 8
-.LC9:
+.LC10:
 	.string	"Currently this program can support following commands "
 	.align 8
-.LC10:
+.LC11:
 	.string	"get <filename>   : Get the file name in server and print the file"
 	.align 8
-.LC11:
+.LC12:
 	.string	"put <filename>   : if filename does not exists on server, create one. "
 	.align 8
-.LC12:
+.LC13:
 	.string	"delete <filename>: if filename does exists on server, delete that file"
 	.align 8
-.LC13:
+.LC14:
 	.string	"ls               : get the list of all the files/chunks in all server and print it"
 	.align 8
-.LC14:
+.LC15:
 	.string	"exit             : exit from the client program and free the resources in client and server"
 	.align 8
-.LC15:
+.LC16:
 	.string	"server info      : get to know server info"
 	.align 8
-.LC16:
-	.string	"help             : print this help "
 .LC17:
+	.string	"help             : print this help "
+.LC18:
 	.string	"\n\033[0m"
 	.text
 	.globl	print_menu
@@ -363,43 +381,43 @@ print_menu:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	.loc 1 259 5
-	leaq	.LC8(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 260 5
 	leaq	.LC9(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 262 5
+	.loc 1 260 5
 	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 263 5
+	.loc 1 262 5
 	leaq	.LC11(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 264 5
+	.loc 1 263 5
 	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 265 5
+	.loc 1 264 5
 	leaq	.LC13(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 266 5
+	.loc 1 265 5
 	leaq	.LC14(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 267 5
+	.loc 1 266 5
 	leaq	.LC15(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 268 5
+	.loc 1 267 5
 	leaq	.LC16(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 269 5
+	.loc 1 268 5
 	leaq	.LC17(%rip), %rax
+	movq	%rax, %rdi
+	call	puts@PLT
+	.loc 1 269 5
+	leaq	.LC18(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
