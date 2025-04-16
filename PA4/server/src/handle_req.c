@@ -129,11 +129,11 @@ void *handle_req(sockdetails_t *sd)
                     total_bytes+=numbytes;
                 }
                 total_bytes = 0;
-                // while(total_bytes < message_header.data_length){
-                //     numbytes = 
-                    fwrite(&recieved_buf[total_bytes], message_header.data_length, 1, fs);
-                //     total_bytes += numbytes;
-                // }
+                while(total_bytes < message_header.data_length){
+                    numbytes = fwrite(&recieved_buf[total_bytes], message_header.data_length, 1, fs);
+                    total_bytes += numbytes *message_header.data_length;
+                    printf("size %d \n", total_bytes);
+                }
                 free(filename);
                 fclose(fs);
             }

@@ -60,8 +60,10 @@ get_in_addr:
 .LC7:
 	.string	"data : %s\n"
 .LC8:
-	.string	"%s_%s"
+	.string	"size %d \n"
 .LC9:
+	.string	"%s_%s"
+.LC10:
 	.string	"rb"
 	.text
 	.globl	handle_req
@@ -92,7 +94,7 @@ handle_req:
 	movq	%fs:40, %rax
 	movq	%rax, -24(%rbp)
 	xorl	%eax, %eax
-.L20:
+.L22:
 .LBB2:
 .LBB3:
 	.loc 1 64 9
@@ -172,7 +174,7 @@ handle_req:
 	movl	$0, %eax
 	call	fprintf@PLT
 	.loc 1 77 13 is_stmt 1
-	jmp	.L21
+	jmp	.L23
 .L7:
 	.loc 1 81 17
 	cmpl	$0, -61692(%rbp)
@@ -187,7 +189,7 @@ handle_req:
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 87 13 is_stmt 1
-	jmp	.L21
+	jmp	.L23
 .L9:
 	.loc 1 91 18
 	movq	-61720(%rbp), %rax
@@ -208,7 +210,7 @@ handle_req:
 	andq	%rdx, %rax
 	.loc 1 91 17
 	testq	%rax, %rax
-	je	.L20
+	je	.L22
 .LBB4:
 	.loc 1 93 13
 	leaq	-61472(%rbp), %rax
@@ -230,7 +232,7 @@ handle_req:
 	movl	%eax, -61688(%rbp)
 	.loc 1 97 16 discriminator 1
 	cmpl	$0, -61688(%rbp)
-	js	.L24
+	js	.L26
 	.loc 1 104 16
 	cmpl	$0, -61688(%rbp)
 	jne	.L13
@@ -245,7 +247,7 @@ handle_req:
 	movl	$0, %eax
 	call	fprintf@PLT
 	.loc 1 107 17 is_stmt 1
-	jmp	.L21
+	jmp	.L23
 .L13:
 	.loc 1 110 13
 	movl	-61636(%rbp), %edi
@@ -362,20 +364,48 @@ handle_req:
 	jb	.L16
 	.loc 1 131 29
 	movl	$0, -61700(%rbp)
-	.loc 1 134 70
+	.loc 1 132 22
+	jmp	.L17
+.L18:
+	.loc 1 133 81
 	movl	-61636(%rbp), %eax
-	.loc 1 134 21
+	.loc 1 133 32
 	movl	%eax, %esi
-	.loc 1 134 28
+	.loc 1 133 39
 	leaq	-61472(%rbp), %rdx
 	movl	-61700(%rbp), %eax
 	cltq
 	leaq	(%rdx,%rax), %rdi
-	.loc 1 134 21
+	.loc 1 133 32
 	movq	-61656(%rbp), %rax
 	movq	%rax, %rcx
 	movl	$1, %edx
 	call	fwrite@PLT
+	.loc 1 133 30 discriminator 1
+	movl	%eax, -61688(%rbp)
+	.loc 1 134 60
+	movl	-61636(%rbp), %edx
+	.loc 1 134 45
+	movl	-61688(%rbp), %eax
+	imull	%eax, %edx
+	.loc 1 134 33
+	movl	-61700(%rbp), %eax
+	addl	%edx, %eax
+	movl	%eax, -61700(%rbp)
+	.loc 1 135 21
+	movl	-61700(%rbp), %eax
+	movl	%eax, %esi
+	leaq	.LC8(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+.L17:
+	.loc 1 132 51
+	movl	-61636(%rbp), %eax
+	.loc 1 132 35
+	movl	-61700(%rbp), %edx
+	cmpl	%eax, %edx
+	jb	.L18
 	.loc 1 137 17
 	movq	-61632(%rbp), %rax
 	movq	%rax, %rdi
@@ -385,13 +415,13 @@ handle_req:
 	movq	%rax, %rdi
 	call	fclose@PLT
 .LBE5:
-	jmp	.L20
+	jmp	.L22
 .L14:
 	.loc 1 140 35
 	movzbl	-61644(%rbp), %eax
 	.loc 1 140 20
 	testb	%al, %al
-	jne	.L20
+	jne	.L22
 .LBB6:
 	.loc 1 141 17
 	leaq	-61472(%rbp), %rax
@@ -424,13 +454,13 @@ handle_req:
 	movzbl	%al, %ecx
 	leaq	-61472(%rbp), %rdx
 	leaq	-61680(%rbp), %rax
-	leaq	.LC8(%rip), %rsi
+	leaq	.LC9(%rip), %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	asprintf@PLT
 	.loc 1 147 28
 	movq	-61680(%rbp), %rax
-	leaq	.LC9(%rip), %rdx
+	leaq	.LC10(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	fopen@PLT
@@ -475,8 +505,8 @@ handle_req:
 	movl	%eax, %edi
 	call	send@PLT
 	.loc 1 157 22
-	jmp	.L18
-.L19:
+	jmp	.L20
+.L21:
 	.loc 1 158 38
 	leaq	-30752(%rbp), %rdx
 	movl	-61696(%rbp), %eax
@@ -493,11 +523,11 @@ handle_req:
 	.loc 1 159 32
 	movl	-61688(%rbp), %eax
 	addl	%eax, -61696(%rbp)
-.L18:
+.L20:
 	.loc 1 157 34
 	movl	-61696(%rbp), %eax
 	cmpl	-61684(%rbp), %eax
-	jl	.L19
+	jl	.L21
 	.loc 1 162 17
 	movq	-61680(%rbp), %rax
 	movq	%rax, %rdi
@@ -506,13 +536,13 @@ handle_req:
 .LBE4:
 .LBE2:
 	.loc 1 63 5
-	jmp	.L20
-.L24:
+	jmp	.L22
+.L26:
 .LBB8:
 .LBB7:
 	.loc 1 99 17
 	nop
-.L21:
+.L23:
 .LBE7:
 .LBE8:
 	.loc 1 178 5
@@ -525,9 +555,9 @@ handle_req:
 	.loc 1 181 1
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
-	je	.L23
+	je	.L25
 	call	__stack_chk_fail@PLT
-.L23:
+.L25:
 	addq	$61712, %rsp
 	popq	%rbx
 	popq	%r12
@@ -2030,7 +2060,7 @@ handle_req:
 	.byte	0x1
 	.byte	0xae
 	.byte	0x1
-	.quad	.L21
+	.quad	.L23
 	.uleb128 0x1c
 	.long	.LLRL0
 	.uleb128 0x5
