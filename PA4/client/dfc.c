@@ -15,134 +15,6 @@ void print_menu();
 
 
 
-/**
- * Handle network errors and timeouts
- *
- * Processes network operation errors, handles timeouts, and sends error notifications
- * to the remote peer when necessary. Prints error messages in red for visibility.
- *
- * @param sd   Pointer to socket details structure
- * @param msg  Error message to be displayed using perror()
- *
- * Error handling:
- * - EAGAIN/EWOULDBLOCK: Indicates timeout condition
- * - Other errors: Sends ERROR_FOR_DYNAMIC_DATA to peer
- */
-// void error(sockDetails_t *sd, char *msg)
-// {
-//     printf(RED "[-] Error somewhere ! Check below message to see details \n" RESET);
-
-//     perror(msg);
-
-//     /* Check for timeout conditions */
-//     if (errno == EAGAIN || errno == EWOULDBLOCK)
-//     {
-//         printf(RED "[-] Timeout\n" RESET);
-//     }
-//     else
-//     {
-//         /* Notify peer about error condition */
-//         sendto(sd->sockfd, ERROR_FOR_DYNAMIC_DATA, strlen(ERROR_FOR_DYNAMIC_DATA), 0, (struct sockaddr *)&sd->their_addr, sd->addr_len);
-//         // close(sd->sockfd);
-//         // exit(EXIT_FAILURE);
-//     }
-// }
-
-/**
- * Wrapper for UDP packet transmission
- *
- * Sends a UDP packet and updates the sent bytes count in the socket details.
- * Handles error conditions through the error() function.
- *
- * @param sd      Pointer to socket details structure
- * @param size    Size of data to send in bytes
- * @param packet  Pointer to data buffer to send
- *
- * Note: Updates sd->sentBytes with the number of bytes sent
- */
-// void _send(sockDetails_t *sd, int size, void *packet)
-// {
-//     if ((sd->sentBytes = sendto(sd->sockfd, packet, size, 0, (struct sockaddr *)sd->their_addr, sd->addr_len)) < 0)
-//     {
-//         error(sd, "send");
-//     }
-// }
-
-/**
- * Wrapper for UDP packet reception
- *
- * Receives a UDP packet and updates the received bytes count in the socket details.
- * Handles error conditions through the error() function.
- *
- * @param sd      Pointer to socket details structure
- * @param size    Maximum size of data to receive
- * @param packet  Pointer to buffer for received data
- *
- * Note: Updates sd->recvBytes with the number of bytes received
- */
-// void _recv(sockDetails_t *sd, int size, void *packet)
-// {
-//     if ((sd->recvBytes = recvfrom(sd->sockfd, packet, size, 0, (struct sockaddr *)sd->their_addr, &sd->addr_len)) < 0)
-//     {
-//         error(sd, "recv");
-//     }
-// }
-
-/**
- * Configure socket receive timeout
- *
- * Sets the SO_RCVTIMEO socket option to implement a timeout for receive operations.
- * Exits program on failure to set socket option.
- *
- * @param sd   Pointer to socket details structure
- * @param sec  Timeout value in seconds
- *
- * Implementation:
- * - Uses timeval structure for timeout specification
- * - Sets microseconds to 0 (timeout precision in seconds only)
- * - Applies timeout using setsockopt with SO_RCVTIMEO
- */
-// void set_timeout(sockDetails_t *sd, int sec)
-// {
-
-//     struct timeval timeout;
-//     timeout.tv_sec = sec;
-//     timeout.tv_usec = 0;
-
-//     if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
-//     {
-//         perror("setsockopt");
-//         exit(1);
-//     }
-// }
-
-/**
- * Remove socket receive timeout
- *
- * Disables the SO_RCVTIMEO socket option by setting it to zero.
- * Exits program on failure to set socket option.
- *
- * @param sd  Pointer to socket details structure
- *
- * Implementation:
- * - Sets both seconds and microseconds to 0
- * - Effectively removes any timeout on receive operations
- */
-// void remove_timeout(sockDetails_t *sd)
-// {
-//     struct timeval timeout;
-//     timeout.tv_sec = 0;
-//     timeout.tv_usec = 0;
-
-//     if (setsockopt(sd->sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
-//     {
-//         perror("setsockopt");
-//         exit(1);
-//     }
-// }
-
-
-
 void read_server_conf(sockDetails_t *sd){
     FILE *fs = fopen(SERVER_CONF, "r");
     char line[1024];
@@ -166,16 +38,16 @@ void read_server_conf(sockDetails_t *sd){
 
         char *line_dup = strdup(line);
         char *tok = strtok_r(line, " ", &saved_remaining_line);
-        // free(tok);
+
         tok = strtok_r(NULL, " ", &saved_remaining_line);
         sscanf(tok, "dfs%d", &dfs_no);
         tok = strtok_r(NULL, ":", &saved_remaining_line);
         
-        current->server_ip = strndup(tok, strlen(tok));
+        current->server_ip = strndup(tok, strlen(tok)); // free
         if(current->server_ip == NULL) exit(EXIT_FAILURE);
         
         tok = strtok_r(NULL, "\n", &saved_remaining_line);
-        current->server_port = strndup(tok, strlen(tok));
+        current->server_port = strndup(tok, strlen(tok)); // free
         
         if(current->server_port == NULL) exit(EXIT_FAILURE);
 
@@ -191,6 +63,9 @@ void read_server_conf(sockDetails_t *sd){
     printf("Number of servers configured %d \n", sd->number_of_servers);
     fclose(fs);
 }
+
+
+
 
 /**
  * Main entry point for FTP client application
@@ -234,11 +109,6 @@ int main(int argc, char *argv[])
     else{
         exit(EXIT_SUCCESS);
     }
-
-
-    
-
-    // close(sockfd);
 
     return EXIT_SUCCESS;
 }

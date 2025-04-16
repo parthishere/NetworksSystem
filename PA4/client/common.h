@@ -70,6 +70,7 @@
 #define TIMEOUT_SEC 10         /* Connection timeout in seconds */
 #define RETRY_COUNT 3
 #define MAX_NUMBER_OF_SERVERS 1024
+#define NUMBER_OF_PAIRS 4
 #define MAX_NUMBER_OF_CHUNKS_PER_SERVER 2
 /** @} */
 
@@ -127,36 +128,6 @@ typedef enum
     number_of_command, // Total number of commands (used for validation)
 } commands_t;
 
-/**
- * @enum contentType_s
- * @brief Supported content types for responses
- */
-typedef enum contentType_s
-{
-    TEXT_HTML,              /* text/html */
-    TEXT_CSS,               /* text/css */
-    TEXT_PLAIN,             /* text/plain */
-    APPLICATION_JAVASCRIPT, /* application/javascript */
-    IMAGE_PNG,              /* image/png */
-    IMAGE_GIF,              /* image/gif */
-    IMAGE_JPG,              /* image/jpeg */
-    IMAGE_X_ICON,           /* image/x-icon */
-    total_content_types     /* Count of supported types */
-} contentType_t;
-
-/**
- * @enum parse_result_t
- * @brief Parser result codes
- */
-typedef enum
-{
-    PARSE_OK = 0,                     /* Successful parse */
-    PARSE_ERROR_INVALID_METHOD = -1,  /* Unknown HTTP method */
-    PARSE_ERROR_INVALID_URI = -2,     /* Malformed URI */
-    PARSE_ERROR_INVALID_VERSION = -3, /* Unsupported HTTP version */
-    PARSE_ERROR_MALFORMED = -4,       /* General syntax error */
-    PARSE_ERROR_BUFFER_OVERFLOW = -5  /* Request too large */
-} parse_result_t;
 
 
 
@@ -183,6 +154,8 @@ typedef struct
     commands_t command_int;
     serverDetails_t *servers_details;
     int number_of_servers;
+    int number_of_available_servers;
+    int *server_sock_fds;
     struct addrinfo *connect_to_info;        // Client address information
     int timeout;
     pthread_mutex_t lock;
@@ -212,3 +185,8 @@ typedef struct
 void *getin_addr(struct sockaddr *sa);
 
 #endif
+
+
+// server dfs2 127.0.0.1:8004
+// server dfs3 127.0.0.1:8005
+// server dfs4 127.0.0.1:8006
