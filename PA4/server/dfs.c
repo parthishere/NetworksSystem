@@ -1,4 +1,7 @@
 #include "common.h"
+#include "handle_req.h"
+#include "queue.h"
+#include "setup.h"
 
 char *str2md5(char *str, int length)
 {
@@ -36,175 +39,95 @@ char *str2md5(char *str, int length)
 
 
 
+static volatile sig_atomic_t shutdown_flag = 0;
+static pthread_mutex_t shutdown_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-
-
-
-/**
- * Clean up Client Resources
- * 
- * Performs cleanup operations when client requests disconnection.
- * Sends acknowledgment to client and removes timeout settings.
- * 
- * @param sd  Pointer to socket details structure
- * 
- * Note: Future enhancement planned for child process handling
- */
-void cleanup_client_resouces(sockdetails_t *sd)
-{
-    /* Send acknowledgment to client */
-    char transmit_buffer[TRANSMIT_SIZE];
-    bzero(transmit_buffer, TRANSMIT_SIZE);
-    snprintf(transmit_buffer, sizeof(ACK), ACK);
-    _send(sd, TRANSMIT_SIZE, transmit_buffer);
-
-    /* Remove timeout and cleanup */
-    remove_timeout(sd);
-    // something cleanup, we will use child processes to make it more useable !
+void sig_handler(int num) {
+    char *data = "\n\nCleaning up resources...\n";
+    write(STDOUT_FILENO, data, strlen(data));
+    shutdown_flag = 1;
 }
 
-
-/**
- * Server Main Function
- * 
- * Initializes UDP server, configures socket options, and enters
- * main processing loop. Handles IPv4/IPv6 connections with timeout
- * and address reuse capabilities.
- * 
- * Server Features:
- * - IPv4/IPv6 support (AF_UNSPEC)
- * - Configurable port (>5000)
- * - Socket timeout handling
- * - Address reuse capability
- * 
- * @param argc Argument count (expects 2)
- * @param argv Arguments (program name, port number)
- * @return EXIT_SUCCESS on normal termination, EXIT_FAILURE on error
- */
 int main(int argc, char *argv[])
-{   
-    /* Validate command line arguments */
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sigemptyset(&sa.sa_mask);    // Clear signal mask
+    sa.sa_flags = 0;   
+    sa.sa_handler = sig_handler;
+    
+    sigaction(SIGINT, &sa, NULL);
+    signal(SIGPIPE, SIG_IGN);
+
+    sockdetails_t sd;
+    pthread_mutex_init(&sd.lock, NULL);
+    
+    printf("Argv[1] %s\n", argv[1]);
+    // int status = mkdir(argv[1], 0777); 
+    // if (status == 0) {
+    //     printf(GRN"[+] Directory '%s' created successfully.\n"RESET, argv[1]);
+    // } else if (errno == EEXIST) {
+    //     printf(GRN"[+] Directory '%s' already exists.\n"RESET, argv[1]);
+    // } else {
+    //     perror(RED"[-] Error creating directory");
+    //     exit(EXIT_FAILURE);
+    // }
+
     if (argc != 3)
     {
-        printf(RED "[-] You messed up, command is ./server <WORKING_DIR> <PORT> | current command ARGS: (%d)\n" RESET, argc);
+        
+        printf(RED "[-] You messed up, command is ./dfs <DFS_DIR> <PORT> | (passed numer of args: %d) \n" RESET, argc);
         exit(EXIT_FAILURE);
+        
+        
     }
+    
+    
+    
+    printf(GRN"[+] Cache Timeout is set to %d sec\n"RESET,sd.timeout);
+    sd.addr_len = sizeof(sd.client_info);
 
-    /*
-    struct addrinfo {
-               int              ai_flags;
-               int              ai_family;
-               int              ai_socktype;
-               int              ai_protocol;
-               socklen_t        ai_addrlen;
-               struct sockaddr *ai_addr;
-               char            *ai_canonname;
-               struct addrinfo *ai_next;
-           };
 
-    */
-   /* Initialize network structures */
-    struct addrinfo hints, *serv_info, *temp;
+ 
+    init_socket(&sd, argv[2]);
 
-    int status;
-    int sockfd;
+#if USE_FORK == 0
+    threadpool tp = create_threadpool(TOTAL_THREADS);
+    if (tp == NULL)
+        goto cleanup;
+#else
+    printf(RED"[-] Only supports Threadpool !!!\n"RESET);
+    exit(EXIT_FAILURE);
+#endif
 
-    int numbytes;
-    char buf[MAXDATASIZE];
-    char ip[INET6_ADDRSTRLEN];
 
-    /* Configure address hints structure */
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE; // fill up my IP
-
-    /* Validate and set port number */
-    char *server_port = argv[1];
-    printf("Passed Server Port %s\n", server_port);
-    if (atoi(server_port) <= 5000)
+    while (!shutdown_flag)
     {
-        fprintf(stderr, RED "[-] Port Value <= 5000 ! keep port value more than 5000 \n" RESET);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Get address information */
-    if ((status = getaddrinfo(NULL, server_port, &hints, &serv_info)) < 0)
-    {
-        fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-        exit(EXIT_FAILURE);                                                   // exit if there is an error
-    }
-    printf(GRN "[+] getaddrinfo call successful\n" RESET);
-
-        /* Create and configure socket */
-
-    for (temp = serv_info; temp != NULL; temp = temp->ai_next)
-    {
-        /*
-        int socket(int domain, int type, int protocol);
-        we need domain to be IF_INET (IPv4)
-        we need type to be UDP
-        and protocol: specifies a particular protocol to be used with the socket. Normally only a single protocol exists to support a particular socket type within a given protocol family, in which case protocol can be specified as 0
-        */
-        if ((sockfd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+        if ((sd.client_sock_fd = accept(sd.sockfd, (struct sockaddr *)&sd.client_info, &sd.addr_len)) < 0 && errno != EINTR)
         {
-            perror(RED "server: socket");
-            continue;
-        }
-        printf(GRN "[+] socket call successful\n" RESET);
-
-        /* Configure socket timeouts */
-        struct timeval timeout;
-        timeout.tv_sec = TIMEOUT;
-        timeout.tv_usec = 0;
-
-        int yes = 1;
-        /* Set socket options */
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) == -1)
-        {
-            perror(RED "setsockopt");
-            exit(1);
+            perror(RED"accept"RESET);
+            goto cleanup;
         }
 
-        /*
-        int bind(int sockfd, const struct sockaddr *addr,
-                socklen_t addrlen);
-        */
-        if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
-        {
-            close(sockfd);
-            perror(RED "server: bind");
-            continue;
+        dispatch(tp, handle_req, &sd);
+
+
+        pthread_mutex_lock(&shutdown_mutex);
+        if(shutdown_flag){
+            break;
         }
+        pthread_mutex_unlock(&shutdown_mutex);
 
-        break;
     }
 
-    /* Verify socket creation and binding */
-    if (temp == NULL)
-    {
-        fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
+cleanup:;
 
-     /* Display server information */
-    inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
-    printf(GRN "[+] Server recieving UDP packet to : %s\n" RESET, ip);
+    close(sd.sockfd);
 
-    freeaddrinfo(serv_info); // we do not need this anymore
+    destroy_threadpool(tp);
 
-     /* Main server loop */
-    bool exit = false;
-    while (true)
-    {
-        recieve_and_send(sockfd);
-    }
 
-    /* Cleanup */
-    close(sockfd);
-
-    return EXIT_SUCCESS;
+    return 0;
 }
 
