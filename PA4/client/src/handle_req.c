@@ -83,8 +83,8 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
     serverDetails_t *current = sd->servers_details;
     int i = 0;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
-    int chunks_stored[sd->number_of_servers];                           // NUMBER_OF_PAIRS
-    memset(chunks_stored, 0, sd->number_of_servers *4);
+    int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
+    memset(chunks_stored, 0, sd->number_of_servers * 4);
     while (current)
     {
 
@@ -141,10 +141,29 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
 
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
         printf("chunks: ");
+        char *send_command;
+        asprintf(&send_command, "put %s", sd->filename);
+        if (send(current->client_sock_fd, send_command, strlen(send_command), 0) < 0)
+        {
+            fprintf(stderr, "sent failed %d", errno);
+            goto next;
+        }
+        free(send_command);
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             printf("%d ", (index + j) % sd->number_of_servers); // NUMBER_OF_PAIRS
             chunks_stored[(index + j) % sd->number_of_servers]++;
+
+            if (send(current->client_sock_fd, chunks[(index + j) % sd->number_of_servers], chunk_sizes[(index + j) % sd->number_of_servers] + 5, 0) < 0)
+            {
+                fprintf(stderr, "sent failed %d", errno);
+                goto next;
+            }
+        }
+        if (send(current->client_sock_fd, END_OF_DYNAMIC_DATA, 7, 0) < 0)
+        {
+            fprintf(stderr, "sent failed %d", errno);
+            goto next;
         }
         printf("for server %d\n", i);
 
@@ -154,12 +173,6 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
                    "[+] (%d) Server IP address: %s:%s\n" RESET,
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
-
-        if (send(current->client_sock_fd, message, strlen(message), 0) < 0)
-        {
-            fprintf(stderr, "sent failed %d", errno);
-            goto next;
-        }
 
     next:;
         i++;
@@ -177,7 +190,6 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
         }
     }
     printf("Suck sess full put\n");
-
 }
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
@@ -185,7 +197,7 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     int i = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
-    int chunks_stored[sd->number_of_servers];                           // NUMBER_OF_PAIRS
+    int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
     while (current)
     {
         struct addrinfo hints, *temp;
