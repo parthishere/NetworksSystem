@@ -84,6 +84,7 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
     int i = 0;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     int chunks_stored[sd->number_of_servers];                           // NUMBER_OF_PAIRS
+    memset(chunks_stored, 0, sd->number_of_servers *4);
     while (current)
     {
 
@@ -143,7 +144,7 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             printf("%d ", (index + j) % sd->number_of_servers); // NUMBER_OF_PAIRS
-            chunks_stored[index]++;
+            chunks_stored[(index + j) % sd->number_of_servers]++;
         }
         printf("for server %d\n", i);
 
@@ -171,9 +172,12 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
     {
         if (chunks_stored[i] <= 0)
         {
-            printf("Could not put the file realaibley\n");
+            printf("Could not put the file realaibley chunk :%d\n", i);
+            return;
         }
     }
+    printf("Suck sess full put\n");
+
 }
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
@@ -240,7 +244,7 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             printf("%d ", (index + j) % sd->number_of_servers); // NUMBER_OF_PAIRS
-            chunks_stored[index]++;
+            chunks_stored[(index + j) % sd->number_of_servers]++;
         }
         printf("for server %d\n", i);
 
