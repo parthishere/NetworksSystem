@@ -26,7 +26,6 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-
 /**
  * @function handle_req
  * @brief Main HTTP request handler function
@@ -99,7 +98,29 @@ void *handle_req(sockdetails_t *sd)
                 break;
             }
 
-            total_bytes += (numbytes - 1);
+            printf("command: (%d) %s\n", total_bytes, recieved_buf);
+
+            if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
+            {
+                break;
+                fprintf(stderr, RED "[-] (%d) read\n", gettid());
+                // break;
+            }
+           
+            printf("\n\n==============================================================\n"
+                   "[+] (%d) Received request from client [%d bytes]:\n"
+                   "==============================================================\n"
+                   "%s\n",
+                   gettid(), numbytes, recieved_buf);
+
+            if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
+            {
+                break;
+                fprintf(stderr, RED "[-] (%d) read\n", gettid());
+                // break;
+            }
+
+
 
             printf("\n\n==============================================================\n"
                    "[+] (%d) Received request from client [%d bytes]:\n"
@@ -107,10 +128,6 @@ void *handle_req(sockdetails_t *sd)
                    "%s\n",
                    gettid(), total_bytes, recieved_buf);
 
-           
-
-            
-            
             memset(recieved_buf, 0, sizeof(recieved_buf));
 
             /* Clear header for next request */
@@ -125,21 +142,19 @@ cleanup:;
     return NULL;
 }
 
-
-
 // /**
 //  * Process Client Commands and Handle Responses
-//  * 
+//  *
 //  * Main command processing function that receives client commands,
 //  * identifies the requested operation, and dispatches to appropriate handlers.
 //  * Supports GET, PUT, DELETE, LS, and EXIT operations.
-//  * 
+//  *
 //  * Protocol Flow:
 //  * 1. Receive command from client
 //  * 2. Extract client IP and command
 //  * 3. Parse and validate command
 //  * 4. Dispatch to appropriate handler
-//  * 
+//  *
 //  * @param sockfd Socket file descriptor for client communication
 //  */
 // void recieve_and_send(int sockfd)
@@ -198,4 +213,3 @@ cleanup:;
 
 //     */
 // }
-

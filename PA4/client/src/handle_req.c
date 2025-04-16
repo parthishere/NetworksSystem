@@ -142,29 +142,33 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
         printf("chunks: ");
         char *send_command;
-        asprintf(&send_command, "put %s", sd->filename);
-        if (send(current->client_sock_fd, send_command, strlen(send_command), 0) < 0)
-        {
-            fprintf(stderr, "sent failed %d", errno);
-            goto next;
-        }
-        free(send_command);
+        
+        
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             printf("%d ", (index + j) % sd->number_of_servers); // NUMBER_OF_PAIRS
             chunks_stored[(index + j) % sd->number_of_servers]++;
+            
+            asprintf(&send_command, "put%d%s", (index + j) % sd->number_of_servers, sd->filename);
+            if (send(current->client_sock_fd, send_command, strlen(send_command), 0) < 0)
+            {
+                fprintf(stderr, "sent failed %d", errno);
+                goto next;
+            }
+            free(send_command);
 
-            if (send(current->client_sock_fd, chunks[(index + j) % sd->number_of_servers], chunk_sizes[(index + j) % sd->number_of_servers] + 5, 0) < 0)
+            if (send(current->client_sock_fd, chunks[(index + j) % sd->number_of_servers], 27+5, 0) < 0)
+            {
+                fprintf(stderr, "sent failed %d", errno);
+                goto next;
+            }
+            if (send(current->client_sock_fd, END_OF_DYNAMIC_DATA, 7, 0) < 0)
             {
                 fprintf(stderr, "sent failed %d", errno);
                 goto next;
             }
         }
-        if (send(current->client_sock_fd, END_OF_DYNAMIC_DATA, 7, 0) < 0)
-        {
-            fprintf(stderr, "sent failed %d", errno);
-            goto next;
-        }
+        
         printf("for server %d\n", i);
 
         char s[INET6_ADDRSTRLEN];
@@ -387,7 +391,8 @@ void *handle_req(sockDetails_t *sd)
             *(chunk + 1) = ((chunk_size >> 8) & 0xFF);
             *(chunk + 2) = ((chunk_size >> 16) & 0xFF);
             *(chunk + 3) = ((chunk_size >> 24) & 0xFF);
-            *(chunk + 4) = i + 1;
+            *(chunk + 4) = i;
+            printf("Size of chunk %d is %d for filename %s\n",i, chunk_size, sd->filename);
         }
 
         FILE *out_file = fopen("reconstructed_file", "wb");
