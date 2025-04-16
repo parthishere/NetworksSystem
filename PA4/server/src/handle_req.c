@@ -114,14 +114,54 @@ void *handle_req(sockdetails_t *sd)
                 numbytes = recv(sd->client_sock_fd, recieved_buf, message_header.filename_length, MSG_WAITALL);
                 printf("filename : %s\n", recieved_buf);
                 total_bytes = 0;
+
+                char *filename;
+                asprintf(&filename, "%s_%d", recieved_buf, message_header.chunk_id);
+                FILE *fs = fopen(filename, "wb");
+
+                
+               
+
+                memset(recieved_buf, 0, sizeof(recieved_buf));
                 while(total_bytes < message_header.data_length){
-                    memset(recieved_buf, 0, sizeof(recieved_buf));
-                    numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, MSG_WAITALL);
+                    numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], message_header.data_length, MSG_WAITALL);
                     printf("data : %s\n", recieved_buf);
                     total_bytes+=numbytes;
                 }
-                
+                total_bytes = 0;
+                // while(total_bytes < message_header.data_length){
+                //     numbytes = 
+                    fwrite(&recieved_buf[total_bytes], message_header.data_length, 1, fs);
+                //     total_bytes += numbytes;
+                // }
+                free(filename);
+                fclose(fs);
+            }
+            else if(message_header.command == GET){
+                memset(recieved_buf, 0, sizeof(recieved_buf));
+                numbytes = recv(sd->client_sock_fd, recieved_buf, message_header.filename_length, MSG_WAITALL);
+                printf("filename : %s\n", recieved_buf);
 
+                char *filename;
+                asprintf(&filename, "%s_%s", recieved_buf, message_header.chunk_id);
+                FILE *fs = fopen(filename, "rb");
+                char transmit_buf[TRANSMIT_SIZE];
+                int total_size = 0;
+                fseek(fs, 0, SEEK_END);
+                int file_size = ftell(fs);
+                fseek(fs, 0, SEEK_SET);
+                message_header_t message_header = {GET, 0, strlen(recieved_buf), file_size};
+
+                send(sd->client_sock_fd, &message_header, sizeof(message_header), 0);
+                // send(sd->client_sock_fd, &message_header, sizeof())
+                while(total_size < file_size){
+                    numbytes = fread(&transmit_buf[total_size], TRANSMIT_SIZE, 1, fs);
+                    total_size += numbytes;
+                    
+                }
+                free(filename);
+                // fread()
+                
             }
             // FILE *fs = fopen("./random.txt", "wb");
             // fwrite(recieved_buf, 1, numbytes, fs);
