@@ -26,6 +26,15 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+
+typedef struct message_header_s {
+    uint8_t command;     // 0=put, 1=get
+    uint8_t chunk_id;    // Which chunk (0-based)
+    uint32_t filename_length; // length of filename
+    uint32_t data_length; // Length of following data
+}message_header_t;
+
+
 /**
  * @function handle_req
  * @brief Main HTTP request handler function
@@ -84,8 +93,8 @@ void *handle_req(sockdetails_t *sd)
             memset(recieved_buf, 0, sizeof(recieved_buf));
             /* Read incoming request with error checking */
             int total_bytes = 0;
-
-            if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
+            message_header_t message_header;
+            if ((numbytes = recv(sd->client_sock_fd, &message_header, sizeof(message_header), MSG_WAITALL)) < 0)
             {
                 break;
                 fprintf(stderr, RED "[-] (%d) read\n", gettid());
@@ -97,38 +106,27 @@ void *handle_req(sockdetails_t *sd)
                 fprintf(stderr, RED "[-] (%d) peer has closed the connection exiting\n", gettid());
                 break;
             }
+            
+            printf("%d) command %d, chunk: %d, filename %d, data %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
+            
+            if(message_header.command == PUT){
+                memset(recieved_buf, 0, sizeof(recieved_buf));
+                numbytes = recv(sd->client_sock_fd, recieved_buf, message_header.filename_length, MSG_WAITALL);
+                printf("filename : %s\n", recieved_buf);
+                total_bytes = 0;
+                while(total_bytes < message_header.data_length){
+                    memset(recieved_buf, 0, sizeof(recieved_buf));
+                    numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, MSG_WAITALL);
+                    printf("data : %s\n", recieved_buf);
+                    total_bytes+=numbytes;
+                }
+                
 
-            printf("command: (%d) %s\n", total_bytes, recieved_buf);
-
-            if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
-            {
-                break;
-                fprintf(stderr, RED "[-] (%d) read\n", gettid());
-                // break;
             }
-           
-            printf("\n\n==============================================================\n"
-                   "[+] (%d) Received request from client [%d bytes]:\n"
-                   "==============================================================\n"
-                   "%s\n",
-                   gettid(), numbytes, recieved_buf);
-
-            if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
-            {
-                break;
-                fprintf(stderr, RED "[-] (%d) read\n", gettid());
-                // break;
-            }
-
-
-
-            printf("\n\n==============================================================\n"
-                   "[+] (%d) Received request from client [%d bytes]:\n"
-                   "==============================================================\n"
-                   "%s\n",
-                   gettid(), total_bytes, recieved_buf);
-
-            memset(recieved_buf, 0, sizeof(recieved_buf));
+            // FILE *fs = fopen("./random.txt", "wb");
+            // fwrite(recieved_buf, 1, numbytes, fs);
+            // fclose(fs);
+            
 
             /* Clear header for next request */
         }

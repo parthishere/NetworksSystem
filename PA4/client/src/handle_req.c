@@ -16,6 +16,14 @@
 
 #include "handle_req.h"
 
+
+typedef struct message_header_s {
+    uint8_t command;     // 0=put, 1=get
+    uint8_t chunk_id;    // Which chunk (0-based)
+    uint32_t filename_length; // length of filename
+    uint32_t data_length; // Length of following data
+}message_header_t;
+
 uint32_t str2md5(char *str, int length)
 {
     printf("filename %s, len %d\n", str, length);
@@ -146,23 +154,24 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
         
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
-            printf("%d ", (index + j) % sd->number_of_servers); // NUMBER_OF_PAIRS
-            chunks_stored[(index + j) % sd->number_of_servers]++;
+            index = (index + j) % sd->number_of_servers;
+            printf("%d ", index); // NUMBER_OF_PAIRS
+            chunks_stored[index]++;
             
-            asprintf(&send_command, "put%d%s", (index + j) % sd->number_of_servers, sd->filename);
-            if (send(current->client_sock_fd, send_command, strlen(send_command), 0) < 0)
+            message_header_t message = {PUT, index, strlen(sd->filename), chunk_sizes[index]};
+            
+            if (send(current->client_sock_fd, &message, sizeof(message), 0) < 0)
             {
                 fprintf(stderr, "sent failed %d", errno);
                 goto next;
             }
-            free(send_command);
 
-            if (send(current->client_sock_fd, chunks[(index + j) % sd->number_of_servers], 27+5, 0) < 0)
+            if (send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0) < 0)
             {
                 fprintf(stderr, "sent failed %d", errno);
                 goto next;
             }
-            if (send(current->client_sock_fd, END_OF_DYNAMIC_DATA, 7, 0) < 0)
+            if (send(current->client_sock_fd, chunks[index], chunk_sizes[index], 0) < 0)
             {
                 fprintf(stderr, "sent failed %d", errno);
                 goto next;
@@ -384,24 +393,25 @@ void *handle_req(sockDetails_t *sd)
 
             chunk_sizes[i] = chunk_size;
 
-            char *chunk = malloc(chunk_size + 5); // free
+            char *chunk = malloc(chunk_size); // free
             chunks[i] = chunk;
+            fread(chunk, 1, chunk_size, fs);
 
-            *chunk = (chunk_size & 0xFF);
-            *(chunk + 1) = ((chunk_size >> 8) & 0xFF);
-            *(chunk + 2) = ((chunk_size >> 16) & 0xFF);
-            *(chunk + 3) = ((chunk_size >> 24) & 0xFF);
-            *(chunk + 4) = i;
+            // *chunk = (chunk_size & 0xFF);
+            // *(chunk + 1) = ((chunk_size >> 8) & 0xFF);
+            // *(chunk + 2) = ((chunk_size >> 16) & 0xFF);
+            // *(chunk + 3) = ((chunk_size >> 24) & 0xFF);
+            // *(chunk + 4) = i;
             printf("Size of chunk %d is %d for filename %s\n",i, chunk_size, sd->filename);
         }
 
         FILE *out_file = fopen("reconstructed_file", "wb");
         if (out_file)
         {
-            fwrite(chunks[0] + 5, 1, chunk_sizes[0], out_file);
-            fwrite(chunks[1] + 5, 1, chunk_sizes[1], out_file);
-            fwrite(chunks[2] + 5, 1, chunk_sizes[2], out_file);
-            fwrite(chunks[3] + 5, 1, chunk_sizes[3], out_file);
+            fwrite(chunks[0] , 1, chunk_sizes[0], out_file);
+            fwrite(chunks[1] , 1, chunk_sizes[1], out_file);
+            fwrite(chunks[2] , 1, chunk_sizes[2], out_file);
+            fwrite(chunks[3] , 1, chunk_sizes[3], out_file);
             fclose(out_file);
             printf("File reconstructed successfully\n");
         }
