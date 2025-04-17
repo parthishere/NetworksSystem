@@ -16,13 +16,13 @@
 
 #include "handle_req.h"
 
-
-typedef struct message_header_s {
-    uint8_t command;     // 0=put, 1=get
-    uint8_t chunk_id;    // Which chunk (0-based)
+typedef struct message_header_s
+{
+    uint8_t command;          // 0=put, 1=get
+    uint8_t chunk_id;         // Which chunk (0-based)
     uint32_t filename_length; // length of filename
-    uint32_t data_length; // Length of following data
-}message_header_t;
+    uint32_t data_length;     // Length of following data
+} message_header_t;
 
 uint32_t str2md5(char *str, int length)
 {
@@ -86,7 +86,7 @@ void cleanup_connection(sockDetails_t *sd)
     }
 }
 
-void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_length, char *message, char *chunks[], int chunk_sizes[], int hash)
+void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[], int hash)
 {
     serverDetails_t *current = sd->servers_details;
     int i = 0;
@@ -148,18 +148,15 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
         sd->number_of_available_servers++;
 
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
-        printf("chunks: ");
         char *send_command;
-        
-        
+
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             index = (index + j) % sd->number_of_servers;
-            printf("%d ", index); // NUMBER_OF_PAIRS
             chunks_stored[index]++;
-            
+
             message_header_t message = {PUT, index, strlen(sd->filename), chunk_sizes[index]};
-            
+
             if (send(current->client_sock_fd, &message, sizeof(message), 0) < 0)
             {
                 fprintf(stderr, "sent failed %d", errno);
@@ -171,14 +168,27 @@ void connect_save_send(sockDetails_t *sd, char servers_to_connect_to[], int arr_
                 fprintf(stderr, "sent failed %d", errno);
                 goto next;
             }
-            if (send(current->client_sock_fd, chunks[index], chunk_sizes[index], 0) < 0)
-            {
-                fprintf(stderr, "sent failed %d", errno);
-                goto next;
+            int total_bytes = 0, numbytes = 0;
+            while(total_bytes < chunk_sizes[index]){
+                if ((numbytes = send(current->client_sock_fd, chunks[index], chunk_sizes[index], 0)) < 0)
+                {
+                    fprintf(stderr, "sent failed %d", errno);
+                    goto next;
+                }
+                total_bytes += numbytes;
             }
+            printf("Sent chunk %d to server \n", index, i);
+            // ack from server
+            char recieve_buffer[RECIEVE_SIZE];
+            memset(recieve_buffer, 0, sizeof(recieve_buffer));
+            if((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) <= 0){
+                fprintf(stderr, "recv failed \n");
+            }
+
+            if(strncmp(recieve_buffer, ACK, 7) != 0) printf("nack recieved \n"); 
+
+            send(current->client_sock_fd, ACK, 7, 0); // ack from client
         }
-        
-        printf("for server %d\n", i);
 
         char s[INET6_ADDRSTRLEN];
         inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
@@ -296,26 +306,47 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     }
 }
 
-void check_if_we_can_store_it_reliably()
+void put_files(sockDetails_t *sd)
 {
-}
-
-void recv_and_showing(sockDetails_t *sd)
-{
-    serverDetails_t *current = sd->servers_details;
-    while (current)
+    FILE *fs = fopen(sd->filename, "rb");
+    if (fs == NULL)
     {
-
-        if (send(current->client_sock_fd, "ls", 2, 0) < 0)
-        {
-            fprintf(stderr, RED "[-] send failed %d \n" RESET, errno);
-            goto next;
-        }
-        printf("Sent \n");
-    next:;
-        current = current->next;
+        fprintf(stderr, "[-] Error opening file %d \n" RESET, errno);
+        return;
     }
+    uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
+    printf("hash: %u | modulo: %d\n\r", hash, hash % sd->number_of_servers);
+
+    fseek(fs, 0L, SEEK_END);
+    int size = ftell(fs);
+    fseek(fs, 0, SEEK_SET);
+
+    int chunk_sizes[MAX_NUMBER_OF_SERVERS]; // NUMBER_OF_PAIRS
+    char *chunks[MAX_NUMBER_OF_SERVERS];    // NUMBER_OF_PAIRS
+    int total_chunk_size_until_now = 0;
+
+    // NUMBER_OF_PAIRS
+    for (int i = 0; i < sd->number_of_servers; i++)
+    {
+        int chunk_size;
+        if (i == sd->number_of_servers - 1)
+            chunk_size = size - total_chunk_size_until_now;
+        else
+            chunk_size = size / sd->number_of_servers;
+        total_chunk_size_until_now += chunk_size;
+
+        chunk_sizes[i] = chunk_size;
+
+        char *chunk = malloc(chunk_size); // free
+        chunks[i] = chunk;
+        fread(chunk, 1, chunk_size, fs);
+
+        printf("Size of chunk %d is %d for filename %s\n", i, chunk_size, sd->filename);
+    }
+
+    connect_and_put_chunks(sd, chunks, chunk_sizes, hash % sd->number_of_servers);
 }
+
 /**
  * @function handle_req
  * @brief Main HTTP request handler function
@@ -347,9 +378,6 @@ void *handle_req(sockDetails_t *sd)
     /* Set timeout period for idle connections */
     struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
 
-    char servers[sd->number_of_servers];
-
-    memset(servers, 1, sd->number_of_servers);
     /* Process user commands through menu interface */
     switch (sd->command_int)
     {
@@ -362,63 +390,9 @@ void *handle_req(sockDetails_t *sd)
 
         break;
     case PUT:
+        
         /* Upload file to server */
-
-        FILE *fs = fopen(sd->filename, "rb");
-        if (fs == NULL)
-        {
-            fprintf(stderr, "[-] Error opening file %d \n" RESET, errno);
-            return NULL;
-        }
-        uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
-        printf("hash: %lu | modulo: %d\n\r", hash, hash % sd->number_of_servers);
-
-        fseek(fs, 0L, SEEK_END);
-        int size = ftell(fs);
-        fseek(fs, 0, SEEK_SET);
-
-        int chunk_sizes[MAX_NUMBER_OF_SERVERS]; // NUMBER_OF_PAIRS
-        char *chunks[MAX_NUMBER_OF_SERVERS];    // NUMBER_OF_PAIRS
-        int total_chunk_size_until_now = 0;
-
-        // NUMBER_OF_PAIRS
-        for (int i = 0; i < sd->number_of_servers; i++)
-        {
-            int chunk_size;
-            if (i == sd->number_of_servers - 1)
-                chunk_size = size - total_chunk_size_until_now;
-            else
-                chunk_size = size / sd->number_of_servers;
-            total_chunk_size_until_now += chunk_size;
-
-            chunk_sizes[i] = chunk_size;
-
-            char *chunk = malloc(chunk_size); // free
-            chunks[i] = chunk;
-            fread(chunk, 1, chunk_size, fs);
-
-            // *chunk = (chunk_size & 0xFF);
-            // *(chunk + 1) = ((chunk_size >> 8) & 0xFF);
-            // *(chunk + 2) = ((chunk_size >> 16) & 0xFF);
-            // *(chunk + 3) = ((chunk_size >> 24) & 0xFF);
-            // *(chunk + 4) = i;
-            printf("Size of chunk %d is %d for filename %s\n",i, chunk_size, sd->filename);
-        }
-
-        FILE *out_file = fopen("reconstructed_file", "wb");
-        if (out_file)
-        {
-            fwrite(chunks[0] , 1, chunk_sizes[0], out_file);
-            fwrite(chunks[1] , 1, chunk_sizes[1], out_file);
-            fwrite(chunks[2] , 1, chunk_sizes[2], out_file);
-            fwrite(chunks[3] , 1, chunk_sizes[3], out_file);
-            fclose(out_file);
-            printf("File reconstructed successfully\n");
-        }
-        fclose(fs);
-
-        connect_save_send(sd, servers, sd->number_of_servers, "put", chunks, chunk_sizes, hash % sd->number_of_servers);
-
+        put_files(sd);
         break;
 
     case DELETE:

@@ -10,7 +10,7 @@
 	.string	"\033[31m[-] Timeout\n\033[0m"
 	.align 8
 .LC2:
-	.string	"UNABLE_TO_COMPLETE_THE_OPERATION\t\t\t\n"
+	.string	"UNABLE_TO_COMPLETE_THE_OPERATION\t\n0\t\n"
 	.string	""
 	.text
 	.globl	error
@@ -62,7 +62,7 @@ error:
 	movq	-8(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
-	movl	$36, %edx
+	movl	$37, %edx
 	leaq	.LC2(%rip), %rsi
 	movl	%eax, %edi
 	call	send@PLT
@@ -1624,76 +1624,76 @@ init_socket:
 	.uleb128 0x25
 	.byte	0xd0
 	.byte	0x12
-	.byte	0xae
+	.byte	0xaf
 	.byte	0xa
 	.long	0x7e8
 	.uleb128 0x1
 	.long	.LASF131
 	.byte	0x12
-	.byte	0xb0
+	.byte	0xb1
 	.byte	0xa
 	.long	0x7e
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF132
 	.byte	0x12
-	.byte	0xb1
+	.byte	0xb2
 	.byte	0xa
 	.long	0x7e
 	.byte	0x4
 	.uleb128 0x1
 	.long	.LASF133
 	.byte	0x12
-	.byte	0xb2
+	.byte	0xb3
 	.byte	0x1e
 	.long	0x501
 	.byte	0x8
 	.uleb128 0x1
 	.long	.LASF134
 	.byte	0x12
-	.byte	0xb3
+	.byte	0xb4
 	.byte	0x17
 	.long	0x733
 	.byte	0x88
 	.uleb128 0x1
 	.long	.LASF135
 	.byte	0x12
-	.byte	0xb4
+	.byte	0xb5
 	.byte	0xa
 	.long	0x7e
 	.byte	0x90
 	.uleb128 0x1
 	.long	.LASF136
 	.byte	0x12
-	.byte	0xb5
+	.byte	0xb6
 	.byte	0xa
 	.long	0x7e
 	.byte	0x94
 	.uleb128 0x1
 	.long	.LASF137
 	.byte	0x12
-	.byte	0xb6
+	.byte	0xb7
 	.byte	0xa
 	.long	0x7e
 	.byte	0x98
 	.uleb128 0x1
 	.long	.LASF138
 	.byte	0x12
-	.byte	0xb7
+	.byte	0xb8
 	.byte	0xa
 	.long	0x7e
 	.byte	0x9c
 	.uleb128 0x1
 	.long	.LASF139
 	.byte	0x12
-	.byte	0xb8
+	.byte	0xb9
 	.byte	0xa
 	.long	0x7e
 	.byte	0xa0
 	.uleb128 0x1
 	.long	.LASF140
 	.byte	0x12
-	.byte	0xb9
+	.byte	0xba
 	.byte	0x16
 	.long	0x428
 	.byte	0xa8
@@ -1701,7 +1701,7 @@ init_socket:
 	.uleb128 0x3
 	.long	.LASF141
 	.byte	0x12
-	.byte	0xba
+	.byte	0xbb
 	.byte	0x4
 	.long	0x75c
 	.uleb128 0xc
