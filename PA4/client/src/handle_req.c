@@ -225,10 +225,15 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
     char *chunks[NUMBER_OF_PAIRS];
+    memset(chunks, 0, sizeof(chunks));
     char recieve_buffer[RECIEVE_SIZE];
 
     while (current)
     {
+        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
+
+        if(chunks[index] != NULL && chunks[index+1] != NULL) goto next;
+
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
 
@@ -280,7 +285,7 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         sd->server_sock_fds[i] = current->client_sock_fd;
         sd->number_of_available_servers++;
 
-        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
+       
         printf("chunks: ");
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -326,16 +331,16 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             while (total_bytes < recv_message_header->data_length)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
-                // if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
-                // {
-                    //     printf("recv failed \n");
-                    //     goto next;
-                    // }
+                if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
+                {
+                        printf("recv failed \n");
+                        goto next;
+                    }
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
             free(recv_message_header);
-            
+
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
 

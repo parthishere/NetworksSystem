@@ -68,7 +68,7 @@
  #define USE_FORK 0              /* Use threading instead of forking */
  #define TOTAL_THREADS 1       /* Number of worker threads */
  #define MAX_THREAD_IN_POOL 200  /* Maximum thread pool size */
- #define TIMEOUT_SEC 0      /* Connection timeout in seconds */
+ #define TIMEOUT_SEC 2      /* Connection timeout in seconds */
  #define RETRY_COUNT 3
  /** @} */
  

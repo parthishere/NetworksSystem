@@ -131,16 +131,16 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     numbytes = send(sd->client_sock_fd, message_header_send, sizeof(message_header_t), 0);
     printf("send header %d bytes \n\r", numbytes);
     // total_bytes = 0;
-    // while (total_bytes < file_size)
-    // {
-        // memset(transmit_buf, 0, sizeof(transmit_buf));
-        // numbytes = fread(transmit_buf, file_size, 1, fs);
-        // printf("numbytes read from file for GET:%d\n", numbytes);
-        // numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
-        // printf("send bytes:%d\n", numbytes);
+    while (total_bytes < file_size)
+    {
+        memset(transmit_buf, 0, sizeof(transmit_buf));
+        numbytes = fread(transmit_buf, 1, file_size, fs);
+        printf("numbytes read from file for GET:%d\n", numbytes);
+        numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
+        printf("send bytes:%d\n", numbytes);
 
         total_bytes += numbytes;
-    // }
+    }
 
     if (status >= 0) send(sd->client_sock_fd, ACK, 7, 0);
     else send(sd->client_sock_fd, NACK, 8, 0);
@@ -232,7 +232,7 @@ void *handle_req(sockdetails_t *sd)
             message_header_t message_header;
             if ((numbytes = recv(sd->client_sock_fd, &message_header, sizeof(message_header), MSG_WAITALL)) < 0)
             {
-                fprintf(stderr, RED "[-] (%d) read\n", gettid());
+                fprintf(stderr, RED "[-] (%d) read %d\n", gettid(), errno);
                 goto cleanup;
             }
             // You get a return value of 0 for recv() when the connection was closed by the other host
