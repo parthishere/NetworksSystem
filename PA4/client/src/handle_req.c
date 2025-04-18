@@ -220,12 +220,13 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 {
-    int i = 0;
+    int i = 0, numbytes = 0, totalbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
     char *chunks[NUMBER_OF_PAIRS];
-    
+    char recieve_buffer[RECIEVE_SIZE];
+
     while (current)
     {
         struct addrinfo hints, *temp;
@@ -289,46 +290,56 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                 .chunk_id = index,
                 .filename_length = strlen(sd->filename),
                 .data_length = 0};
-            send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
+            numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
 
             // Send Filename
-            send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0);
+            numbytes = send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0);
+            
 
 
-
-            // ACK ??
-            char recieve_buffer[RECIEVE_SIZE];
-            recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0);
+            // ACK 
+            numbytes = recv(current->client_sock_fd, recieve_buffer, 7, 0);
+            // numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0);
             if (strncmp(recieve_buffer, ACK, 7) != 0)
             {
-                fprintf(stderr, "NACK recieved \n");
+                fprintf(stderr, "NACK recieved %d\n", numbytes);
                 goto next;
             }
             else
             {
-                printf("ACK!!!!!!!\n");
+                printf("ACK!!!!!!! %d\n", numbytes);
             }
 
-            memset(&message_header, 0, sizeof(message_header));
-            recv(current->client_sock_fd, &message_header, sizeof(message_header), 0);
+            message_header_t *recv_message_header = malloc(sizeof(message_header_t)); // free it later
+            // int data = 0;
+            // numbytes = recv(current->client_sock_fd, &data, sizeof(data), 0);
+            // printf("data : %d \n", data);
 
-            printf("Server has fucking shit %d %d %d %d", message_header.chunk_id, message_header.command, message_header.data_length, message_header.filename_length);
+            numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(recv_message_header), 0);
+
+            printf("Server has fucking shit %d %d %d %d", recv_message_header->chunk_id, recv_message_header->command, recv_message_header->data_length, recv_message_header->filename_length);
 
             int total_bytes = 0, numbytes = 0;
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             total_bytes = 0;
-            chunks[index] = malloc(sizeof(message_header.data_length)); // free this later
-            while (total_bytes < message_header.data_length)
+            chunks[index] = malloc(recv_message_header->data_length); // free this later
+            while (total_bytes < recv_message_header->data_length)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
-                if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
-                {
-                    printf("recv failed \n");
-                    goto next;
-                }
+                // if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
+                // {
+                    //     printf("recv failed \n");
+                    //     goto next;
+                    // }
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
+            free(recv_message_header);
+            
+            memset(recieve_buffer, 0, sizeof(recieve_buffer));
+            numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
+
+            numbytes = send(current->client_sock_fd, ACK, 7, 0);
             printf("recieved chunk bitch from server %d - chunk %d\n", i, index);
             chunks_stored[index]++;
         }

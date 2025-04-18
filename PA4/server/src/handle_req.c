@@ -114,26 +114,36 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     printf("file size %d \n", file_size);
     // send ack
     numbytes = send(sd->client_sock_fd, ACK, 7, 0);
-    printf("Ack sent \n\r");
+    printf("Ack sent %d bytes \n\r", numbytes);
 
-    message_header_t message_header_send = {GET, message_header->chunk_id, strlen(filename), file_size};
-    numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
+    message_header_t *message_header_send = malloc(sizeof(*message_header_send));
+    
+    
+        message_header_send->command=GET;
+        message_header_send->chunk_id=message_header->chunk_id;
+        message_header_send->filename_length=strlen(filename);
+        message_header_send->data_length=file_size;
+    
+
+    int data = 12;
+
+    // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
+    numbytes = send(sd->client_sock_fd, message_header_send, sizeof(message_header_t), 0);
     printf("send header %d bytes \n\r", numbytes);
-    total_bytes = 0;
+    // total_bytes = 0;
     // while (total_bytes < file_size)
     // {
-        memset(transmit_buf, 0, sizeof(transmit_buf));
-        numbytes = fread(transmit_buf, file_size, 1, fs);
-        send(sd->client_sock_fd, transmit_buf, numbytes, 0);
+        // memset(transmit_buf, 0, sizeof(transmit_buf));
+        // numbytes = fread(transmit_buf, file_size, 1, fs);
+        // printf("numbytes read from file for GET:%d\n", numbytes);
+        // numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
+        // printf("send bytes:%d\n", numbytes);
 
         total_bytes += numbytes;
-        printf("numbytes read from file for GET:%d\n", total_bytes);
     // }
 
-    if (status >= 0)
-        send(sd->client_sock_fd, ACK, 7, MSG_WAITALL);
-    else
-        send(sd->client_sock_fd, NACK, 8, MSG_WAITALL);
+    if (status >= 0) send(sd->client_sock_fd, ACK, 7, 0);
+    else send(sd->client_sock_fd, NACK, 8, 0);
 
     
     memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -150,7 +160,6 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
 done:
     free(filename);
     fclose(fs);
-    close(sd->client_sock_fd);
 }
 
 void ls_command()
@@ -233,7 +242,7 @@ void *handle_req(sockdetails_t *sd)
                 goto cleanup;
             }
 
-            printf("%d) command %d, chunk: %d, filename %d, data %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
+            printf("(bytes:%d) command %d, chunk: %d, filename %d, data %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
 
             switch (message_header.command)
             {
