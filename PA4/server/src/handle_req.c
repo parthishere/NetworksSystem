@@ -93,6 +93,7 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     int status = 0;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
+    // recv filename
     numbytes = recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, MSG_WAITALL);
     printf("filename : %s\n", recieved_buf);
 
@@ -102,6 +103,7 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     if (fs == NULL)
     {
         printf("Reading failed \n");
+        numbytes = send(sd->client_sock_fd, NACK, 8, 0);
         status = -1;
         goto done;
     }
@@ -109,24 +111,31 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     int file_size = ftell(fs);
     fseek(fs, 0, SEEK_SET);
 
+    printf("file size %d \n", file_size);
+    // send ack
+    numbytes = send(sd->client_sock_fd, ACK, 7, 0);
+    printf("Ack sent \n\r");
+
     message_header_t message_header_send = {GET, message_header->chunk_id, strlen(filename), file_size};
     numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
-
+    printf("send header %d bytes \n\r", numbytes);
     total_bytes = 0;
-    while (total_bytes < file_size)
-    {
-        numbytes = fread(transmit_buf, sizeof(transmit_buf), 1, fs);
+    // while (total_bytes < file_size)
+    // {
+        memset(transmit_buf, 0, sizeof(transmit_buf));
+        numbytes = fread(transmit_buf, file_size, 1, fs);
         send(sd->client_sock_fd, transmit_buf, numbytes, 0);
 
         total_bytes += numbytes;
-        printf("numbytes read from file for GET:%d", total_bytes);
-    }
+        printf("numbytes read from file for GET:%d\n", total_bytes);
+    // }
 
     if (status >= 0)
         send(sd->client_sock_fd, ACK, 7, MSG_WAITALL);
     else
         send(sd->client_sock_fd, NACK, 8, MSG_WAITALL);
 
+    
     memset(recieved_buf, 0, sizeof(recieved_buf));
     numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, 0);
     if (strncmp(recieved_buf, ACK, 7) == 0)
@@ -146,6 +155,7 @@ done:
 
 void ls_command()
 {
+
 }
 
 void delete_command()

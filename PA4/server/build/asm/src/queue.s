@@ -505,7 +505,7 @@ destroy_threadpool:
 	addl	$1, -40(%rbp)
 .L29:
 	.loc 1 257 19 discriminator 1
-	cmpl	$9, -40(%rbp)
+	cmpl	$0, -40(%rbp)
 	jle	.L30
 .LBE4:
 .LBB5:
@@ -557,7 +557,7 @@ destroy_threadpool:
 	addl	$1, -36(%rbp)
 .L31:
 	.loc 1 262 19 discriminator 1
-	cmpl	$9, -36(%rbp)
+	cmpl	$0, -36(%rbp)
 	jle	.L32
 .LBE5:
 	.loc 1 272 16

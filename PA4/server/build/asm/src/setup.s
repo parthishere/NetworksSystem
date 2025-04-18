@@ -608,7 +608,7 @@ init_socket:
 	call	freeaddrinfo@PLT
 	.loc 1 289 9
 	movl	-136(%rbp), %eax
-	movl	$20, %esi
+	movl	$2, %esi
 	movl	%eax, %edi
 	call	listen@PLT
 	.loc 1 289 8 discriminator 1
