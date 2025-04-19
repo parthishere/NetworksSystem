@@ -223,17 +223,17 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     int i = 0, numbytes = 0, totalbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
-    int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
+    int chunks_stored[NUMBER_OF_PAIRS];                          // NUMBER_OF_PAIRS
+    int chunks_stored_sizes[NUMBER_OF_PAIRS];                          // NUMBER_OF_PAIRS
     char *chunks[NUMBER_OF_PAIRS];
     memset(chunks, 0, sizeof(chunks));
+    memset(chunks_stored, 0, sizeof(chunks_stored));
     char recieve_buffer[RECIEVE_SIZE];
 
     while (current)
     {
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
 
-        if (chunks[index] != NULL && chunks[index + 1] != NULL)
-            goto next;
 
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
@@ -287,9 +287,13 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         sd->number_of_available_servers++;
 
         printf("chunks: ");
+        
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             index = (index + j) % sd->number_of_servers;
+
+            if(chunks_stored[index] >= 1) continue;
+
             message_header_t message_header = {
                 .command = GET,
                 .chunk_id = index,
@@ -337,7 +341,7 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
-            free(recv_message_header);
+        
 
             
             numbytes = send(current->client_sock_fd, ACK, 7, 0);
@@ -345,8 +349,10 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
-            
+
             chunks_stored[index]++;
+            chunks_stored_sizes[index] =  recv_message_header->data_length;
+            free(recv_message_header);
         }
         printf("for server %d\n", i);
 
@@ -357,21 +363,25 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
 
-        // for (int i = 0; i < sd->number_of_servers; i++)
-        // {
-        //     if (chunks_stored[i] <= 0)
-        //     {
-        //         printf("Could not put the file realaibley\n");
-        //         continue;
-        //     }
-        // }
-        // break;
+
 
     next:;
         close(current->client_sock_fd);
         current = current->next;
         i++;
     }
+
+    FILE *fs = fopen(sd->filename, "wb");
+
+    for(int i=0; i<NUMBER_OF_PAIRS; i++){
+        chunks[i];
+        chunks_stored_sizes[i];
+        fwrite(chunks[i], chunks_stored_sizes[i], 1, fs);
+        
+
+        free(chunks[i]);
+    }
+    fclose(fs);
 }
 
 void put_file(sockDetails_t *sd)
@@ -383,7 +393,7 @@ void put_file(sockDetails_t *sd)
         return;
     }
     uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
-    printf("hash: %u | modulo: %d\n\r", hash, hash % sd->number_of_servers);
+    // printf("hash: %u | modulo: %d\n\r", hash, hash % sd->number_of_servers);
 
     fseek(fs, 0L, SEEK_END);
     int size = ftell(fs);
