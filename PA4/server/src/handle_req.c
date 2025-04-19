@@ -114,7 +114,6 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     printf("file size %d \n", file_size);
     // send ack
     numbytes = send(sd->client_sock_fd, ACK, 7, 0);
-    printf("Ack sent %d bytes \n\r", numbytes);
 
     message_header_t message_header_send = {
         .command=GET,
@@ -129,13 +128,11 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
 
     // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
     numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_t), 0);
-    printf("send header %d bytes \n\r", numbytes);
     total_bytes = 0;
     while (total_bytes < file_size)
     {
         memset(transmit_buf, 0, sizeof(transmit_buf));
         numbytes = fread(transmit_buf, 1, file_size, fs);
-        printf("numbytes read from file for GET:%d -%s\n", numbytes, transmit_buf);
         numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
         printf("send bytes:%d\n", numbytes);
 
@@ -149,7 +146,7 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, 0);
     if (strncmp(recieved_buf, ACK, 7) == 0)
     {
-        printf("lessgoo\n");
+        printf("ACK recv so client is good\n");
     }
     else
     {
