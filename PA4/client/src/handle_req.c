@@ -232,7 +232,8 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     {
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
 
-        if(chunks[index] != NULL && chunks[index+1] != NULL) goto next;
+        if (chunks[index] != NULL && chunks[index + 1] != NULL)
+            goto next;
 
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
@@ -285,7 +286,6 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         sd->server_sock_fds[i] = current->client_sock_fd;
         sd->number_of_available_servers++;
 
-       
         printf("chunks: ");
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -299,10 +299,8 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
             // Send Filename
             numbytes = send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0);
-            
 
-
-            // ACK 
+            // ACK
             numbytes = recv(current->client_sock_fd, recieve_buffer, 7, 0);
             // numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0);
             if (strncmp(recieve_buffer, ACK, 7) != 0)
@@ -316,13 +314,11 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             }
 
             message_header_t *recv_message_header = malloc(sizeof(message_header_t)); // free it later
-            // int data = 0;
-            // numbytes = recv(current->client_sock_fd, &data, sizeof(data), 0);
-            // printf("data : %d \n", data);
 
-            numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(recv_message_header), 0);
 
-            printf("Server has fucking shit %d %d %d %d", recv_message_header->chunk_id, recv_message_header->command, recv_message_header->data_length, recv_message_header->filename_length);
+            numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), 0);
+
+            printf("Server has fucking shit %d %d %d %d (numbytes read) %d\n", recv_message_header->chunk_id, recv_message_header->command, recv_message_header->data_length, recv_message_header->filename_length, numbytes);
 
             int total_bytes = 0, numbytes = 0;
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
@@ -331,21 +327,25 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             while (total_bytes < recv_message_header->data_length)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
+                printf("were waiting here\n");
                 if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
                 {
-                        printf("recv failed \n");
-                        goto next;
-                    }
+                    printf("recv failed \n");
+                    goto next;
+                }
+                printf("not here");
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
             free(recv_message_header);
 
-            memset(recieve_buffer, 0, sizeof(recieve_buffer));
-            numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
-
+            
             numbytes = send(current->client_sock_fd, ACK, 7, 0);
             printf("recieved chunk bitch from server %d - chunk %d\n", i, index);
+
+            memset(recieve_buffer, 0, sizeof(recieve_buffer));
+            numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
+            
             chunks_stored[index]++;
         }
         printf("for server %d\n", i);
@@ -357,15 +357,15 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
 
-        for (int i = 0; i < sd->number_of_servers; i++)
-        {
-            if (chunks_stored[i] <= 0)
-            {
-                printf("Could not put the file realaibley\n");
-                continue;
-            }
-        }
-        break;
+        // for (int i = 0; i < sd->number_of_servers; i++)
+        // {
+        //     if (chunks_stored[i] <= 0)
+        //     {
+        //         printf("Could not put the file realaibley\n");
+        //         continue;
+        //     }
+        // }
+        // break;
 
     next:;
         close(current->client_sock_fd);

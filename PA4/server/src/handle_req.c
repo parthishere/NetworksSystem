@@ -116,34 +116,33 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     numbytes = send(sd->client_sock_fd, ACK, 7, 0);
     printf("Ack sent %d bytes \n\r", numbytes);
 
-    message_header_t *message_header_send = malloc(sizeof(*message_header_send));
-    
-    
-        message_header_send->command=GET;
-        message_header_send->chunk_id=message_header->chunk_id;
-        message_header_send->filename_length=strlen(filename);
-        message_header_send->data_length=file_size;
+    message_header_t message_header_send = {
+        .command=GET,
+        .chunk_id=message_header->chunk_id,
+        .filename_length=strlen(filename),
+        .data_length=file_size,
+    };
+        
     
 
     int data = 12;
 
     // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
-    numbytes = send(sd->client_sock_fd, message_header_send, sizeof(message_header_t), 0);
+    numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_t), 0);
     printf("send header %d bytes \n\r", numbytes);
-    // total_bytes = 0;
+    total_bytes = 0;
     while (total_bytes < file_size)
     {
         memset(transmit_buf, 0, sizeof(transmit_buf));
         numbytes = fread(transmit_buf, 1, file_size, fs);
-        printf("numbytes read from file for GET:%d\n", numbytes);
+        printf("numbytes read from file for GET:%d -%s\n", numbytes, transmit_buf);
         numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
         printf("send bytes:%d\n", numbytes);
 
         total_bytes += numbytes;
     }
 
-    if (status >= 0) send(sd->client_sock_fd, ACK, 7, 0);
-    else send(sd->client_sock_fd, NACK, 8, 0);
+    
 
     
     memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -156,6 +155,12 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     {
         printf("something went wrong\n");
     }
+
+
+
+    memcpy(recieved_buf, ACK, 7);
+    send(sd->client_sock_fd, recieved_buf, 7, 0);
+    // else send(sd->client_sock_fd, NACK, 8, 0);
 
 done:
     free(filename);
