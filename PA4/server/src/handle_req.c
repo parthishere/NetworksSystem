@@ -29,7 +29,7 @@
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
     int nbytes;                                                                       \
-    if ((nbytes = recv(sockfd, message, message_len, 0)) <= 0)                        \
+    if ((nbytes = recv(sockfd, message, message_len, 0)) < 0)                        \
     {                                                                                 \
         printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
         close(sockfd);                                                                \
@@ -217,8 +217,37 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
     }
 }
 
-void delete_command()
+void delete_command(sockDetails_t *sd, message_header_t *message_header)
 {
+    int numbytes = 0;
+    char recieved_buf[RECIEVE_SIZE];
+
+    memset(recieved_buf, 0, sizeof(recieved_buf));
+    numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
+    printf("filename : %s\n", recieved_buf);
+
+    char *filename;
+    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
+
+    FILE *fs = fopen(filename, "wb");
+    if (fs == NULL)
+    {
+        send(sd->client_sock_fd, NACK, 8, 0);
+    }
+
+    if (remove(filename) < 0)
+    {
+        send(sd->client_sock_fd, ACK, 7, 0);
+    }
+    else
+    {
+        send(sd->client_sock_fd, NACK, 8, 0);
+    }
+
+    free(filename);
+
+done:;
+    return;
 }
 
 /**
@@ -294,6 +323,7 @@ void *handle_req(sockDetails_t *sd)
                 get_command(sd, &message_header);
                 break;
             case DELETE:
+                delete_command(sd, &message_header);
                 break;
             case LS:
                 ls_command(sd, &message_header);

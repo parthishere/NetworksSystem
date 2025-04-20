@@ -28,7 +28,7 @@
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
     int numbytes;                                                                     \
-    if ((numbytes = recv(sockfd, message, message_len, 0)) <= 0)                      \
+    if ((numbytes = recv(sockfd, message, message_len, 0)) < 0)                      \
     {                                                                                 \
         printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
         goto goto_where;                                                              \
@@ -254,7 +254,53 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 {
+    
+}
+
+void put_file(sockDetails_t *sd)
+{
+    FILE *fs = fopen(sd->filename, "rb");
+    if (fs == NULL)
+    {
+        fprintf(stderr, "[-] Error opening file %d \n" RESET, errno);
+        return;
+    }
+    uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
+
+    fseek(fs, 0L, SEEK_END);
+    int size = ftell(fs);
+    fseek(fs, 0, SEEK_SET);
+
+    int chunk_sizes[NUMBER_OF_PAIRS];
+    char *chunks[NUMBER_OF_PAIRS];
+    int total_chunk_size_until_now = 0;
+
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+    {
+        int chunk_size;
+        if (i == NUMBER_OF_PAIRS - 1)
+            chunk_size = size - total_chunk_size_until_now;
+        else
+            chunk_size = size / NUMBER_OF_PAIRS;
+        total_chunk_size_until_now += chunk_size;
+
+        chunk_sizes[i] = chunk_size;
+
+        char *chunk = malloc(chunk_size); // free
+        chunks[i] = chunk;
+        fread(chunk, 1, chunk_size, fs);
+
+        printf("Size of chunk %d is %d for filename %s\n", i, chunk_size, sd->filename);
+    }
+
+    connect_and_put_chunks(sd, chunks, chunk_sizes, hash % sd->number_of_servers);
+}
+
+void get_file(sockDetails_t *sd)
+{
+
     int i = 0, numbytes = 0;
+    int hash = str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     int chunks_stored[NUMBER_OF_PAIRS];
@@ -353,50 +399,6 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         free(chunks[i]);
     }
     fclose(fs);
-}
-
-void put_file(sockDetails_t *sd)
-{
-    FILE *fs = fopen(sd->filename, "rb");
-    if (fs == NULL)
-    {
-        fprintf(stderr, "[-] Error opening file %d \n" RESET, errno);
-        return;
-    }
-    uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
-
-    fseek(fs, 0L, SEEK_END);
-    int size = ftell(fs);
-    fseek(fs, 0, SEEK_SET);
-
-    int chunk_sizes[NUMBER_OF_PAIRS];
-    char *chunks[NUMBER_OF_PAIRS];
-    int total_chunk_size_until_now = 0;
-
-    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
-    {
-        int chunk_size;
-        if (i == NUMBER_OF_PAIRS - 1)
-            chunk_size = size - total_chunk_size_until_now;
-        else
-            chunk_size = size / NUMBER_OF_PAIRS;
-        total_chunk_size_until_now += chunk_size;
-
-        chunk_sizes[i] = chunk_size;
-
-        char *chunk = malloc(chunk_size); // free
-        chunks[i] = chunk;
-        fread(chunk, 1, chunk_size, fs);
-
-        printf("Size of chunk %d is %d for filename %s\n", i, chunk_size, sd->filename);
-    }
-
-    connect_and_put_chunks(sd, chunks, chunk_sizes, hash % sd->number_of_servers);
-}
-
-void get_file(sockDetails_t *sd)
-{
-    get_file_chunks_and_join(sd, str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers);
 }
 
 // Function to extract original filename from server format
@@ -581,16 +583,18 @@ void delete_file(sockDetails_t *sd)
                 .chunk_id = index,
                 .filename_length = strlen(sd->filename),
                 .data_length = 0};
-            numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
-
+            numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
+            numbytes = _send(current->client_sock_fd, sd->filename, message_header.filename_length, next);
             bzero(recieve_buffer, sizeof(recieve_buffer));
-            numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
-            if (numbytes <= 0)
-                break;
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
             if (strncmp(recieve_buffer, ACK, 7) == 0)
                 break;
-            if (strncmp(recieve_buffer, NACK, 8) == 0)
-                break;
+            if (strncmp(recieve_buffer, NACK, 8) == 0){
+                printf("Filename does not exists or file permission not matching !\n");
+            }
+
+
+            (void)numbytes;
         }
     next:;
         close(current->client_sock_fd);
