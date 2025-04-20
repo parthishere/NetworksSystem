@@ -421,12 +421,83 @@ void get_file(sockDetails_t *sd)
     get_file_chunks_and_join(sd, str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers);
 }
 
+
+// Function to extract original filename from server format
+// Format: "chunk_id_original_filename_chunk_id"
+char* extract_original_filename(const char* server_filename) {
+    // Find the first underscore
+    const char* first_underscore = strchr(server_filename, '_');
+    if (first_underscore == NULL) {
+        return NULL; // Invalid format
+    }
+    
+    // Move past the first underscore
+    first_underscore++;
+    
+    // Find the last underscore
+    const char* last_underscore = strrchr(first_underscore, '_');
+    if (last_underscore == NULL) {
+        return NULL; // Invalid format
+    }
+    
+    // Calculate length of original filename
+    size_t original_len = last_underscore - first_underscore;
+    
+    // Allocate memory and copy
+    char* original_filename = malloc(original_len + 1);
+    if (original_filename == NULL) {
+        return NULL; // Memory allocation failed
+    }
+    
+    // Copy the original filename part
+    strncpy(original_filename, first_underscore, original_len);
+    original_filename[original_len] = '\0';
+    
+    return original_filename;
+}
+// Function to extract original filename and chunk ID from server format
+// Format: "dirname/original_filename_chunk_id"
+int parse_server_filename(const char* server_filename, char** original_filename, int* chunk_id) {
+    // Skip past directory part if present
+    const char* filename_part = strrchr(server_filename, '/');
+    if (filename_part != NULL) {
+        filename_part++; // Skip past the '/'
+    } else {
+        filename_part = server_filename; // No directory separator found
+    }
+    
+    // Find the last underscore (before chunk_id)
+    const char* last_underscore = strrchr(filename_part, '_');
+    if (last_underscore == NULL) {
+        return -1; // Invalid format
+    }
+    
+    // Extract chunk ID
+    *chunk_id = atoi(last_underscore + 1);
+    
+    // Calculate length of original filename
+    size_t original_len = last_underscore - filename_part;
+    
+    // Allocate memory for original filename
+    *original_filename = malloc(original_len + 1);
+    if (*original_filename == NULL) {
+        return -1; // Memory allocation failed
+    }
+    
+    // Copy the original filename part
+    strncpy(*original_filename, filename_part, original_len);
+    (*original_filename)[original_len] = '\0';
+    
+    return 0;
+}
+
 void list_file(sockDetails_t *sd){
 
     int i = 0, numbytes = 0, totalbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     char recieve_buffer[RECIEVE_SIZE];
+    int chunks_stored[NUMBER_OF_PAIRS];
 
 
     while (current)
@@ -494,7 +565,7 @@ void list_file(sockDetails_t *sd){
             memset(&message_header, 0, sizeof(message_header_t));
             numbytes = recv(current->client_sock_fd, &message_header, sizeof(message_header_t), 0);
             if(numbytes <= 0) break;
-            printf("Numbytes rescieved %d filelength %d from server %d \n", numbytes, message_header.filename_length, i);
+            // printf("Numbytes rescieved %d filelength %d from server %d \n", numbytes, message_header.filename_length, i);
 
             memcpy(recieve_buffer, (void *)&message_header, numbytes);
             if(strncmp(recieve_buffer, ACK, 7) == 0) break;
@@ -503,12 +574,30 @@ void list_file(sockDetails_t *sd){
             
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
+            if(numbytes <= 0) break;
             if(strncmp(recieve_buffer, ACK, 7) == 0) break;
             if(strncmp(recieve_buffer, NACK, 8) == 0) break;
-            printf("recieved bytes %d %s\n", numbytes, recieve_buffer);
-            if(numbytes <= 0) break;
+            char *original_filename = NULL;
+            int chunk_id = -1;
+            if (parse_server_filename(recieve_buffer, &original_filename, &chunk_id) == 0) {
+                printf("Extracted: Original file = %s, Chunk ID = %d\n", original_filename, chunk_id);
+                // Use original_filename and chunk_id as needed
+                free(original_filename); // Don't forget to free when done
+                if(chunk_id >= NUMBER_OF_PAIRS){
+                    printf("Failed to parse chunk id\n");
+                    break;
+                }
+                chunks_stored[chunk_id]++;
+            } else {
+                printf("Failed to parse filename\n");
+            }
 
-            // sscanf()
+        }
+        
+        for (int i=0; i<NUMBER_OF_PAIRS;i++){
+            if(chunks_stored[i] <= 0){
+                printf("INCOMPLETE PAIR\n");
+            }
         }
         
         printf("for server %d\n", i);

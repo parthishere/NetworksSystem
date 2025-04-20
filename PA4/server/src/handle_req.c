@@ -51,6 +51,10 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     char *filename;
     asprintf(&filename, "%s/%s_%d",sd->dirname, recieved_buf, message_header->chunk_id);
     FILE *fs = fopen(filename, "wb");
+    if(fs == NULL){
+        printf("could not open file ! \n");
+        goto done;
+    }
 
     while (total_bytes < message_header->data_length)
     {
@@ -177,6 +181,7 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
         int seq_num = 0; // Packet sequence counter
         while ((ep = readdir(dp)) != NULL)
         {
+            if(ep->d_type != DT_REG) continue;
             int record_len = strlen(ep->d_name);
 
             bzero(transmit_buf, sizeof(transmit_buf));
