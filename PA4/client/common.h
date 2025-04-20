@@ -149,15 +149,14 @@ typedef struct serverDetails_t {
 typedef struct
 {
     int sockfd; // Socket file descriptor
-    char *command; // no need to free it afterwards
-    char *filename;
-    char *dirname;
+    char *command; // no need to free it (argv)
+    char *filename; // no need to free it (argv)
     commands_t command_int;
     serverDetails_t *servers_details;
+    struct addrinfo *connect_to_info;        // Client address information
+    int *server_sock_fds;
     int number_of_servers;
     int number_of_available_servers;
-    int *server_sock_fds;
-    struct addrinfo *connect_to_info;        // Client address information
 
     pthread_mutex_t lock;
 } sockDetails_t;

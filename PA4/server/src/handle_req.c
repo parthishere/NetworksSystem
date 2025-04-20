@@ -16,6 +16,30 @@
 
 #include "handle_req.h"
 
+#define _send(sockfd, message, message_len, goto_where) ({           \
+    int numbytes;                                                    \
+    if ((numbytes = send(sockfd, message, message_len, 0)) <= 0)     \
+    {                                                                \
+        printf(RED "[-] Send failed, error no: %d \n" RESET, errno); \
+        goto goto_where;                                             \
+    }                                                                \
+    numbytes;                                                        \
+})
+
+#define _recv(sockfd, message, message_len, goto_where) ({                            \
+    int numbytes;                                                                     \
+    if ((numbytes = recv(sockfd, message, message_len, 0)) <= 0)                      \
+    {                                                                                 \
+        printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
+        goto goto_where;                                                              \
+    }                                                                                 \
+    else if (numbytes == 0)                                                           \
+    {                                                                                 \
+        printf(RED "[-] Server Closed the Connection, error no: %d \n" RESET, errno); \
+    }                                                                                 \
+    numbytes;                                                                         \
+})
+
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
@@ -41,17 +65,14 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     int status = 0;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
-    if ((numbytes = recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, MSG_WAITALL)) <= 0)
-    {
-        fprintf(stderr, "Num bytes read and write did not match \n");
-        goto done;
-    }
+    _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     printf("filename we are putting: %s (%d)\n", recieved_buf, message_header->chunk_id);
 
     char *filename;
-    asprintf(&filename, "%s/%s_%d",sd->dirname, recieved_buf, message_header->chunk_id);
+    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
     FILE *fs = fopen(filename, "wb");
-    if(fs == NULL){
+    if (fs == NULL)
+    {
         printf("could not open file ! \n");
         goto done;
     }
@@ -59,7 +80,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     while (total_bytes < message_header->data_length)
     {
         memset(recieved_buf, 0, sizeof(recieved_buf));
-        numbytes = recv(sd->client_sock_fd, recieved_buf, message_header->data_length, MSG_WAITALL);
+        numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->data_length, done);
         numbytes_w = fwrite(recieved_buf, numbytes, 1, fs);
 
         if (numbytes != numbytes_w * numbytes)
@@ -73,16 +94,9 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
 
     // ACK
     if (status >= 0)
-        send(sd->client_sock_fd, ACK, 7, MSG_WAITALL);
+        _send(sd->client_sock_fd, ACK, 7, done);
     else
-        send(sd->client_sock_fd, NACK, 8, MSG_WAITALL);
-
-    memset(recieved_buf, 0, sizeof(recieved_buf));
-    numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, 0);
-    if (strncmp(recieved_buf, ACK, 7) != 0)
-    {
-        printf("something went wrong\n");
-    }
+        _send(sd->client_sock_fd, NACK, 8, done);
 
 done:
     free(filename);
@@ -120,10 +134,10 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     numbytes = send(sd->client_sock_fd, ACK, 7, 0);
 
     message_header_t message_header_send = {
-        .command=GET,
-        .chunk_id=message_header->chunk_id,
-        .filename_length=strlen(filename),
-        .data_length=file_size,
+        .command = GET,
+        .chunk_id = message_header->chunk_id,
+        .filename_length = strlen(filename),
+        .data_length = file_size,
     };
 
     // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
@@ -149,8 +163,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     {
         printf("something went wrong\n");
     }
-
-
 
     memcpy(recieved_buf, ACK, 7);
     send(sd->client_sock_fd, recieved_buf, 7, 0);
@@ -178,29 +190,30 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
         int seq_num = 0; // Packet sequence counter
         while ((ep = readdir(dp)) != NULL)
         {
-            if(ep->d_type != DT_REG) continue;
+            if (ep->d_type != DT_REG)
+                continue;
             int record_len = strlen(ep->d_name);
 
             bzero(transmit_buf, sizeof(transmit_buf));
             memcpy(transmit_buf, ep->d_name, record_len);
 
             message_header_t message_header_send = {
-                .command=LS,
-                .chunk_id=0,
-                .filename_length=record_len,
-                .data_length=0,
+                .command = LS,
+                .chunk_id = 0,
+                .filename_length = record_len,
+                .data_length = 0,
             };
 
             send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
 
-            send(sd->client_sock_fd ,transmit_buf, record_len, 0);
+            send(sd->client_sock_fd, transmit_buf, record_len, 0);
         }
         send(sd->client_sock_fd, ACK, 7, 0);
     }
-    else{
+    else
+    {
         send(sd->client_sock_fd, NACK, 7, 0);
     }
-
 }
 
 void delete_command()

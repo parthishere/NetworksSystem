@@ -16,6 +16,29 @@
 
 #include "handle_req.h"
 
+#define _send(sockfd, message, message_len, goto_where) ({int numbytes;\
+    if((numbytes = send(sockfd, message, message_len, 0)) <= 0){ \
+        printf(RED"[-] Send failed, error no: %d \n"RESET, errno); \
+        goto goto_where; \
+    }\
+    numbytes;\
+})
+
+
+#define _recv(sockfd, message, message_len, goto_where) ({                            \
+    int numbytes;                                                                     \
+    if ((numbytes = recv(sockfd, message, message_len, 0)) <= 0)                      \
+    {                                                                                 \
+        printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
+        goto goto_where;                                                              \
+    }                                                                                 \
+    else if (numbytes == 0)                                                           \
+    {                                                                                 \
+        printf(RED "[-] Server Closed the Connection, error no: %d \n" RESET, errno); \
+    }                                                                                 \
+    numbytes;                                                                         \
+})
+
 typedef struct message_header_s
 {
     uint8_t command;          // 0=put, 1=get
@@ -68,31 +91,39 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
+void cleanup_current_connection(serverDetails_t *current)
+{
+    close(current->client_sock_fd);
+    current->client_sock_fd = -1;
+    if (current->server_ip)
+        free(current->server_ip);
+    current->server_ip = NULL;
+    if (current->server_port)
+        free(current->server_port);
+    current->server_port = NULL;
+}
+
 void cleanup_connection(sockDetails_t *sd)
 {
     serverDetails_t *current = sd->servers_details;
-    int i = 0;
     while (current)
     {
-        if (current->client_sock_fd > 0)
-        {
-            close(current->client_sock_fd);
-            current->client_sock_fd = -1;
-            sd->server_sock_fds[i] = -1;
-        }
-        sd->number_of_available_servers = 0;
-        i++;
+        serverDetails_t *temp = current;
         current = current->next;
+        free(temp);
     }
+    sd->number_of_available_servers = 0;
+    sd->number_of_servers = 0;
+    if(sd->server_sock_fds)free(sd->server_sock_fds);
+    sd->server_sock_fds = NULL;
+    freeaddrinfo(sd->connect_to_info);
 }
-
-
 
 int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index)
 {
     struct addrinfo hints, *temp;
+    int status = 1;
 
-    int status;
     sd->server_sock_fds[server_index] = -1;
     current->client_sock_fd = -1;
 
@@ -110,7 +141,8 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
     {
         fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-        return -1;                                                            // exit if there is an error
+        status = -1;                                                            // exit if there is an error
+        goto cleanup;
     }
 
     for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
@@ -118,14 +150,16 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
         if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
         {
             perror(RED "server: socket");
-            return -1;
+            status = -1;                                                            // exit if there is an error
+            goto cleanup;
         }
 
         if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
         {
             fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
             close(current->client_sock_fd);
-            return -1;
+            status = -1;                                                            // exit if there is an error
+            goto cleanup;
         }
 
         break;
@@ -134,7 +168,8 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     if (temp == NULL)
     {
         fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
-        return -1;
+        status = -1;                                                            // exit if there is an error
+        goto cleanup;
     }
 
     sd->server_sock_fds[server_index] = current->client_sock_fd;
@@ -146,20 +181,25 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
                "[+] (%d) Server IP address: %s:%s\n" RESET,
            gettid(), current->server_ip, gettid(), s,
            current->server_port);
-    return 1;
-}
 
+cleanup:
+    freeaddrinfo(temp);
+    return status;
+}
 
 void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[], int hash)
 {
     serverDetails_t *current = sd->servers_details;
     int i = 0;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
+    
     int chunks_stored[NUMBER_OF_PAIRS];
+    char recieve_buffer[RECIEVE_SIZE];
+
     memset(chunks_stored, 0, NUMBER_OF_PAIRS * 4);
+
     while (current)
     {
-
         if (connect_server(sd, current, i) < 0)
             goto next;
 
@@ -172,43 +212,32 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
             message_header_t message = {PUT, index, strlen(sd->filename), chunk_sizes[index]};
 
-            if (send(current->client_sock_fd, &message, sizeof(message), 0) < 0)
-            {
-                fprintf(stderr, "sent failed %d", errno);
-                goto next;
-            }
+            _send(current->client_sock_fd, &message, sizeof(message), next);
+        
+            _send(current->client_sock_fd, sd->filename, sizeof(sd->filename), next);
 
-            if (send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0) < 0)
-            {
-                fprintf(stderr, "sent failed %d", errno);
-                goto next;
-            }
             int total_bytes = 0, numbytes = 0;
             while (total_bytes < chunk_sizes[index])
             {
-                if ((numbytes = send(current->client_sock_fd, chunks[index], chunk_sizes[index], 0)) < 0)
-                {
-                    fprintf(stderr, "sent failed %d", errno);
-                    goto next;
-                }
+                numbytes = _send(current->client_sock_fd, chunks[index], chunk_sizes[index], next);
                 total_bytes += numbytes;
             }
-            printf("Sent chunk %d to server %d \n", index, i);
-            char recieve_buffer[RECIEVE_SIZE];
+
+            printf("Sent chunk %d to server %d numbytes %d \n", index, i, numbytes);
+            
+            
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
-            if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) <= 0)
-            {
-                fprintf(stderr, "recv failed \n");
+            _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
+            
+            if (strncmp(recieve_buffer, ACK, 7) != 0){
+                printf("nack recieved \n");
+                goto next;
             }
 
-            if (strncmp(recieve_buffer, ACK, 7) != 0)
-                printf("nack recieved \n");
-
-            send(current->client_sock_fd, ACK, 7, 0); // ack from client
         }
 
     next:;
-        close(current->client_sock_fd);
+        cleanup_current_connection(current);
         i++;
         current = current->next;
     }
@@ -221,6 +250,8 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
             return;
         }
     }
+
+    cleanup_connection(sd);
     printf("Suck sess full put\n");
 }
 
@@ -256,14 +287,17 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                 .chunk_id = index,
                 .filename_length = strlen(sd->filename),
                 .data_length = 0};
-            numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
-
+            // numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
+            numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header), next);
+            
             // Send Filename
-            numbytes = send(current->client_sock_fd, sd->filename, strlen(sd->filename), 0);
+            // numbytes = send(current->client_sock_fd, sd->filename, sd->filename, 0);
+            numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
 
             // ACK
-            numbytes = recv(current->client_sock_fd, recieve_buffer, 7, 0);
             // numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0);
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
+            
             if (strncmp(recieve_buffer, ACK, 7) != 0)
             {
                 fprintf(stderr, "NACK recieved %d\n", numbytes);
@@ -273,10 +307,11 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             {
                 printf("ACK!!!!!!! %d\n", numbytes);
             }
-
+            
             message_header_t *recv_message_header = malloc(sizeof(message_header_t)); // free it later
-
-            numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), 0);
+            
+            // numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), 0);
+            numbytes = _recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), next);
 
             printf("Server has fucking shit %d %d %d %d (numbytes read) %d\n", recv_message_header->chunk_id, recv_message_header->command, recv_message_header->data_length, recv_message_header->filename_length, numbytes);
 
@@ -287,20 +322,16 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             while (total_bytes < recv_message_header->data_length)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
-                if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
-                {
-                    printf("recv failed \n");
-                    goto next;
-                }
+                numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
 
-            numbytes = send(current->client_sock_fd, ACK, 7, 0);
+            numbytes = _send(current->client_sock_fd, ACK, 7, next);
             printf("recieved chunk bitch from server %d - chunk %d\n", i, index);
 
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
-            numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next); // ack
 
             chunks_stored[index]++;
             chunks_stored_sizes[index] = recv_message_header->data_length;
