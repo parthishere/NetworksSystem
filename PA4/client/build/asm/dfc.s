@@ -17,10 +17,10 @@
 	.string	"\n"
 	.align 8
 .LC6:
-	.string	"[-] 0 number of servers found ! "
+	.string	"\033[31m[-] ERROR: No servers found in configuration file\n\033[0m"
 	.align 8
 .LC7:
-	.string	"Number of servers configured %d \n"
+	.string	"\033[32m[+] SERVER CONFIGURATION: %d server(s) found in config file\n\033[0m"
 	.text
 	.globl	read_server_conf
 	.type	read_server_conf, @function
@@ -219,7 +219,8 @@ read_server_conf:
 	.loc 1 61 9
 	leaq	.LC6(%rip), %rax
 	movq	%rax, %rdi
-	call	puts@PLT
+	movl	$0, %eax
+	call	printf@PLT
 	.loc 1 62 9
 	movl	$1, %edi
 	call	exit@PLT
@@ -252,7 +253,10 @@ read_server_conf:
 	.section	.rodata
 	.align 8
 .LC8:
-	.string	"\033[31m[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n\033[0m"
+	.string	"\033[31m[-] ERROR: Invalid command usage\n\033[0m"
+	.align 8
+.LC9:
+	.string	"\033[31m    Usage: ./dfc <COMMAND> [FILENAME]\n\033[0m"
 	.text
 	.globl	main
 	.type	main, @function
@@ -293,37 +297,42 @@ main:
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 98 9
+	leaq	.LC9(%rip), %rax
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	.loc 1 99 9
 	movl	$0, %eax
 	call	print_menu@PLT
-	.loc 1 100 9
+	.loc 1 101 9
 	movl	$1, %edi
 	call	exit@PLT
 .L12:
-	.loc 1 103 5
+	.loc 1 104 5
 	leaq	-112(%rbp), %rax
 	movq	%rax, %rdi
 	call	read_server_conf
-	.loc 1 104 11
+	.loc 1 105 11
 	movq	$0, -120(%rbp)
-	.loc 1 105 22
+	.loc 1 106 22
 	leaq	-120(%rbp), %rdx
 	movq	-144(%rbp), %rcx
 	movl	-132(%rbp), %eax
 	movq	%rcx, %rsi
 	movl	%eax, %edi
 	call	whichcmd@PLT
-	.loc 1 105 20 discriminator 1
+	.loc 1 106 20 discriminator 1
 	movl	%eax, -88(%rbp)
-	.loc 1 106 17
+	.loc 1 107 17
 	movq	-120(%rbp), %rax
 	movq	%rax, -96(%rbp)
-	.loc 1 109 5
+	.loc 1 110 5
 	leaq	-112(%rbp), %rax
 	movq	%rax, %rdi
 	call	handle_req@PLT
-	.loc 1 112 12
+	.loc 1 113 12
 	movl	$0, %eax
-	.loc 1 113 1
+	.loc 1 114 1
 	movq	-8(%rbp), %rdx
 	subq	%fs:40, %rdx
 	je	.L14
@@ -1380,7 +1389,7 @@ main:
 	.sleb128 -128
 	.uleb128 0x8
 	.long	.LASF99
-	.byte	0x68
+	.byte	0x69
 	.byte	0xb
 	.long	0x8c
 	.uleb128 0x3

@@ -13,17 +13,20 @@
 void print_menu()
 {
     /* Display menu header */
-    printf(YEL "\n\nThis client can support distributed FTP\n\n");
-    printf("Currently this program can support following commands \n");
+    printf(YEL "\n========================================================\n" RESET);
+    printf(YEL "    DISTRIBUTED FILE SYSTEM CLIENT (DFC)\n" RESET);
+    printf(YEL "========================================================\n\n" RESET);
+    
     /* Display available commands */
-    printf("get <filename>   : Get the file name in server and print the file\n");
-    printf("put <filename>   : if filename does not exists on server, create one. \n");
-    printf("delete <filename>: if filename does exists on server, delete that file\n");
-    printf("ls               : get the list of all the files/chunks in all server and print it\n");
-    printf("exit             : exit from the client program and free the resources in client and server\n");
-    printf("server info      : get to know server info\n");
-    printf("help             : print this help \n");
-    printf("\n" RESET);
+    printf(YEL "Available Commands:\n\n" RESET);
+    printf("  get <filename>    Retrieve file from servers and reconstruct locally\n");
+    printf("  put <filename>    Upload file to servers with redundant distribution\n");
+    printf("  delete <filename> Remove file from all servers\n");
+    printf("  ls                List all files available across all servers\n");
+    printf("  server info       Display connection status of all servers\n");
+    printf("  exit              Terminate client and clean up resources\n");
+    printf("  help              Display this help menu\n");
+    printf("\n");
 }
 
 /**
@@ -90,7 +93,7 @@ commands_t whichcmd(int argc, char *argv[], char **filename)
     }
 
 error:;
-    printf(RED "[-] Wrong command ! \n\r" RESET);
+    printf(RED "[-] ERROR: Invalid command or missing parameters\n" RESET);
     print_menu();
 
     return -1;

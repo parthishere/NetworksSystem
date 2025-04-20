@@ -58,11 +58,11 @@ void read_server_conf(sockDetails_t *sd){
         i++;
     }
     if(sd->number_of_servers <= 0) {
-        printf("[-] 0 number of servers found ! \n");
+        printf(RED "[-] ERROR: No servers found in configuration file\n" RESET);
         exit(EXIT_FAILURE);
     }
 
-    printf("Number of servers configured %d \n", sd->number_of_servers);
+    printf(GRN "[+] SERVER CONFIGURATION: %d server(s) found in config file\n" RESET, sd->number_of_servers);
     fclose(fs);
 }
 
@@ -94,7 +94,8 @@ int main(int argc, char *argv[])
     /* Validate command line arguments */
     if (argc != 3 && argc != 2)
     {
-        printf(RED "[-] You messed up, command is ./dfc <COMMAND> <FILENAME>\n" RESET);
+        printf(RED "[-] ERROR: Invalid command usage\n" RESET);
+        printf(RED "    Usage: ./dfc <COMMAND> [FILENAME]\n" RESET);
         print_menu();
         
         exit(EXIT_FAILURE);

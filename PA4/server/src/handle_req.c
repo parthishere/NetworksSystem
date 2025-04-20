@@ -77,7 +77,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     FILE *fs = fopen(filename, "wb");
     if (fs == NULL)
     {
-        fprintf(stderr, RED "\n[-] Error opening file: %s\n" RESET, sd->filename);
+        fprintf(stderr, RED "\n[-] Error opening file: %s\n" RESET, filename);
         fprintf(stderr, RED "    Error: %s (code: %d)\n\n" RESET, strerror(errno), errno);
         status = -1;
         goto done;
@@ -126,9 +126,10 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     if (fs == NULL)
     {
         printf("Reading failed \n");
-        numbytes = _send(sd->client_sock_fd, NACK, 8, done);
+        close(sd->client_sock_fd);
         status = -1;
-        goto done;
+        free(filename);
+        return;
     }
     fseek(fs, 0, SEEK_END);
     int file_size = ftell(fs);
