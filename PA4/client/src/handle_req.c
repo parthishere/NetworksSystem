@@ -338,18 +338,18 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         i++;
     }
 
-    FILE *fs = fopen(sd->filename, "wb");
-
-    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
-    {
+    for (int i = 0; i< NUMBER_OF_PAIRS; i++){
         if (chunks[i] == 0 || chunks_stored_sizes[i] <= 0 || chunks_stored[i] <= 0)
         {
             printf("Chunk not found !\n\r");
-            fclose(fs);
-            exit(EXIT_FAILURE);
+            return;
         }
-        fwrite(chunks[i], chunks_stored_sizes[i], 1, fs);
+    }
 
+    FILE *fs = fopen(sd->filename, "wb");
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+    {
+        fwrite(chunks[i], chunks_stored_sizes[i], 1, fs);
         free(chunks[i]);
     }
     fclose(fs);
