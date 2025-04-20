@@ -86,8 +86,7 @@
 #define GRN "\x1B[32m"  // Success messages
 #define YEL "\x1B[33m"  // Warnings and prompts
 #define BLU "\x1B[34m"  // Informational messages
-#define MAG "\x1B[35m"  // Input echo and data display
-#define CYN "\x1B[36m"  // Alternative highlighting
+#define MAG "\x1B[36m"  // Alternative highlighting
 #define WHT "\x1B[37m"  // Standard output
 #define RESET "\x1B[0m" // Reset to default color
 

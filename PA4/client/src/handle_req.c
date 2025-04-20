@@ -28,14 +28,16 @@
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
     int numbytes;                                                                     \
-    if ((numbytes = recv(sockfd, message, message_len, 0)) < 0)                      \
+    if ((numbytes = recv(sockfd, message, message_len, 0)) < 0)                       \
     {                                                                                 \
         printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
         goto goto_where;                                                              \
     }                                                                                 \
     else if (numbytes == 0)                                                           \
     {                                                                                 \
-        printf(RED "[-] Server Closed the Connection, error no: %d \n" RESET, errno); \
+        close(sockfd);                                                                \
+        printf(YEL "[-] Client Closed the Connection, error no: %d \n" RESET, errno); \
+        goto goto_where;                                                              \
     }                                                                                 \
     numbytes;                                                                         \
 })
@@ -142,8 +144,8 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
 
     if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
     {
-        fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-        status = -1;                                                          // exit if there is an error
+        fprintf(stderr, RED "[-] getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
+        status = -1;                                                              // exit if there is an error
         goto cleanup;
     }
 
@@ -151,14 +153,15 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     {
         if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
         {
-            perror(RED "server: socket");
+            fprintf(stderr, RED "[-] server: socket (%s:%s)", current->server_ip, current->server_port);
             status = -1; // exit if there is an error
             goto cleanup;
         }
 
         if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
         {
-            fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
+            fprintf(stderr, RED "\n[-] Connection failed to server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
+            fprintf(stderr, RED "    Error: %s (code: %d)\n\n" RESET, strerror(errno), errno);
             close(current->client_sock_fd);
             status = -1; // exit if there is an error
             goto cleanup;
@@ -179,7 +182,11 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
 
     char s[INET6_ADDRSTRLEN];
     inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-    printf(GRN "[+] Connection established to server: %s:%s\n" RESET, s, current->server_port);
+    printf(GRN "\n[+] Connection established to server %d\n" RESET, server_index + 1);
+    printf(GRN "    Server address: %s:%s\n" RESET, current->server_ip, current->server_port);
+
+    // fprintf(stderr, YEL "\n[!] Connection timeout to server %d (%s:%s)\n" RESET, server_index+1, current->server_ip, current->server_port);
+    // fprintf(stderr, YEL "    Server did not respond within timeout period\n\n" RESET);
 
 cleanup:
     freeaddrinfo(temp);
@@ -188,6 +195,10 @@ cleanup:
 
 void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[], int hash)
 {
+
+    printf(MAG "\n[*] File hash: %d\n" RESET, hash);
+    printf(MAG "    Distribution starting at server %d\n\n" RESET, hash % sd->number_of_servers + 1);
+
     serverDetails_t *current = sd->servers_details;
     int i = 0, numbytes;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
@@ -204,8 +215,16 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
 
+        printf(MAG "[*] Server %d will store chunks: " RESET, i + 1);
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
+            printf("%d ", (index + j) % sd->number_of_servers + 1);
+        }
+        printf("\n\n");
+
+        for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
+        {
+            // Server chunk assignment
             index = (index + j) % sd->number_of_servers;
             chunks_stored[index]++;
 
@@ -243,18 +262,28 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
     {
         if (chunks_stored[i] <= 0)
         {
-            printf("Could not put the file realaibley chunk :%d\n", i);
+            printf(RED "\n=========================================\n" RESET);
+            printf(RED "    PUT OPERATION FAILED\n" RESET);
+            printf(RED "    File: %s\n" RESET, sd->filename);
+            printf(RED "    Cannot store file reliably\n" RESET);
+            printf(RED "    Missing redundancy for chunk %d\n" RESET, i + 1);
+            printf(RED "=========================================\n\n" RESET);
             return;
         }
     }
 
     cleanup_connection(sd);
-    printf("Suck sess full put\n");
+
+    // Put operation success
+    printf(GRN "\n=========================================\n" RESET);
+    printf(GRN "    FILE UPLOAD SUCCESSFUL\n" RESET);
+    printf(GRN "    File: %s\n" RESET, sd->filename);
+    printf(GRN "    All chunks stored with redundancy\n" RESET);
+    printf(GRN "=========================================\n\n" RESET);
 }
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 {
-    
 }
 
 void put_file(sockDetails_t *sd)
@@ -262,7 +291,7 @@ void put_file(sockDetails_t *sd)
     FILE *fs = fopen(sd->filename, "rb");
     if (fs == NULL)
     {
-        fprintf(stderr, "[-] Error opening file %d \n" RESET, errno);
+        fprintf(stderr, RED "[-] Error opening file %d \n" RESET, errno);
         return;
     }
     uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
@@ -274,6 +303,10 @@ void put_file(sockDetails_t *sd)
     int chunk_sizes[NUMBER_OF_PAIRS];
     char *chunks[NUMBER_OF_PAIRS];
     int total_chunk_size_until_now = 0;
+
+    printf(MAG "\n[*] Processing file: %s\n" RESET, sd->filename);
+    printf(MAG "    Total file size: %d bytes\n" RESET, size);
+    printf(MAG "    Dividing into %d chunks\n\n" RESET, NUMBER_OF_PAIRS);
 
     for (int i = 0; i < NUMBER_OF_PAIRS; i++)
     {
@@ -290,8 +323,13 @@ void put_file(sockDetails_t *sd)
         chunks[i] = chunk;
         fread(chunk, 1, chunk_size, fs);
 
-        printf("Size of chunk %d is %d for filename %s\n", i, chunk_size, sd->filename);
+        printf(MAG "[*] Created chunk %d of %d\n" RESET, i + 1, NUMBER_OF_PAIRS);
+        printf(MAG "    Chunk size: %d bytes\n\n" RESET, chunk_size);
     }
+
+    // Chunk distribution mapping
+    printf(MAG "\n[*] File hash: %d\n" RESET, hash);
+    printf(MAG "    Distribution starting at server %d\n\n" RESET, hash % sd->number_of_servers + 1);
 
     connect_and_put_chunks(sd, chunks, chunk_sizes, hash % sd->number_of_servers);
 }
@@ -330,7 +368,7 @@ void get_file(sockDetails_t *sd)
                 .chunk_id = index,
                 .filename_length = strlen(sd->filename),
                 .data_length = 0};
-    
+
             numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header), next);
 
             // Send Filename
@@ -384,10 +422,16 @@ void get_file(sockDetails_t *sd)
         i++;
     }
 
-    for (int i = 0; i< NUMBER_OF_PAIRS; i++){
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+    {
         if (chunks[i] == 0 || chunks_stored_sizes[i] <= 0 || chunks_stored[i] <= 0)
         {
-            printf("Chunk not found !\n\r");
+            printf(RED "\n=========================================\n" RESET);
+            printf(RED "    GET OPERATION FAILED\n" RESET);
+            printf(RED "    File: %s\n" RESET, sd->filename);
+            printf(RED "    Cannot reconstruct file\n" RESET);
+            printf(RED "    Missing chunk %d\n" RESET, i + 1);
+            printf(RED "=========================================\n\n" RESET);
             return;
         }
     }
@@ -399,6 +443,12 @@ void get_file(sockDetails_t *sd)
         free(chunks[i]);
     }
     fclose(fs);
+
+    printf(GRN "\n=========================================\n" RESET);
+    printf(GRN "    FILE DOWNLOAD SUCCESSFUL\n" RESET);
+    printf(GRN "    File: %s\n" RESET, sd->filename);
+    printf(GRN "    All chunks retrieved and reassembled\n" RESET);
+    printf(GRN "=========================================\n\n" RESET);
 }
 
 // Function to extract original filename from server format
@@ -588,11 +638,18 @@ void delete_file(sockDetails_t *sd)
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
             if (strncmp(recieve_buffer, ACK, 7) == 0)
+            {
+                printf(GRN "\n=========================================\n" RESET);
+                printf(GRN "    FILE DELETE SUCCESSFUL\n" RESET);
+                printf(GRN "    File: %s\n" RESET, sd->filename);
+                printf(GRN "    All chunks removed from servers\n" RESET);
+                printf(GRN "=========================================\n\n" RESET);
                 break;
-            if (strncmp(recieve_buffer, NACK, 8) == 0){
+            }
+            if (strncmp(recieve_buffer, NACK, 8) == 0)
+            {
                 printf("Filename does not exists or file permission not matching !\n");
             }
-
 
             (void)numbytes;
         }
@@ -611,8 +668,25 @@ void server_info(sockDetails_t *sd)
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     while (current)
     {
-        if (connect_server(sd, current, i) < 0)
-            goto next;
+        if (connect_server(sd, current, i) < 0) goto next;
+
+        printf(MAG "\n=========================================\n" RESET);
+        printf(MAG "    SERVER STATUS\n" RESET);
+        printf(MAG "=========================================\n\n" RESET);
+
+        // Available server
+        printf(GRN "[+] Server %d is ONLINE\n" RESET, i+1);
+        printf(GRN "    Address: %s:%s\n\n" RESET, current->server_ip, current->server_port);
+
+        // Unavailable server
+        printf(RED "[-] Server %d is OFFLINE\n" RESET, i+1);
+        printf(RED "    Address: %s:%s\n\n" RESET, current->server_ip, current->server_port);
+
+        // Server information summary
+        printf(MAG "\n=========================================\n" RESET);
+        printf(MAG "    %d/%d servers available\n" RESET, sd->number_of_available_servers, sd->number_of_servers);
+        printf(MAG "=========================================\n\n" RESET);
+
     next:;
         close(current->client_sock_fd);
         current = current->next;
@@ -638,6 +712,14 @@ void server_info(sockDetails_t *sd)
  */
 void *handle_req(sockDetails_t *sd)
 {
+
+    printf(MAG "\n=========================================\n" RESET);
+    printf(MAG "    STARTING %s OPERATION\n" RESET,
+           sd->command_int == PUT ? "PUT" : sd->command_int == GET  ? "GET"
+                                        : sd->command_int == LS     ? "LIST"
+                                        : sd->command_int == DELETE ? "DELETE"
+                                                                    : "UNKNOWN");
+    printf(MAG "=========================================\n\n" RESET);
 
     /* Process user commands through menu interface */
     switch (sd->command_int)

@@ -29,7 +29,7 @@
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
     int nbytes;                                                                       \
-    if ((nbytes = recv(sockfd, message, message_len, 0)) < 0)                        \
+    if ((nbytes = recv(sockfd, message, message_len, 0)) < 0)                         \
     {                                                                                 \
         printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
         close(sockfd);                                                                \
@@ -38,7 +38,8 @@
     else if (nbytes == 0)                                                             \
     {                                                                                 \
         close(sockfd);                                                                \
-        printf(RED "[-] Client Closed the Connection, error no: %d \n" RESET, errno); \
+        printf(YEL "[-] Client Closed the Connection, error no: %d \n" RESET, errno); \
+        goto goto_where;                                                              \
     }                                                                                 \
     nbytes;                                                                           \
 })
@@ -76,7 +77,8 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     FILE *fs = fopen(filename, "wb");
     if (fs == NULL)
     {
-        printf("could not open file ! \n");
+        fprintf(stderr, RED "\n[-] Error opening file: %s\n" RESET, sd->filename);
+        fprintf(stderr, RED "    Error: %s (code: %d)\n\n" RESET, strerror(errno), errno);
         status = -1;
         goto done;
     }
@@ -295,7 +297,7 @@ void *handle_req(sockDetails_t *sd)
         /* Handle connection timeout */
         else if (select_status == 0)
         {
-            printf(YEL "\n[-] (%d) CONNECTION TIMEOUT:\n"
+            printf(YEL "\n[!] (%d) CONNECTION TIMEOUT:\n"
                        "[-] Client connection idle for %d seconds\n"
                        "------------------------------------------------------------\n" RESET,
                    gettid(), TIMEOUT_SEC);
