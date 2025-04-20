@@ -34,7 +34,7 @@ typedef struct message_header_s
     uint32_t data_length;     // Length of following data
 } message_header_t;
 
-void put_command(sockdetails_t *sd, message_header_t *message_header)
+void put_command(sockDetails_t *sd, message_header_t *message_header)
 {
     int numbytes = 0, total_bytes = 0, numbytes_w = 0;
     char recieved_buf[RECIEVE_SIZE];
@@ -49,7 +49,7 @@ void put_command(sockdetails_t *sd, message_header_t *message_header)
     printf("filename we are putting: %s (%d)\n", recieved_buf, message_header->chunk_id);
 
     char *filename;
-    asprintf(&filename, "%s_%d", recieved_buf, message_header->chunk_id);
+    asprintf(&filename, "%s/%s_%d",sd->dirname, recieved_buf, message_header->chunk_id);
     FILE *fs = fopen(filename, "wb");
 
     while (total_bytes < message_header->data_length)
@@ -85,7 +85,7 @@ done:
     fclose(fs);
 }
 
-void get_command(sockdetails_t *sd, message_header_t *message_header)
+void get_command(sockDetails_t *sd, message_header_t *message_header)
 {
     int numbytes = 0, total_bytes = 0, numbytes_r = 0;
     char recieved_buf[RECIEVE_SIZE];
@@ -98,7 +98,7 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
     printf("filename : %s\n", recieved_buf);
 
     char *filename;
-    asprintf(&filename, "%s_%d", recieved_buf, message_header->chunk_id);
+    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
     FILE *fs = fopen(filename, "rb");
     if (fs == NULL)
     {
@@ -121,10 +121,6 @@ void get_command(sockdetails_t *sd, message_header_t *message_header)
         .filename_length=strlen(filename),
         .data_length=file_size,
     };
-        
-    
-
-    int data = 12;
 
     // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
     numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_t), 0);
@@ -164,8 +160,44 @@ done:
     fclose(fs);
 }
 
-void ls_command()
+void ls_command(sockDetails_t *sd, message_header_t *message_header)
 {
+
+    int numbytes = 0, total_bytes = 0, numbytes_r = 0;
+    char recieved_buf[RECIEVE_SIZE];
+    char transmit_buf[TRANSMIT_SIZE];
+    int status = 0;
+
+    DIR *dp;
+    struct dirent *ep;
+    dp = opendir(sd->dirname);
+
+    if (dp != NULL)
+    {
+        int seq_num = 0; // Packet sequence counter
+        while ((ep = readdir(dp)) != NULL)
+        {
+            int record_len = strlen(ep->d_name);
+
+            bzero(transmit_buf, sizeof(transmit_buf));
+            memcpy(transmit_buf, ep->d_name, record_len);
+
+            message_header_t message_header_send = {
+                .command=LS,
+                .chunk_id=0,
+                .filename_length=record_len,
+                .data_length=0,
+            };
+
+            send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
+
+            send(sd->client_sock_fd ,transmit_buf, record_len, 0);
+        }
+        send(sd->client_sock_fd, ACK, 7, 0);
+    }
+    else{
+        send(sd->client_sock_fd, NACK, 7, 0);
+    }
 
 }
 
@@ -190,7 +222,7 @@ void delete_command()
  * Threading: This function is designed to be thread-safe and can be
  * called by multiple threads simultaneously with different connections.
  */
-void *handle_req(sockdetails_t *sd)
+void *handle_req(sockDetails_t *sd)
 {
     int numbytes;                     /* Number of bytes received */
     char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
@@ -244,7 +276,7 @@ void *handle_req(sockdetails_t *sd)
                 goto cleanup;
             }
 
-            printf("(bytes:%d) command %d, chunk: %d, filename %d, data %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
+            printf("[+] Recieved bytes:%d | command %d, chunk: %d, filename length %d, data length %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
 
             switch (message_header.command)
             {

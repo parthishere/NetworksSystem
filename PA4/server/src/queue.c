@@ -32,8 +32,8 @@
 typedef struct thread_s
 {
     struct thread_s *next_thread;          /* Pointer to next task in queue */
-    void *(*function_to_run)(sockdetails_t*); /* Function pointer for the task */
-    sockdetails_t *sd;                      /* Socket details for the task */
+    void *(*function_to_run)(sockDetails_t*); /* Function pointer for the task */
+    sockDetails_t *sd;                      /* Socket details for the task */
 } _thread_t;
 
 
@@ -128,7 +128,7 @@ void *default_thread_func(threadpool args)
  * 3. Adds it to the task queue
  * 4. Signals worker threads about task availability
  */
-void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t *sd)
+void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockDetails_t *sd)
 {
     
     _threadpool_t *tp = from_me;

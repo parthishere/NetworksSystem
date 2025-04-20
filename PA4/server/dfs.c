@@ -60,36 +60,30 @@ int main(int argc, char *argv[])
     // sigaction(SIGINT, &sa, NULL);
     signal(SIGPIPE, SIG_IGN);
 
-    sockdetails_t sd;
-    pthread_mutex_init(&sd.lock, NULL);
-    
-    printf("Argv[1] %s\n", argv[1]);
-    // int status = mkdir(argv[1], 0777); 
-    // if (status == 0) {
-    //     printf(GRN"[+] Directory '%s' created successfully.\n"RESET, argv[1]);
-    // } else if (errno == EEXIST) {
-    //     printf(GRN"[+] Directory '%s' already exists.\n"RESET, argv[1]);
-    // } else {
-    //     perror(RED"[-] Error creating directory");
-    //     exit(EXIT_FAILURE);
-    // }
-
+   
     if (argc != 3)
     {
-        
         printf(RED "[-] You messed up, command is ./dfs <DFS_DIR> <PORT> | (passed numer of args: %d) \n" RESET, argc);
+        exit(EXIT_FAILURE);   
+    }
+
+    sockDetails_t sd;
+    pthread_mutex_init(&sd.lock, NULL);
+    sd.dirname = argv[1];
+    
+    int status = mkdir(argv[1], 0777); 
+    if (status == 0) {
+        printf(GRN"[+] Directory '%s' created successfully.\n"RESET, argv[1]);
+    } else if (errno == EEXIST) {
+        printf(GRN"[+] Directory '%s' already exists.\n"RESET, argv[1]);
+    } else {
+        perror(RED"[-] Error creating directory");
         exit(EXIT_FAILURE);
-        
-        
     }
     
-    
-    
-    printf(GRN"[+] Cache Timeout is set to %d sec\n"RESET,sd.timeout);
     sd.addr_len = sizeof(sd.client_info);
 
 
- 
     init_socket(&sd, argv[2]);
 
 #if USE_FORK == 0

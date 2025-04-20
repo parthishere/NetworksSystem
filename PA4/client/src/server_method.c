@@ -23,7 +23,7 @@
 commands_t whichcmd(int argc, char *argv[], char **filename)
 {
     char *cmd = argv[1];
-    if (strncmp(cmd, "ls", strlen("ls")) == 0 || strncmp(cmd, "list", strlen("list")) == 0)
+    if (strncmp(cmd, "ls", strlen("ls")) == 0)
     {
         return LS;
     }

@@ -29,7 +29,6 @@ void read_server_conf(sockDetails_t *sd){
 
         current = malloc(sizeof(serverDetails_t));
         if(sd->servers_details == NULL){
-            printf("saved first occurance \n\r");
             sd->servers_details = current;
         }
         else{
@@ -48,7 +47,6 @@ void read_server_conf(sockDetails_t *sd){
         
         tok = strtok_r(NULL, "\n", &saved_remaining_line);
         current->server_port = strndup(tok, strlen(tok)); // free
-        
         if(current->server_port == NULL) exit(EXIT_FAILURE);
 
         current->dfsno = dfs_no;
@@ -58,6 +56,10 @@ void read_server_conf(sockDetails_t *sd){
         
         free(line_dup);
         i++;
+    }
+    if(sd->number_of_servers <= 0) {
+        printf("[-] 0 number of servers found ! \n");
+        exit(EXIT_FAILURE);
     }
 
     printf("Number of servers configured %d \n", sd->number_of_servers);
@@ -103,12 +105,12 @@ int main(int argc, char *argv[])
     sd.command_int = whichcmd(argc, argv, &filename);
     sd.filename = filename;
     
-    if(filename){
+    
         handle_req(&sd);
-    }
-    else{
-        exit(EXIT_SUCCESS);
-    }
+    
+    
+        
+    
 
     return EXIT_SUCCESS;
 }

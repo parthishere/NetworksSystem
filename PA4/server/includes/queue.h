@@ -40,13 +40,13 @@ typedef void *threadpool;
  * @typedef dispatch_fn
  * @brief Function pointer type for tasks that can be dispatched to the thread pool
  * 
- * @param sockdetails_t Socket details structure containing connection information
+ * @param sockDetails_t Socket details structure containing connection information
  * @return void* Result of the task execution (if any)
  * 
  * This type defines the signature for functions that can be scheduled
  * for execution by the thread pool's worker threads.
  */
-typedef void *(*dispatch_fn)(sockdetails_t*);
+typedef void *(*dispatch_fn)(sockDetails_t*);
 
 /**
  * @function destroy_threadpool
@@ -74,7 +74,7 @@ void destroy_threadpool(threadpool tp);
  * If all threads are busy, the task will wait in the queue until a thread
  * becomes available.
  */
-void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockdetails_t *sd);
+void dispatch(threadpool from_me, dispatch_fn dispatch_to_here, sockDetails_t *sd);
 
 /**
  * @function create_threadpool

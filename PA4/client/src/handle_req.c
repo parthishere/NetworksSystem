@@ -91,8 +91,8 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
     serverDetails_t *current = sd->servers_details;
     int i = 0;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
-    int chunks_stored[sd->number_of_servers];                          // NUMBER_OF_PAIRS
-    memset(chunks_stored, 0, sd->number_of_servers * 4);
+    int chunks_stored[NUMBER_OF_PAIRS];
+    memset(chunks_stored, 0, NUMBER_OF_PAIRS * 4);
     while (current)
     {
 
@@ -148,7 +148,6 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
         sd->number_of_available_servers++;
 
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
-        char *send_command;
 
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -179,7 +178,6 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
                 total_bytes += numbytes;
             }
             printf("Sent chunk %d to server %d \n", index, i);
-            // ack from server
             char recieve_buffer[RECIEVE_SIZE];
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) <= 0)
@@ -201,13 +199,12 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
                current->server_port);
 
     next:;
+        close(current->client_sock_fd);
         i++;
         current = current->next;
     }
 
-    // NUMBER_OF_PAIRS
-
-    for (int i = 0; i < sd->number_of_servers; i++)
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
     {
         if (chunks_stored[i] <= 0)
         {
@@ -223,17 +220,17 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
     int i = 0, numbytes = 0, totalbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
-    int chunks_stored[NUMBER_OF_PAIRS];                          // NUMBER_OF_PAIRS
-    int chunks_stored_sizes[NUMBER_OF_PAIRS];                          // NUMBER_OF_PAIRS
+    int chunks_stored[NUMBER_OF_PAIRS];
+    int chunks_stored_sizes[NUMBER_OF_PAIRS];
     char *chunks[NUMBER_OF_PAIRS];
+    char recieve_buffer[RECIEVE_SIZE];
+
     memset(chunks, 0, sizeof(chunks));
     memset(chunks_stored, 0, sizeof(chunks_stored));
-    char recieve_buffer[RECIEVE_SIZE];
 
     while (current)
     {
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
-
 
         struct addrinfo hints, *temp;
         char ip[INET6_ADDRSTRLEN];
@@ -286,13 +283,13 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
         sd->server_sock_fds[i] = current->client_sock_fd;
         sd->number_of_available_servers++;
 
-        printf("chunks: ");
-        
+
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             index = (index + j) % sd->number_of_servers;
 
-            if(chunks_stored[index] >= 1) continue;
+            if (chunks_stored[index] >= 1)
+                continue;
 
             message_header_t message_header = {
                 .command = GET,
@@ -319,7 +316,6 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
             message_header_t *recv_message_header = malloc(sizeof(message_header_t)); // free it later
 
-
             numbytes = recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), 0);
 
             printf("Server has fucking shit %d %d %d %d (numbytes read) %d\n", recv_message_header->chunk_id, recv_message_header->command, recv_message_header->data_length, recv_message_header->filename_length, numbytes);
@@ -331,19 +327,15 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             while (total_bytes < recv_message_header->data_length)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
-                printf("were waiting here\n");
                 if ((numbytes = recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, 0)) < 0)
                 {
                     printf("recv failed \n");
                     goto next;
                 }
-                printf("not here");
                 memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
                 total_bytes += numbytes;
             }
-        
 
-            
             numbytes = send(current->client_sock_fd, ACK, 7, 0);
             printf("recieved chunk bitch from server %d - chunk %d\n", i, index);
 
@@ -351,7 +343,7 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             numbytes = recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), 0); // ack
 
             chunks_stored[index]++;
-            chunks_stored_sizes[index] =  recv_message_header->data_length;
+            chunks_stored_sizes[index] = recv_message_header->data_length;
             free(recv_message_header);
         }
         printf("for server %d\n", i);
@@ -363,8 +355,6 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
                gettid(), current->server_ip, gettid(), s,
                current->server_port);
 
-
-
     next:;
         close(current->client_sock_fd);
         current = current->next;
@@ -373,11 +363,14 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
     FILE *fs = fopen(sd->filename, "wb");
 
-    for(int i=0; i<NUMBER_OF_PAIRS; i++){
-        chunks[i];
-        chunks_stored_sizes[i];
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+    {
+        if(chunks[i] == 0 || chunks_stored_sizes[i] <= 0 || chunks_stored[i] <= 0) {
+            printf("Chunk not found !\n\r");
+            fclose(fs);
+            exit(EXIT_FAILURE);
+        }
         fwrite(chunks[i], chunks_stored_sizes[i], 1, fs);
-        
 
         free(chunks[i]);
     }
@@ -393,24 +386,22 @@ void put_file(sockDetails_t *sd)
         return;
     }
     uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
-    // printf("hash: %u | modulo: %d\n\r", hash, hash % sd->number_of_servers);
 
     fseek(fs, 0L, SEEK_END);
     int size = ftell(fs);
     fseek(fs, 0, SEEK_SET);
 
-    int chunk_sizes[MAX_NUMBER_OF_SERVERS]; // NUMBER_OF_PAIRS
-    char *chunks[MAX_NUMBER_OF_SERVERS];    // NUMBER_OF_PAIRS
+    int chunk_sizes[NUMBER_OF_PAIRS];
+    char *chunks[NUMBER_OF_PAIRS];
     int total_chunk_size_until_now = 0;
 
-    // NUMBER_OF_PAIRS
-    for (int i = 0; i < sd->number_of_servers; i++)
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
     {
         int chunk_size;
-        if (i == sd->number_of_servers - 1)
+        if (i == NUMBER_OF_PAIRS - 1)
             chunk_size = size - total_chunk_size_until_now;
         else
-            chunk_size = size / sd->number_of_servers;
+            chunk_size = size / NUMBER_OF_PAIRS;
         total_chunk_size_until_now += chunk_size;
 
         chunk_sizes[i] = chunk_size;
@@ -428,6 +419,114 @@ void put_file(sockDetails_t *sd)
 void get_file(sockDetails_t *sd)
 {
     get_file_chunks_and_join(sd, str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers);
+}
+
+void list_file(sockDetails_t *sd){
+
+    int i = 0, numbytes = 0, totalbytes = 0;
+    serverDetails_t *current = sd->servers_details;
+    sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
+    char recieve_buffer[RECIEVE_SIZE];
+
+
+    while (current)
+    {
+
+        struct addrinfo hints, *temp;
+        char ip[INET6_ADDRSTRLEN];
+
+        int status;
+        sd->server_sock_fds[i] = -1;
+        current->client_sock_fd = -1;
+
+        /* Configure address hints structure */
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM; // for TCP
+
+        if (atoi(current->server_port) <= 1024)
+        {
+            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
+            exit(EXIT_FAILURE);
+        }
+
+        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
+        {
+            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
+            goto next;                                                            // exit if there is an error
+        }
+
+        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
+        {
+            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+            {
+                perror(RED "server: socket");
+                goto next;
+            }
+
+            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
+            {
+                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
+                close(current->client_sock_fd);
+                goto next;
+            }
+
+            break;
+        }
+
+        if (temp == NULL)
+        {
+            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+            goto next;
+        }
+
+        sd->server_sock_fds[i] = current->client_sock_fd;
+        sd->number_of_available_servers++;
+
+        message_header_t message_header = {
+            .command = LS,
+            .chunk_id = 0,
+            .filename_length = 0,
+            .data_length = 0};
+        numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
+
+        while(1){
+            memset(&message_header, 0, sizeof(message_header_t));
+            numbytes = recv(current->client_sock_fd, &message_header, sizeof(message_header_t), 0);
+            if(numbytes <= 0) break;
+            printf("Numbytes rescieved %d filelength %d from server %d \n", numbytes, message_header.filename_length, i);
+
+            memcpy(recieve_buffer, (void *)&message_header, numbytes);
+            if(strncmp(recieve_buffer, ACK, 7) == 0) break;
+            if(strncmp(recieve_buffer, NACK, 8) == 0) break;
+            
+            
+            bzero(recieve_buffer, sizeof(recieve_buffer));
+            numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
+            if(strncmp(recieve_buffer, ACK, 7) == 0) break;
+            if(strncmp(recieve_buffer, NACK, 8) == 0) break;
+            printf("recieved bytes %d %s\n", numbytes, recieve_buffer);
+            if(numbytes <= 0) break;
+
+            // sscanf()
+        }
+        
+        printf("for server %d\n", i);
+
+        char s[INET6_ADDRSTRLEN];
+        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
+        printf(GRN "[+] (%d) Connection established to server: %s\n"
+                   "[+] (%d) Server IP address: %s:%s\n" RESET,
+               gettid(), current->server_ip, gettid(), s,
+               current->server_port);
+
+    next:;
+        close(current->client_sock_fd);
+        current = current->next;
+        i++;
+    }
+
+    
 }
 /**
  * @function handle_req
@@ -459,13 +558,14 @@ void *handle_req(sockDetails_t *sd)
 
     /* Set timeout period for idle connections */
     struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
-
+    printf("list\n");
     /* Process user commands through menu interface */
     switch (sd->command_int)
     {
     case LS:
         /* List directory contents */
-
+        
+        list_file(sd);
         break;
     case GET:
         /* Download file from server */

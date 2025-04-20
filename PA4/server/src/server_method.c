@@ -68,14 +68,13 @@ commands_t whichcmd(char *cmd)
  *
  * @param sd  Pointer to socket details structure
  */
-void list_files(sockdetails_t *sd)
+void list_files(sockDetails_t *sd)
 {
     // set_timeout(sd, TIMEOUT);
     printf("\n\nLS\n\n");
 
     // /* Initialize directory scanning */
-    // DIR *dp;
-    // struct dirent *ep;
+    
     // int total_bytes;
     // int retry_count = 0;
 
@@ -83,18 +82,12 @@ void list_files(sockdetails_t *sd)
     // char recieve_buffer[RECIEVE_SIZE]; // 256bytes
     // char transmit_buffer[TRANSMIT_SIZE];
     // uint8_t crc = crc8(0, NULL, 0);
-    // dp = opendir("./");
-    // if (dp != NULL)
-    // {
-    //     int seq_num = 0; // Packet sequence counter
-    //     while ((ep = readdir(dp)) != NULL)
-    //     {
+    // 
+    
     //     retry:;
     //         /* Prepare filename packet */
-    //         int record_len = strlen(ep->d_name);
-    //         bzero(transmit_buffer, sizeof(transmit_buffer));
-
-    //         memcpy(transmit_buffer, ep->d_name, record_len);
+    //         
+    //        
 
     //         /* Construct packet header
     //          * Format: [2B length][2B sequence][1B CRC][data]
@@ -162,7 +155,7 @@ void list_files(sockdetails_t *sd)
  * @param sd             Pointer to socket details structure
  * @param recieve_buffer Buffer containing the GET request
  */
-void get_file(sockdetails_t *sd, char *recieve_buffer)
+void get_file(sockDetails_t *sd, char *recieve_buffer)
 {
     // set_timeout(sd, TIMEOUT);
     printf("\n\nGET\n\n");
@@ -268,7 +261,7 @@ void get_file(sockdetails_t *sd, char *recieve_buffer)
  * @param sd             Pointer to socket details structure
  * @param recieve_buffer Buffer containing DELETE command and filename
  */
-void delete_file(sockdetails_t *sd, char *recieve_buffer)
+void delete_file(sockDetails_t *sd, char *recieve_buffer)
 {
     /* Set standard timeout and extract filename */
     // set_timeout(sd, TIMEOUT);
