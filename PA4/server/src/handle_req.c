@@ -17,27 +17,30 @@
 #include "handle_req.h"
 
 #define _send(sockfd, message, message_len, goto_where) ({           \
-    int numbytes;                                                    \
-    if ((numbytes = send(sockfd, message, message_len, 0)) <= 0)     \
+    int nbytes;                                                      \
+    if ((nbytes = send(sockfd, message, message_len, 0)) <= 0)       \
     {                                                                \
         printf(RED "[-] Send failed, error no: %d \n" RESET, errno); \
+        close(sockfd);                                               \
         goto goto_where;                                             \
     }                                                                \
-    numbytes;                                                        \
+    nbytes;                                                          \
 })
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
-    int numbytes;                                                                     \
-    if ((numbytes = recv(sockfd, message, message_len, 0)) <= 0)                      \
+    int nbytes;                                                                       \
+    if ((nbytes = recv(sockfd, message, message_len, 0)) <= 0)                        \
     {                                                                                 \
         printf(RED "[-] Recv failed, error no: %d \n" RESET, errno);                  \
+        close(sockfd);                                                                \
         goto goto_where;                                                              \
     }                                                                                 \
-    else if (numbytes == 0)                                                           \
+    else if (nbytes == 0)                                                             \
     {                                                                                 \
-        printf(RED "[-] Server Closed the Connection, error no: %d \n" RESET, errno); \
+        close(sockfd);                                                                \
+        printf(RED "[-] Client Closed the Connection, error no: %d \n" RESET, errno); \
     }                                                                                 \
-    numbytes;                                                                         \
+    nbytes;                                                                           \
 })
 
 void *get_in_addr(struct sockaddr *sa)
@@ -65,7 +68,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     int status = 0;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
-    _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
+    numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     printf("filename we are putting: %s (%d)\n", recieved_buf, message_header->chunk_id);
 
     char *filename;
@@ -74,6 +77,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     if (fs == NULL)
     {
         printf("could not open file ! \n");
+        status = -1;
         goto done;
     }
 
@@ -94,9 +98,9 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
 
     // ACK
     if (status >= 0)
-        _send(sd->client_sock_fd, ACK, 7, done);
+        numbytes = _send(sd->client_sock_fd, ACK, 7, done);
     else
-        _send(sd->client_sock_fd, NACK, 8, done);
+        numbytes = _send(sd->client_sock_fd, NACK, 8, done);
 
 done:
     free(filename);
@@ -111,8 +115,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     int status = 0;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
-    // recv filename
-    numbytes = recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, MSG_WAITALL);
+    numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     printf("filename : %s\n", recieved_buf);
 
     char *filename;
@@ -121,7 +124,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     if (fs == NULL)
     {
         printf("Reading failed \n");
-        numbytes = send(sd->client_sock_fd, NACK, 8, 0);
+        numbytes = _send(sd->client_sock_fd, NACK, 8, done);
         status = -1;
         goto done;
     }
@@ -131,7 +134,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
     printf("file size %d \n", file_size);
     // send ack
-    numbytes = send(sd->client_sock_fd, ACK, 7, 0);
+    numbytes = _send(sd->client_sock_fd, ACK, 7, done);
 
     message_header_t message_header_send = {
         .command = GET,
@@ -140,21 +143,20 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         .data_length = file_size,
     };
 
-    // numbytes = send(sd->client_sock_fd, &data, sizeof(data), 0);
-    numbytes = send(sd->client_sock_fd, &message_header_send, sizeof(message_header_t), 0);
+    numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_t), done);
     total_bytes = 0;
     while (total_bytes < file_size)
     {
         memset(transmit_buf, 0, sizeof(transmit_buf));
         numbytes = fread(transmit_buf, 1, file_size, fs);
-        numbytes = send(sd->client_sock_fd, transmit_buf, numbytes, 0);
+        numbytes = _send(sd->client_sock_fd, transmit_buf, numbytes, done);
         printf("send bytes:%d\n", numbytes);
 
         total_bytes += numbytes;
     }
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
-    numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, 0);
+    numbytes = _recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, done);
     if (strncmp(recieved_buf, ACK, 7) == 0)
     {
         printf("ACK recv so client is good\n");
@@ -164,8 +166,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         printf("something went wrong\n");
     }
 
-    memcpy(recieved_buf, ACK, 7);
-    send(sd->client_sock_fd, recieved_buf, 7, 0);
+    _send(sd->client_sock_fd, ACK, 7, done);
     // else send(sd->client_sock_fd, NACK, 8, 0);
 
 done:
@@ -279,17 +280,8 @@ void *handle_req(sockDetails_t *sd)
             /* Read incoming request with error checking */
             int total_bytes = 0;
             message_header_t message_header;
-            if ((numbytes = recv(sd->client_sock_fd, &message_header, sizeof(message_header), MSG_WAITALL)) < 0)
-            {
-                fprintf(stderr, RED "[-] (%d) read %d\n", gettid(), errno);
-                goto cleanup;
-            }
-            // You get a return value of 0 for recv() when the connection was closed by the other host
-            if (numbytes == 0)
-            {
-                fprintf(stderr, RED "[-] (%d) peer has closed the connection exiting\n", gettid());
-                goto cleanup;
-            }
+
+            _recv(sd->client_sock_fd, &message_header, sizeof(message_header_t), cleanup);
 
             printf("[+] Recieved bytes:%d | command %d, chunk: %d, filename length %d, data length %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
 
