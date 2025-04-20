@@ -106,37 +106,11 @@ int main(int argc, char *argv[])
     sd.filename = filename;
     
     
-        handle_req(&sd);
+    handle_req(&sd);
     
     
         
     
 
     return EXIT_SUCCESS;
-}
-
-/**
- * Display command menu and process user input
- *
- * Presents available commands to user and processes their selection.
- * Supports multiple input methods (SCANF, FGETS, or raw read) based
- * on compilation flags.
- *
- * @param filename  Buffer to store filename parameter if command requires one
- * @return         Command type from commands_t enum
- */
-void print_menu()
-{
-    /* Display menu header */
-    printf(YEL "\n\nThis client can support distributed FTP\n\n");
-    printf("Currently this program can support following commands \n");
-    /* Display available commands */
-    printf("get <filename>   : Get the file name in server and print the file\n");
-    printf("put <filename>   : if filename does not exists on server, create one. \n");
-    printf("delete <filename>: if filename does exists on server, delete that file\n");
-    printf("ls               : get the list of all the files/chunks in all server and print it\n");
-    printf("exit             : exit from the client program and free the resources in client and server\n");
-    printf("server info      : get to know server info\n");
-    printf("help             : print this help \n");
-    printf("\n" RESET);
 }

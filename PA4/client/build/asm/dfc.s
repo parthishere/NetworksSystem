@@ -294,7 +294,7 @@ main:
 	call	printf@PLT
 	.loc 1 98 9
 	movl	$0, %eax
-	call	print_menu
+	call	print_menu@PLT
 	.loc 1 100 9
 	movl	$1, %edi
 	call	exit@PLT
@@ -317,7 +317,7 @@ main:
 	.loc 1 106 17
 	movq	-136(%rbp), %rax
 	movq	%rax, -112(%rbp)
-	.loc 1 109 9
+	.loc 1 109 5
 	leaq	-128(%rbp), %rax
 	movq	%rax, %rdi
 	call	handle_req@PLT
@@ -335,98 +335,6 @@ main:
 	.cfi_endproc
 .LFE321:
 	.size	main, .-main
-	.section	.rodata
-	.align 8
-.LC9:
-	.string	"\033[33m\n\nThis client can support distributed FTP\n"
-	.align 8
-.LC10:
-	.string	"Currently this program can support following commands "
-	.align 8
-.LC11:
-	.string	"get <filename>   : Get the file name in server and print the file"
-	.align 8
-.LC12:
-	.string	"put <filename>   : if filename does not exists on server, create one. "
-	.align 8
-.LC13:
-	.string	"delete <filename>: if filename does exists on server, delete that file"
-	.align 8
-.LC14:
-	.string	"ls               : get the list of all the files/chunks in all server and print it"
-	.align 8
-.LC15:
-	.string	"exit             : exit from the client program and free the resources in client and server"
-	.align 8
-.LC16:
-	.string	"server info      : get to know server info"
-	.align 8
-.LC17:
-	.string	"help             : print this help "
-.LC18:
-	.string	"\n\033[0m"
-	.text
-	.globl	print_menu
-	.type	print_menu, @function
-print_menu:
-.LFB322:
-	.loc 1 129 1
-	.cfi_startproc
-	endbr64
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	.loc 1 131 5
-	leaq	.LC9(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 132 5
-	leaq	.LC10(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 134 5
-	leaq	.LC11(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 135 5
-	leaq	.LC12(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 136 5
-	leaq	.LC13(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 137 5
-	leaq	.LC14(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 138 5
-	leaq	.LC15(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 139 5
-	leaq	.LC16(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 140 5
-	leaq	.LC17(%rip), %rax
-	movq	%rax, %rdi
-	call	puts@PLT
-	.loc 1 141 5
-	leaq	.LC18(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	.loc 1 142 1
-	nop
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE322:
-	.size	print_menu, .-print_menu
 .Letext0:
 	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/14/include/stddef.h"
 	.file 3 "/usr/include/x86_64-linux-gnu/bits/types.h"
@@ -448,7 +356,7 @@ print_menu:
 	.file 19 "/usr/include/string.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0x91b
+	.long	0x90f
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
@@ -521,7 +429,7 @@ print_menu:
 	.byte	0x1
 	.byte	0x6
 	.long	.LASF12
-	.uleb128 0x13
+	.uleb128 0x14
 	.long	0x96
 	.uleb128 0x5
 	.long	.LASF13
@@ -900,7 +808,7 @@ print_menu:
 	.long	0x2f5
 	.byte	0x18
 	.byte	0
-	.uleb128 0x14
+	.uleb128 0x15
 	.byte	0x4
 	.byte	0x20
 	.long	0x395
@@ -921,9 +829,9 @@ print_menu:
 	.byte	0x24
 	.byte	0x3
 	.long	0x377
-	.uleb128 0x13
-	.long	0x395
 	.uleb128 0x14
+	.long	0x395
+	.uleb128 0x15
 	.byte	0x28
 	.byte	0x43
 	.long	0x3cf
@@ -1290,17 +1198,25 @@ print_menu:
 	.uleb128 0x2
 	.long	0x3f8
 	.byte	0
+	.uleb128 0x1f
+	.long	.LASF133
+	.byte	0x1
+	.byte	0xd
+	.byte	0x6
+	.long	0x68b
+	.uleb128 0x13
+	.byte	0
 	.uleb128 0x7
 	.long	.LASF112
 	.byte	0x10
 	.value	0x30d
 	.byte	0xc
 	.long	0x66
-	.long	0x699
+	.long	0x6a7
 	.uleb128 0x2
-	.long	0x699
+	.long	0x6a7
 	.uleb128 0x2
-	.long	0x69e
+	.long	0x6ac
 	.byte	0
 	.uleb128 0x3
 	.long	0x3df
@@ -1312,7 +1228,7 @@ print_menu:
 	.byte	0xb8
 	.byte	0xc
 	.long	0x66
-	.long	0x6b9
+	.long	0x6c7
 	.uleb128 0x2
 	.long	0x2b0
 	.byte	0
@@ -1322,10 +1238,10 @@ print_menu:
 	.value	0x16b
 	.byte	0xc
 	.long	0x66
-	.long	0x6d1
+	.long	0x6df
 	.uleb128 0x2
 	.long	0x2a6
-	.uleb128 0x15
+	.uleb128 0x13
 	.byte	0
 	.uleb128 0x7
 	.long	.LASF115
@@ -1333,7 +1249,7 @@ print_menu:
 	.value	0x28e
 	.byte	0xe
 	.long	0x8c
-	.long	0x6f2
+	.long	0x700
 	.uleb128 0x2
 	.long	0x91
 	.uleb128 0x2
@@ -1341,21 +1257,21 @@ print_menu:
 	.uleb128 0x2
 	.long	0x2b5
 	.byte	0
-	.uleb128 0x1f
-	.long	.LASF133
+	.uleb128 0x20
+	.long	.LASF134
 	.byte	0x12
 	.value	0x2af
 	.byte	0xd
-	.long	0x705
+	.long	0x713
 	.uleb128 0x2
 	.long	0x48
 	.byte	0
-	.uleb128 0x20
+	.uleb128 0x21
 	.long	.LASF116
 	.byte	0x12
 	.value	0x2f4
 	.byte	0xd
-	.long	0x718
+	.long	0x726
 	.uleb128 0x2
 	.long	0x66
 	.byte	0
@@ -1365,7 +1281,7 @@ print_menu:
 	.byte	0xc3
 	.byte	0xe
 	.long	0x8c
-	.long	0x733
+	.long	0x741
 	.uleb128 0x2
 	.long	0x2a6
 	.uleb128 0x2
@@ -1377,23 +1293,23 @@ print_menu:
 	.value	0x197
 	.byte	0xf
 	.long	0x2e
-	.long	0x74a
+	.long	0x758
 	.uleb128 0x2
 	.long	0x2a6
 	.byte	0
-	.uleb128 0x21
-	.long	.LASF134
+	.uleb128 0x22
+	.long	.LASF135
 	.byte	0x11
 	.value	0x1bf
 	.byte	0xc
-	.long	.LASF135
+	.long	.LASF136
 	.long	0x66
-	.long	0x76b
+	.long	0x779
 	.uleb128 0x2
 	.long	0x2a6
 	.uleb128 0x2
 	.long	0x2a6
-	.uleb128 0x15
+	.uleb128 0x13
 	.byte	0
 	.uleb128 0x7
 	.long	.LASF119
@@ -1401,7 +1317,7 @@ print_menu:
 	.value	0x16e
 	.byte	0xe
 	.long	0x8c
-	.long	0x78c
+	.long	0x79a
 	.uleb128 0x2
 	.long	0x91
 	.uleb128 0x2
@@ -1415,7 +1331,7 @@ print_menu:
 	.byte	0xbb
 	.byte	0xe
 	.long	0x8c
-	.long	0x7a2
+	.long	0x7b0
 	.uleb128 0x2
 	.long	0x2a6
 	.byte	0
@@ -1425,7 +1341,7 @@ print_menu:
 	.value	0x2a0
 	.byte	0xe
 	.long	0x48
-	.long	0x7b9
+	.long	0x7c7
 	.uleb128 0x2
 	.long	0x3a
 	.byte	0
@@ -1435,21 +1351,12 @@ print_menu:
 	.value	0x108
 	.byte	0xe
 	.long	0x2b0
-	.long	0x7d5
+	.long	0x7e3
 	.uleb128 0x2
 	.long	0x2ab
 	.uleb128 0x2
 	.long	0x2ab
 	.byte	0
-	.uleb128 0x22
-	.long	.LASF136
-	.byte	0x1
-	.byte	0x80
-	.byte	0x6
-	.quad	.LFB322
-	.quad	.LFE322-.LFB322
-	.uleb128 0x1
-	.byte	0x9c
 	.uleb128 0x23
 	.long	.LASF137
 	.byte	0x1
@@ -1460,7 +1367,7 @@ print_menu:
 	.quad	.LFE321-.LFB321
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x84d
+	.long	0x841
 	.uleb128 0x16
 	.long	.LASF123
 	.byte	0x57
@@ -1503,7 +1410,7 @@ print_menu:
 	.quad	.LFE320-.LFB320
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x911
+	.long	0x905
 	.uleb128 0x25
 	.string	"sd"
 	.byte	0x1
@@ -1525,7 +1432,7 @@ print_menu:
 	.long	.LASF125
 	.byte	0x14
 	.byte	0xa
-	.long	0x911
+	.long	0x905
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -1056
@@ -1845,13 +1752,18 @@ print_menu:
 	.byte	0
 	.byte	0
 	.uleb128 0x13
+	.uleb128 0x18
+	.byte	0
+	.byte	0
+	.byte	0
+	.uleb128 0x14
 	.uleb128 0x26
 	.byte	0
 	.uleb128 0x49
 	.uleb128 0x13
 	.byte	0
 	.byte	0
-	.uleb128 0x14
+	.uleb128 0x15
 	.uleb128 0x17
 	.byte	0x1
 	.uleb128 0xb
@@ -1866,11 +1778,6 @@ print_menu:
 	.sleb128 9
 	.uleb128 0x1
 	.uleb128 0x13
-	.byte	0
-	.byte	0
-	.uleb128 0x15
-	.uleb128 0x18
-	.byte	0
 	.byte	0
 	.byte	0
 	.uleb128 0x16
@@ -2017,6 +1924,25 @@ print_menu:
 	.uleb128 0x3a
 	.uleb128 0xb
 	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x3c
+	.uleb128 0x19
+	.uleb128 0x1
+	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x20
+	.uleb128 0x2e
+	.byte	0x1
+	.uleb128 0x3f
+	.uleb128 0x19
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0xb
+	.uleb128 0x3b
 	.uleb128 0x5
 	.uleb128 0x39
 	.uleb128 0xb
@@ -2028,7 +1954,7 @@ print_menu:
 	.uleb128 0x13
 	.byte	0
 	.byte	0
-	.uleb128 0x20
+	.uleb128 0x21
 	.uleb128 0x2e
 	.byte	0x1
 	.uleb128 0x3f
@@ -2051,7 +1977,7 @@ print_menu:
 	.uleb128 0x13
 	.byte	0
 	.byte	0
-	.uleb128 0x21
+	.uleb128 0x22
 	.uleb128 0x2e
 	.byte	0x1
 	.uleb128 0x3f
@@ -2074,29 +2000,6 @@ print_menu:
 	.uleb128 0x19
 	.uleb128 0x1
 	.uleb128 0x13
-	.byte	0
-	.byte	0
-	.uleb128 0x22
-	.uleb128 0x2e
-	.byte	0
-	.uleb128 0x3f
-	.uleb128 0x19
-	.uleb128 0x3
-	.uleb128 0xe
-	.uleb128 0x3a
-	.uleb128 0xb
-	.uleb128 0x3b
-	.uleb128 0xb
-	.uleb128 0x39
-	.uleb128 0xb
-	.uleb128 0x11
-	.uleb128 0x1
-	.uleb128 0x12
-	.uleb128 0x7
-	.uleb128 0x40
-	.uleb128 0x18
-	.uleb128 0x7c
-	.uleb128 0x19
 	.byte	0
 	.byte	0
 	.uleb128 0x23
@@ -2357,7 +2260,7 @@ print_menu:
 	.string	"command_int"
 .LASF85:
 	.string	"DELETE"
-.LASF134:
+.LASF135:
 	.string	"sscanf"
 .LASF99:
 	.string	"filename"
@@ -2403,7 +2306,7 @@ print_menu:
 	.string	"short int"
 .LASF46:
 	.string	"_IO_wide_data"
-.LASF135:
+.LASF136:
 	.string	"__isoc23_sscanf"
 .LASF81:
 	.string	"ai_next"
@@ -2439,7 +2342,7 @@ print_menu:
 	.string	"_IO_read_base"
 .LASF25:
 	.string	"_IO_save_end"
-.LASF133:
+.LASF134:
 	.string	"free"
 .LASF67:
 	.string	"pthread_mutex_t"
@@ -2485,7 +2388,7 @@ print_menu:
 	.string	"_IO_write_base"
 .LASF95:
 	.string	"dfsno"
-.LASF136:
+.LASF133:
 	.string	"print_menu"
 	.section	.debug_line_str,"MS",@progbits,1
 .LASF1:

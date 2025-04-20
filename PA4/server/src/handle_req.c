@@ -139,9 +139,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         total_bytes += numbytes;
     }
 
-    
-
-    
     memset(recieved_buf, 0, sizeof(recieved_buf));
     numbytes = recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, 0);
     if (strncmp(recieved_buf, ACK, 7) == 0)
