@@ -31,7 +31,7 @@ uint32_t str2md5(char *str, int length)
     EVP_MD_CTX *context = EVP_MD_CTX_new();
     const EVP_MD *md = EVP_md5();
     EVP_DigestInit_ex(context, md, NULL);
-    int md_len;
+    unsigned int md_len;
     unsigned char digest[16];
 
     while (length > 0)
@@ -86,6 +86,70 @@ void cleanup_connection(sockDetails_t *sd)
     }
 }
 
+
+
+int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index)
+{
+    struct addrinfo hints, *temp;
+
+    int status;
+    sd->server_sock_fds[server_index] = -1;
+    current->client_sock_fd = -1;
+
+    /* Configure address hints structure */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM; // for TCP
+
+    if (atoi(current->server_port) <= 1024)
+    {
+        fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
+        exit(EXIT_FAILURE);
+    }
+
+    if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
+    {
+        fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
+        return -1;                                                            // exit if there is an error
+    }
+
+    for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
+    {
+        if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
+        {
+            perror(RED "server: socket");
+            return -1;
+        }
+
+        if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
+        {
+            fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
+            close(current->client_sock_fd);
+            return -1;
+        }
+
+        break;
+    }
+
+    if (temp == NULL)
+    {
+        fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        return -1;
+    }
+
+    sd->server_sock_fds[server_index] = current->client_sock_fd;
+    sd->number_of_available_servers++;
+
+    char s[INET6_ADDRSTRLEN];
+    inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
+    printf(GRN "[+] (%d) Connection established to server: %s\n"
+               "[+] (%d) Server IP address: %s:%s\n" RESET,
+           gettid(), current->server_ip, gettid(), s,
+           current->server_port);
+    return 1;
+}
+
+
 void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[], int hash)
 {
     serverDetails_t *current = sd->servers_details;
@@ -96,56 +160,8 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
     while (current)
     {
 
-        struct addrinfo hints, *temp;
-        char ip[INET6_ADDRSTRLEN];
-
-        int status;
-        sd->server_sock_fds[i] = -1;
-        current->client_sock_fd = -1;
-
-        /* Configure address hints structure */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM; // for TCP
-
-        if (atoi(current->server_port) <= 1024)
-        {
-            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
-        {
-            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                                            // exit if there is an error
-        }
-
-        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
-        {
-            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-            {
-                perror(RED "server: socket");
-                goto next;
-            }
-
-            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-            {
-                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-                close(current->client_sock_fd);
-                goto next;
-            }
-
-            break;
-        }
-
-        if (temp == NULL)
-        {
-            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        if (connect_server(sd, current, i) < 0)
             goto next;
-        }
-
-        sd->server_sock_fds[i] = current->client_sock_fd;
-        sd->number_of_available_servers++;
 
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
 
@@ -191,13 +207,6 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
             send(current->client_sock_fd, ACK, 7, 0); // ack from client
         }
 
-        char s[INET6_ADDRSTRLEN];
-        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-        printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] (%d) Server IP address: %s:%s\n" RESET,
-               gettid(), current->server_ip, gettid(), s,
-               current->server_port);
-
     next:;
         close(current->client_sock_fd);
         i++;
@@ -217,7 +226,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
 void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 {
-    int i = 0, numbytes = 0, totalbytes = 0;
+    int i = 0, numbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     int chunks_stored[NUMBER_OF_PAIRS];
@@ -230,59 +239,10 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
     while (current)
     {
-        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
-
-        struct addrinfo hints, *temp;
-        char ip[INET6_ADDRSTRLEN];
-
-        int status;
-        sd->server_sock_fds[i] = -1;
-        current->client_sock_fd = -1;
-
-        /* Configure address hints structure */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM; // for TCP
-
-        if (atoi(current->server_port) <= 1024)
-        {
-            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
-        {
-            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                                            // exit if there is an error
-        }
-
-        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
-        {
-            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-            {
-                perror(RED "server: socket");
-                goto next;
-            }
-
-            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-            {
-                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-                close(current->client_sock_fd);
-                goto next;
-            }
-
-            break;
-        }
-
-        if (temp == NULL)
-        {
-            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        if (connect_server(sd, current, i) < 0)
             goto next;
-        }
 
-        sd->server_sock_fds[i] = current->client_sock_fd;
-        sd->number_of_available_servers++;
-
+        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
 
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -346,14 +306,6 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
             chunks_stored_sizes[index] = recv_message_header->data_length;
             free(recv_message_header);
         }
-        printf("for server %d\n", i);
-
-        char s[INET6_ADDRSTRLEN];
-        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-        printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] (%d) Server IP address: %s:%s\n" RESET,
-               gettid(), current->server_ip, gettid(), s,
-               current->server_port);
 
     next:;
         close(current->client_sock_fd);
@@ -365,7 +317,8 @@ void get_file_chunks_and_join(sockDetails_t *sd, int hash)
 
     for (int i = 0; i < NUMBER_OF_PAIRS; i++)
     {
-        if(chunks[i] == 0 || chunks_stored_sizes[i] <= 0 || chunks_stored[i] <= 0) {
+        if (chunks[i] == 0 || chunks_stored_sizes[i] <= 0 || chunks_stored[i] <= 0)
+        {
             printf("Chunk not found !\n\r");
             fclose(fs);
             exit(EXIT_FAILURE);
@@ -421,138 +374,99 @@ void get_file(sockDetails_t *sd)
     get_file_chunks_and_join(sd, str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers);
 }
 
-
 // Function to extract original filename from server format
 // Format: "chunk_id_original_filename_chunk_id"
-char* extract_original_filename(const char* server_filename) {
+char *extract_original_filename(const char *server_filename)
+{
     // Find the first underscore
-    const char* first_underscore = strchr(server_filename, '_');
-    if (first_underscore == NULL) {
+    const char *first_underscore = strchr(server_filename, '_');
+    if (first_underscore == NULL)
+    {
         return NULL; // Invalid format
     }
-    
+
     // Move past the first underscore
     first_underscore++;
-    
+
     // Find the last underscore
-    const char* last_underscore = strrchr(first_underscore, '_');
-    if (last_underscore == NULL) {
+    const char *last_underscore = strrchr(first_underscore, '_');
+    if (last_underscore == NULL)
+    {
         return NULL; // Invalid format
     }
-    
+
     // Calculate length of original filename
     size_t original_len = last_underscore - first_underscore;
-    
+
     // Allocate memory and copy
-    char* original_filename = malloc(original_len + 1);
-    if (original_filename == NULL) {
+    char *original_filename = malloc(original_len + 1);
+    if (original_filename == NULL)
+    {
         return NULL; // Memory allocation failed
     }
-    
+
     // Copy the original filename part
     strncpy(original_filename, first_underscore, original_len);
     original_filename[original_len] = '\0';
-    
+
     return original_filename;
 }
 // Function to extract original filename and chunk ID from server format
 // Format: "dirname/original_filename_chunk_id"
-int parse_server_filename(const char* server_filename, char** original_filename, int* chunk_id) {
+int parse_server_filename(const char *server_filename, char **original_filename, int *chunk_id)
+{
     // Skip past directory part if present
-    const char* filename_part = strrchr(server_filename, '/');
-    if (filename_part != NULL) {
+    const char *filename_part = strrchr(server_filename, '/');
+    if (filename_part != NULL)
+    {
         filename_part++; // Skip past the '/'
-    } else {
+    }
+    else
+    {
         filename_part = server_filename; // No directory separator found
     }
-    
+
     // Find the last underscore (before chunk_id)
-    const char* last_underscore = strrchr(filename_part, '_');
-    if (last_underscore == NULL) {
+    const char *last_underscore = strrchr(filename_part, '_');
+    if (last_underscore == NULL)
+    {
         return -1; // Invalid format
     }
-    
+
     // Extract chunk ID
     *chunk_id = atoi(last_underscore + 1);
-    
+
     // Calculate length of original filename
     size_t original_len = last_underscore - filename_part;
-    
+
     // Allocate memory for original filename
     *original_filename = malloc(original_len + 1);
-    if (*original_filename == NULL) {
+    if (*original_filename == NULL)
+    {
         return -1; // Memory allocation failed
     }
-    
+
     // Copy the original filename part
     strncpy(*original_filename, filename_part, original_len);
     (*original_filename)[original_len] = '\0';
-    
+
     return 0;
 }
 
-void list_file(sockDetails_t *sd){
+void list_file(sockDetails_t *sd)
+{
 
-    int i = 0, numbytes = 0, totalbytes = 0;
+    int i = 0, numbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     char recieve_buffer[RECIEVE_SIZE];
     int chunks_stored[NUMBER_OF_PAIRS];
 
-
     while (current)
     {
 
-        struct addrinfo hints, *temp;
-        char ip[INET6_ADDRSTRLEN];
-
-        int status;
-        sd->server_sock_fds[i] = -1;
-        current->client_sock_fd = -1;
-
-        /* Configure address hints structure */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM; // for TCP
-
-        if (atoi(current->server_port) <= 1024)
-        {
-            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
-        {
-            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                                            // exit if there is an error
-        }
-
-        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
-        {
-            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-            {
-                perror(RED "server: socket");
-                goto next;
-            }
-
-            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-            {
-                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-                close(current->client_sock_fd);
-                goto next;
-            }
-
-            break;
-        }
-
-        if (temp == NULL)
-        {
-            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        if (connect_server(sd, current, i) < 0)
             goto next;
-        }
-
-        sd->server_sock_fds[i] = current->client_sock_fd;
-        sd->number_of_available_servers++;
 
         message_header_t message_header = {
             .command = LS,
@@ -561,126 +475,75 @@ void list_file(sockDetails_t *sd){
             .data_length = 0};
         numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
 
-        while(1){
+        while (1)
+        {
             memset(&message_header, 0, sizeof(message_header_t));
             numbytes = recv(current->client_sock_fd, &message_header, sizeof(message_header_t), 0);
-            if(numbytes <= 0) break;
+            if (numbytes <= 0)
+                break;
             // printf("Numbytes rescieved %d filelength %d from server %d \n", numbytes, message_header.filename_length, i);
 
             memcpy(recieve_buffer, (void *)&message_header, numbytes);
-            if(strncmp(recieve_buffer, ACK, 7) == 0) break;
-            if(strncmp(recieve_buffer, NACK, 8) == 0) break;
-            
-            
+            if (strncmp(recieve_buffer, ACK, 7) == 0)
+                break;
+            if (strncmp(recieve_buffer, NACK, 8) == 0)
+                break;
+
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
-            if(numbytes <= 0) break;
-            if(strncmp(recieve_buffer, ACK, 7) == 0) break;
-            if(strncmp(recieve_buffer, NACK, 8) == 0) break;
+            if (numbytes <= 0)
+                break;
+            if (strncmp(recieve_buffer, ACK, 7) == 0)
+                break;
+            if (strncmp(recieve_buffer, NACK, 8) == 0)
+                break;
             char *original_filename = NULL;
             int chunk_id = -1;
-            if (parse_server_filename(recieve_buffer, &original_filename, &chunk_id) == 0) {
+            if (parse_server_filename(recieve_buffer, &original_filename, &chunk_id) == 0)
+            {
                 printf("Extracted: Original file = %s, Chunk ID = %d\n", original_filename, chunk_id);
                 // Use original_filename and chunk_id as needed
                 free(original_filename); // Don't forget to free when done
-                if(chunk_id >= NUMBER_OF_PAIRS){
+                if (chunk_id >= NUMBER_OF_PAIRS)
+                {
                     printf("Failed to parse chunk id\n");
                     break;
                 }
                 chunks_stored[chunk_id]++;
-            } else {
+            }
+            else
+            {
                 printf("Failed to parse filename\n");
             }
-
         }
-        
-        for (int i=0; i<NUMBER_OF_PAIRS;i++){
-            if(chunks_stored[i] <= 0){
+
+        for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+        {
+            if (chunks_stored[i] <= 0)
+            {
                 printf("INCOMPLETE PAIR\n");
             }
         }
-        
-        printf("for server %d\n", i);
-
-        char s[INET6_ADDRSTRLEN];
-        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-        printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] (%d) Server IP address: %s:%s\n" RESET,
-               gettid(), current->server_ip, gettid(), s,
-               current->server_port);
 
     next:;
         close(current->client_sock_fd);
         current = current->next;
         i++;
     }
-
-    
 }
 
+void delete_file(sockDetails_t *sd)
+{
 
-void delete_file(sockDetails_t *sd){
-
-    int i = 0, numbytes = 0, totalbytes = 0;
+    int i = 0, numbytes = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     char recieve_buffer[RECIEVE_SIZE];
-    int chunks_stored[NUMBER_OF_PAIRS];
-
 
     while (current)
     {
-
-        struct addrinfo hints, *temp;
-        char ip[INET6_ADDRSTRLEN];
-
-        int status;
-        sd->server_sock_fds[i] = -1;
-        current->client_sock_fd = -1;
-
-        /* Configure address hints structure */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM; // for TCP
-
-        if (atoi(current->server_port) <= 1024)
-        {
-            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
-        {
-            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                                            // exit if there is an error
-        }
-
-        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
-        {
-            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-            {
-                perror(RED "server: socket");
-                goto next;
-            }
-
-            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-            {
-                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-                close(current->client_sock_fd);
-                goto next;
-            }
-
-            break;
-        }
-
-        if (temp == NULL)
-        {
-            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        if (connect_server(sd, current, i) < 0)
             goto next;
-        }
-
-        sd->server_sock_fds[i] = current->client_sock_fd;
-        sd->number_of_available_servers++;
 
         int hash = str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers;
         int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
@@ -697,104 +560,35 @@ void delete_file(sockDetails_t *sd){
 
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
-            if(numbytes <= 0) break;
-            if(strncmp(recieve_buffer, ACK, 7) == 0) break;
-            if(strncmp(recieve_buffer, NACK, 8) == 0) break;
-
-
+            if (numbytes <= 0)
+                break;
+            if (strncmp(recieve_buffer, ACK, 7) == 0)
+                break;
+            if (strncmp(recieve_buffer, NACK, 8) == 0)
+                break;
         }
-        
-        printf("for server %d\n", i);
-
-        char s[INET6_ADDRSTRLEN];
-        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-        printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] (%d) Server IP address: %s:%s\n" RESET,
-               gettid(), current->server_ip, gettid(), s,
-               current->server_port);
-
     next:;
         close(current->client_sock_fd);
         current = current->next;
         i++;
     }
-
-    
 }
 
-
-void server_info(sockDetails_t *sd){
+void server_info(sockDetails_t *sd)
+{
 
     int i = 0;
     serverDetails_t *current = sd->servers_details;
     sd->server_sock_fds = malloc(sd->number_of_servers * sizeof(int)); // free it afterwards
     while (current)
     {
-        struct addrinfo hints, *temp;
-        char ip[INET6_ADDRSTRLEN];
-
-        int status;
-        sd->server_sock_fds[i] = -1;
-        current->client_sock_fd = -1;
-
-        /* Configure address hints structure */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM; // for TCP
-
-        if (atoi(current->server_port) <= 1024)
-        {
-            fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((status = getaddrinfo(current->server_ip, current->server_port, &hints, &sd->connect_to_info)) < 0)
-        {
-            fprintf(stderr, RED "getaddrinfo: %s\n" RESET, gai_strerror(status)); // this will print error to stderr fd
-            goto next;                                                            // exit if there is an error
-        }
-
-        for (temp = sd->connect_to_info; temp != NULL; temp = temp->ai_next)
-        {
-            if ((current->client_sock_fd = socket(temp->ai_family, temp->ai_socktype, temp->ai_protocol)) < 0)
-            {
-                perror(RED "server: socket");
-                goto next;
-            }
-
-            if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-            {
-                fprintf(stderr, RED "\n[-] (%d) connect failed for server %d\n" RESET, gettid(), errno);
-                close(current->client_sock_fd);
-                goto next;
-            }
-
-            break;
-        }
-
-        if (temp == NULL)
-        {
-            fprintf(stderr, RED "\n[-] (%d) temp = NULL, connection failed %d\n" RESET, gettid(), errno);
+        if (connect_server(sd, current, i) < 0)
             goto next;
-        }
-
-        sd->server_sock_fds[i] = current->client_sock_fd;
-        sd->number_of_available_servers++;
-
-        char s[INET6_ADDRSTRLEN];
-        inet_ntop(temp->ai_family, get_in_addr((struct sockaddr *)temp->ai_addr), s, sizeof s);
-        printf(GRN "[+] (%d) Connection established to server: %s\n"
-                   "[+] (%d) Server IP address: %s:%s\n" RESET,
-               gettid(), current->server_ip, gettid(), s,
-               current->server_port);
-
     next:;
         close(current->client_sock_fd);
         current = current->next;
         i++;
     }
-
-    
 }
 /**
  * @function handle_req
@@ -815,137 +609,31 @@ void server_info(sockDetails_t *sd){
  */
 void *handle_req(sockDetails_t *sd)
 {
-    int numbytes;                     /* Number of bytes received */
-    char recieved_buf[RECIEVE_SIZE];  /* Buffer for incoming requests */
-    char transmit_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
-    fd_set readfds;                   /* File descriptor set for select() */
-    int file_fd;
 
-    FD_ZERO(&readfds);
-    // FD_SET(sd->client_sock_fd, &readfds);
-
-    /* Set timeout period for idle connections */
-    struct timeval timeout = {TIMEOUT_HTTP_SEC, 0};
     /* Process user commands through menu interface */
     switch (sd->command_int)
     {
     case LS:
-        /* List directory contents */
         list_file(sd);
         break;
     case GET:
-        /* Download file from server */
-
         get_file(sd);
         break;
     case PUT:
-
-        /* Upload file to server */
         put_file(sd);
         break;
-
     case DELETE:
-        /* Delete file from server */
         delete_file(sd);
         break;
     case EXIT:
-        /* Clean termination */
         exit(EXIT_SUCCESS);
         break;
     case SERVER_INFO:
-        // Screen clear requested
         server_info(sd);
         break;
     default:
         break;
     }
-
-    /* Monitor socket for incoming data */
-    // int select_status = select(sd->client_sock_fd + 1, &readfds, NULL, NULL, &timeout);
-    /* Handle select errors */
-    // if (select_status < 0)
-    // {
-    //     fprintf(stderr, RED "[-] (%d) Select syscall failed with error: %d (%s)\n" RESET,
-    //             gettid(), errno, strerror(errno));
-    //     break;
-    // }
-
-    /* Handle connection timeout */
-    //         else if (select_status == 0)
-    //         {
-    //             printf(YEL "\n[-] (%d) CONNECTION TIMEOUT:\n"
-    //                        "[-] Client connection idle for %d seconds\n"
-    //                        "------------------------------------------------------------\n" RESET,
-    //                    gettid(), TIMEOUT_HTTP_SEC);
-    //             break;
-    //         }
-
-    //         /* Process incoming data when available */
-    //         else if (FD_ISSET(sd->client_sock_fd, &readfds))
-    //         {
-    //             memset(recieved_buf, 0, sizeof(recieved_buf));
-    //             /* Read incoming request with error checking */
-    //             int total_bytes = 0;
-
-    //             if ((numbytes = recv(sd->client_sock_fd, &recieved_buf[total_bytes], TRANSMIT_SIZE, 0)) < 0)
-    //             {
-    //                 break;
-    //                 fprintf(stderr, RED "[-] (%d) read\n", gettid());
-    //                 // break;
-    //             }
-    //             // You get a return value of 0 for recv() when the connection was closed by the other host
-    //             if (numbytes == 0)
-    //             {
-    //                 fprintf(stderr, RED "[-] (%d) peer has closed the connection exiting\n", gettid());
-    //                 break;
-    //             }
-
-    //             total_bytes += (numbytes - 1);
-
-    //             printf("\n\n==============================================================\n"
-    //                    "[+] (%d) Received request from client [%d bytes]:\n"
-    //                    "==============================================================\n"
-    //                    "%s\n",
-    //                    gettid(), total_bytes, recieved_buf);
-
-    //             /* Initialize header structure and parse request */
-    //             memset(&header, 0, sizeof(HttpHeader_t));
-    //             if (parse_request_line_thread_safe(recieved_buf, &header) < 0)
-    //             {
-    //                 send_error_response(sd->client_sock_fd, header.http_version_str, header.parser_error);
-    //                 goto cleanup;
-    //             }
-
-    //             if (is_blocked(NULL, header.hostname_str))
-    //             {
-    //                 printf(RED "[-] (%d) ACCESS DENIED: Domain is in blocklist\n"
-    //                            "[-] Blocked domain: %s\n" RESET,
-    //                        gettid(), header.hostname_str);
-
-    //                 send_error_response(sd->client_sock_fd, header.http_version_str, FORBIDDEN);
-
-    //                 goto cleanup;
-    //             }
-
-    //             int returnval = check_and_send_from_cache(&header, sd, is_dynamic_content(header.uri_str, recieved_buf), 1, 1);
-
-    //             /* Check if connection should be closed */
-    //             if ((header.connection_close == 1 && header.connection_keep_alive == 0) || returnval < 0)
-    //             {
-    //                 goto cleanup;
-    //             }
-    //             cleanup_header(&header);
-    //             memset(recieved_buf, 0, sizeof(recieved_buf));
-
-    //             /* Clear header for next request */
-    //         }
-    //     }
-    // cleanup:;
-    //     /* Clean up resources before exit */
-    //     cleanup_header(&header);
-    //     // Only close the client socket, file_fd is already closed in the handler functions
-    //     // or was never opened if we jumped to cleanup without accessing a file
-    //     close(sd->client_sock_fd);
 
     return NULL;
 }

@@ -8,7 +8,7 @@ OBJ_DIR = $(OUTPUT_DIR)/obj $(OUTPUT_DIR)/obj/$(SRC_DIR)
 ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
 
 CC := gcc
-CFLAGS := 
+CFLAGS := -Wall -Werror
 LDFLAGS := -lpthread -lssl -lcrypto -g
 INC := -I$(INCLUDE_DIR) -I./ -I$(SRC_DIR) 
 

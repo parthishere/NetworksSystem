@@ -158,7 +158,7 @@ typedef struct
     int number_of_available_servers;
     int *server_sock_fds;
     struct addrinfo *connect_to_info;        // Client address information
-    int timeout;
+
     pthread_mutex_t lock;
 } sockDetails_t;
 
