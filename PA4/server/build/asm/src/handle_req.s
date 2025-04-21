@@ -713,11 +713,6 @@ get_command:
 .LBE7:
 	.loc 1 167 18 is_stmt 1 discriminator 2
 	movl	%eax, -61540(%rbp)
-	.loc 1 168 9
-	movq	-61560(%rbp), %rax
-	movl	4(%rax), %eax
-	movl	%eax, %edi
-	call	close@PLT
 	.loc 1 169 16
 	movl	$-1, -61532(%rbp)
 	.loc 1 170 9

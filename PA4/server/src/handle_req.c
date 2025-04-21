@@ -165,7 +165,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     {
         printf("Reading failed \n");
         numbytes = _send(sd->client_sock_fd, NACK, 8, done);
-        close(sd->client_sock_fd);
+        // close(sd->client_sock_fd);
         status = -1;
         free(filename);
         return;

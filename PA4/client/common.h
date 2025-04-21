@@ -60,6 +60,7 @@
  * @name Server Configuration Constants
  * @{
  */
+#define WHERE_TO_DOWNLOAD_FILE ".   "
 #define SERVER_CONF "./dfc.conf"
 #define MAX_SIZE (1024 * 30)   /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE  /* Receive buffer size */
