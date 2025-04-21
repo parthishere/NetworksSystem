@@ -539,7 +539,13 @@ void get_file(sockDetails_t *sd)
     // Reassemble file
     printf(MAG "[*] REASSEMBLING FILE: All chunks available\n" RESET);
     
-    FILE *fs = fopen(sd->filename, "wb");
+    char *filename;
+    if(*sd->filename=='.'){
+        asprintf(&filename, "%s/%s", WHERE_TO_DOWNLOAD_FILE, sd->filename+2);
+    }else{
+        asprintf(&filename, "%s/%s", WHERE_TO_DOWNLOAD_FILE, sd->filename);
+    }
+    FILE *fs = fopen(filename, "wb");
     if (fs == NULL) {
         printf(RED "[-] ERROR: Could not create output file: %s\n" RESET, sd->filename);
         
@@ -551,6 +557,7 @@ void get_file(sockDetails_t *sd)
         free(sd->server_sock_fds);
         return;
     }
+    free(filename);
     
     // Calculate total file size
     int total_file_size = 0;
