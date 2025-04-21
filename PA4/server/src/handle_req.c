@@ -15,6 +15,7 @@
  */
 
 #include "handle_req.h"
+#include <ctype.h>
 
 #define _send(sockfd, message, message_len, goto_where) ({           \
     int nbytes;                                                      \
@@ -67,13 +68,24 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     int numbytes = 0, total_bytes = 0, numbytes_w = 0;
     char recieved_buf[RECIEVE_SIZE];
     int status = 0;
+    char *filename;
+    char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
-    printf("filename we are putting: %s (%d)\n", recieved_buf, message_header->chunk_id);
 
-    char *filename;
-    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
+    temp_filename = strrchr(recieved_buf, '/');
+    if (temp_filename == NULL)
+    {
+        temp_filename = recieved_buf;
+    }
+    else
+    {
+        temp_filename++;
+    }
+
+    asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id);
+
     FILE *fs = fopen(filename, "wb");
     if (fs == NULL)
     {
@@ -91,7 +103,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
 
         if (numbytes != numbytes_w * numbytes)
         {
-            fprintf(stderr, "Num bytes read and write did not match \n");
+            fprintf(stderr, RED "[-] Num bytes read and write did not match \n" RESET);
             status = -1;
             break;
         }
@@ -100,9 +112,24 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
 
     // ACK
     if (status >= 0)
+    {
         numbytes = _send(sd->client_sock_fd, ACK, 7, done);
+        printf(GRN "\n  =========================================\n" RESET);
+        printf(GRN "    PUT SUCCESSFUL\n" RESET);
+        printf(GRN "    FILE: %s\n" RESET, filename);
+        printf(GRN "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
+        printf(GRN "=========================================\n\n" RESET);
+    }
     else
+    {
+
         numbytes = _send(sd->client_sock_fd, NACK, 8, done);
+        printf(RED "\n=========================================\n" RESET);
+        printf(RED "    PUT FAILED\n" RESET);
+        printf(RED "    FILE: %s\n" RESET, filename);
+        printf(RED "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
+        printf(RED "=========================================\n\n" RESET);
+    }
 
 done:
     free(filename);
@@ -115,22 +142,35 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     char recieved_buf[RECIEVE_SIZE];
     char transmit_buf[TRANSMIT_SIZE];
     int status = 0;
+    char *filename;
+    char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
-    printf("filename : %s\n", recieved_buf);
 
-    char *filename;
-    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
+    temp_filename = strrchr(recieved_buf, '/');
+    if (temp_filename == NULL)
+    {
+        temp_filename = recieved_buf;
+    }
+    else
+    {
+        temp_filename++;
+    }
+
+    asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id);
+
     FILE *fs = fopen(filename, "rb");
     if (fs == NULL)
     {
         printf("Reading failed \n");
+        numbytes = _send(sd->client_sock_fd, NACK, 8, done);
         close(sd->client_sock_fd);
         status = -1;
         free(filename);
         return;
     }
+
     fseek(fs, 0, SEEK_END);
     int file_size = ftell(fs);
     fseek(fs, 0, SEEK_SET);
@@ -162,11 +202,19 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     numbytes = _recv(sd->client_sock_fd, recieved_buf, RECIEVE_SIZE, done);
     if (strncmp(recieved_buf, ACK, 7) == 0)
     {
-        printf("ACK recv so client is good\n");
+        printf(GRN "\n=========================================\n" RESET);
+        printf(GRN "    GET FILE SUCCESSFUL\n" RESET);
+        printf(GRN "    FILE: %s\n" RESET, filename);
+        printf(GRN "    CHUNK: %d sent !\n" RESET, message_header->chunk_id);
+        printf(GRN "=========================================\n\n" RESET);
     }
     else
     {
-        printf("something went wrong\n");
+        printf(RED "\n=========================================\n" RESET);
+        printf(RED "    GET FAILED\n" RESET);
+        printf(RED "    FILE: %s\n" RESET, filename);
+        printf(RED "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
+        printf(RED "=========================================\n\n" RESET);
     }
 
     _send(sd->client_sock_fd, ACK, 7, done);
@@ -179,45 +227,125 @@ done:
 
 void ls_command(sockDetails_t *sd, message_header_t *message_header)
 {
+    printf(CYN "\n=========================================\n" RESET);
+    printf(CYN "    PROCESSING LIST COMMAND\n" RESET);
+    printf(CYN "    Server directory: %s\n" RESET, sd->dirname);
+    printf(CYN "=========================================\n\n" RESET);
 
-    int numbytes = 0, total_bytes = 0, numbytes_r = 0;
-    char recieved_buf[RECIEVE_SIZE];
+    int numbytes = 0;
     char transmit_buf[TRANSMIT_SIZE];
-    int status = 0;
 
+    // Recursive function to list directories
+    list_directory(sd, sd->dirname, "");
+
+    // Send end-of-listing marker
+    send(sd->client_sock_fd, ACK, 7, 0);
+
+    printf(GRN "\n[+] Directory listing completed successfully\n\n" RESET);
+}
+
+/**
+ * Recursively lists all files in a directory and its subdirectories
+ * @param sd Socket details
+ * @param base_path The base server directory path
+ * @param rel_path The relative path from the base
+ */
+void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_path)
+{
+    char full_path[PATH_MAX];
+    char current_rel_path[PATH_MAX];
     DIR *dp;
-    struct dirent *ep;
-    dp = opendir(sd->dirname);
+    struct dirent *entry;
+    struct stat statbuf;
 
-    if (dp != NULL)
+    // Construct the full path to scan
+    if (strlen(rel_path) == 0)
     {
-        int seq_num = 0; // Packet sequence counter
-        while ((ep = readdir(dp)) != NULL)
-        {
-            if (ep->d_type != DT_REG)
-                continue;
-            int record_len = strlen(ep->d_name);
-
-            bzero(transmit_buf, sizeof(transmit_buf));
-            memcpy(transmit_buf, ep->d_name, record_len);
-
-            message_header_t message_header_send = {
-                .command = LS,
-                .chunk_id = 0,
-                .filename_length = record_len,
-                .data_length = 0,
-            };
-
-            send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
-
-            send(sd->client_sock_fd, transmit_buf, record_len, 0);
-        }
-        send(sd->client_sock_fd, ACK, 7, 0);
+        snprintf(full_path, sizeof(full_path), "%s", base_path);
     }
     else
     {
-        send(sd->client_sock_fd, NACK, 7, 0);
+        snprintf(full_path, sizeof(full_path), "%s/%s", base_path, rel_path);
     }
+
+    printf(CYN "[*] Scanning directory: %s\n" RESET, full_path);
+
+    dp = opendir(full_path);
+    if (dp == NULL)
+    {
+        fprintf(stderr, RED "[-] Failed to open directory: %s\n" RESET, full_path);
+        fprintf(stderr, RED "    Error: %s (code: %d)\n\n" RESET, strerror(errno), errno);
+        return;
+    }
+
+    while ((entry = readdir(dp)) != NULL)
+    {
+        // Skip "." and ".." entries
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            continue;
+        }
+
+        // Construct path for this entry
+        char entry_path[PATH_MAX];
+        snprintf(entry_path, sizeof(entry_path), "%s/%s", full_path, entry->d_name);
+
+        // Get file status
+        if (stat(entry_path, &statbuf) < 0)
+        {
+            fprintf(stderr, RED "[-] Failed to get file status: %s\n" RESET, entry_path);
+            continue;
+        }
+
+        // Construct relative path for this entry
+        if (strlen(rel_path) == 0)
+        {
+            snprintf(current_rel_path, sizeof(current_rel_path), "%s", entry->d_name);
+        }
+        else
+        {
+            snprintf(current_rel_path, sizeof(current_rel_path), "%s/%s", rel_path, entry->d_name);
+        }
+
+        if (S_ISREG(statbuf.st_mode))
+        {
+            // Regular file - check if it's a chunk file (has underscore and number at the end)
+            char *last_underscore = strrchr(entry->d_name, '_');
+            if (last_underscore != NULL && isdigit(*(last_underscore + 1)))
+            {
+                // This is a chunk file
+                char file_path[PATH_MAX];
+
+                // Only include the path part for the client
+                if (strlen(rel_path) > 0)
+                {
+                    snprintf(file_path, sizeof(file_path), "%s/%s", rel_path, entry->d_name);
+                }
+                else
+                {
+                    snprintf(file_path, sizeof(file_path), "%s", entry->d_name);
+                }
+
+                // Extract chunk ID from filename
+                int chunk_id = atoi(last_underscore + 1);
+
+                printf(GRN "[+] Found chunk file: %s (Chunk ID: %d)\n" RESET, file_path, chunk_id);
+
+                // Send file information to client
+                message_header_t message_header_send = {
+                    .command = LS,
+                    .chunk_id = chunk_id,
+                    .filename_length = strlen(file_path),
+                    .data_length = 0,
+                };
+
+                send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), 0);
+                send(sd->client_sock_fd, file_path, message_header_send.filename_length, 0);
+            }
+        }
+    }
+
+    closedir(dp);
 }
 
 void delete_command(sockDetails_t *sd, message_header_t *message_header)
@@ -240,10 +368,20 @@ void delete_command(sockDetails_t *sd, message_header_t *message_header)
 
     if (remove(filename) < 0)
     {
+        printf(GRN "\n=========================================\n" RESET);
+        printf(GRN "    DELETE FILE SUCCESSFUL\n" RESET);
+        printf(GRN "    FILE: %s\n" RESET, filename);
+        printf(GRN "    CHUNK: %d deleted !\n" RESET, message_header->chunk_id);
+        printf(GRN "=========================================\n\n" RESET);
         send(sd->client_sock_fd, ACK, 7, 0);
     }
     else
     {
+        printf(RED "\n=========================================\n" RESET);
+        printf(RED "    DELETE FAILED\n" RESET);
+        printf(RED "    FILE: %s\n" RESET, filename);
+        printf(RED "    CHUNK: %d deleted !\n" RESET, message_header->chunk_id);
+        printf(RED "=========================================\n\n" RESET);
         send(sd->client_sock_fd, NACK, 8, 0);
     }
 
@@ -315,7 +453,17 @@ void *handle_req(sockDetails_t *sd)
 
             _recv(sd->client_sock_fd, &message_header, sizeof(message_header_t), cleanup);
 
-            printf("[+] Recieved bytes:%d | command %d, chunk: %d, filename length %d, data length %d \n", numbytes, message_header.command, message_header.chunk_id, message_header.filename_length, message_header.data_length);
+            printf(MAG "\n=========================================\n" RESET);
+            printf(MAG "    OPERATION: %s\n" RESET,
+                   message_header.command == PUT ? "PUT" : message_header.command == GET       ? "GET"
+                                                       : message_header.command == LS          ? "LIST"
+                                                       : message_header.command == DELETE      ? "DELETE"
+                                                       : message_header.command == SERVER_INFO ? "SERVER INFO"
+                                                                                               : "UNKNOWN");
+            printf(MAG "    CHUNK NUMBER: %d \n" RESET, message_header.chunk_id);
+            printf(MAG "    FILENAME LENGTH: %d \n" RESET, message_header.filename_length);
+            printf(MAG "    DATA LENGTH: %d \n" RESET, message_header.data_length);
+            printf(MAG "=========================================\n" RESET);
 
             switch (message_header.command)
             {

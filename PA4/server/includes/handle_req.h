@@ -39,3 +39,5 @@
 void *handle_req(sockDetails_t *sd);
 
 
+void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_path);
+

@@ -159,7 +159,7 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
         if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
         {
             fprintf(stderr, RED "\n[-] CONNECTION FAILED: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
-            fprintf(stderr, RED "    Error: %s (errno: %d)\n\n" RESET, strerror(errno), errno);
+            fprintf(stderr, RED "    Error: %s (errno: %d)\n" RESET, strerror(errno), errno);
             close(current->client_sock_fd);
             status = -1; // exit if there is an error
             goto cleanup;
@@ -218,7 +218,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
         printf(MAG "    Storing chunks: " RESET);
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
-            printf("%d ", (index + j) % sd->number_of_servers + 1);
+            printf(MAG"%d "RESET, (index + j) % sd->number_of_servers + 1);
         }
         printf("\n\n");
 
@@ -483,9 +483,9 @@ void get_file(sockDetails_t *sd)
     }
 
     // Print download summary
-    printf(MAG "\n=========================================================\n" RESET);
+    printf(MAG "\n=========================================\n" RESET);
     printf(MAG "    DOWNLOAD SUMMARY: %s\n" RESET, sd->filename);
-    printf(MAG "=========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
     
     printf("Server status: %d/%d available\n", servers_available, servers_contacted);
     printf("Chunks status: %d/%d downloaded\n\n", total_chunks_downloaded, NUMBER_OF_PAIRS);
@@ -515,12 +515,12 @@ void get_file(sockDetails_t *sd)
 
     if (!can_rebuild)
     {
-        printf(RED "\n=========================================================\n" RESET);
+        printf(RED "\n=========================================\n" RESET);
         printf(RED "    DOWNLOAD FAILED: %s\n" RESET, sd->filename);
         printf(RED "    Reason: Missing chunks prevent reconstruction\n" RESET);
         printf(RED "    Required: %d/%d chunks\n" RESET, NUMBER_OF_PAIRS, NUMBER_OF_PAIRS);
         printf(RED "    Available: %d/%d chunks\n" RESET, total_chunks_downloaded, NUMBER_OF_PAIRS);
-        printf(RED "=========================================================\n\n" RESET);
+        printf(RED "=========================================\n\n" RESET);
         
         // Free allocated memory
         for (int i = 0; i < NUMBER_OF_PAIRS; i++) {
@@ -562,11 +562,11 @@ void get_file(sockDetails_t *sd)
     }
     fclose(fs);
 
-    printf(GRN "\n=========================================================\n" RESET);
+    printf(GRN "\n=========================================\n" RESET);
     printf(GRN "    DOWNLOAD SUCCESSFUL: %s\n" RESET, sd->filename);
     printf(GRN "    Total file size: %d bytes\n" RESET, total_file_size);
     printf(GRN "    All %d chunks retrieved and reassembled\n" RESET, NUMBER_OF_PAIRS);
-    printf(GRN "=========================================================\n\n" RESET);
+    printf(GRN "=========================================\n\n" RESET);
     
     free(sd->server_sock_fds);
     sd->server_sock_fds = NULL;
@@ -764,9 +764,9 @@ void list_file(sockDetails_t *sd)
     }
     
     // Display file status summary
-    printf(MAG "\n=========================================================\n" RESET);
+    printf(MAG "\n=========================================\n" RESET);
     printf(MAG "    FILE AVAILABILITY SUMMARY\n" RESET);
-    printf(MAG "=========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
     
     if (file_list == NULL) {
         printf(YEL "[!] No files found on any server\n\n" RESET);
@@ -863,6 +863,7 @@ void delete_file(sockDetails_t *sd)
                 .chunk_id = index,
                 .filename_length = strlen(sd->filename),
                 .data_length = 0};
+            
             numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
             numbytes = _send(current->client_sock_fd, sd->filename, message_header.filename_length, next);
             bzero(recieve_buffer, sizeof(recieve_buffer));
@@ -892,9 +893,9 @@ void delete_file(sockDetails_t *sd)
 
 void server_info(sockDetails_t *sd)
 {
-    printf(MAG "\n=========================================================\n" RESET);
+    printf(MAG "\n=========================================\n" RESET);
     printf(MAG "    DFS SERVER STATUS CHECK\n" RESET);
-    printf(MAG "=========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
 
     int i = 0;
     int servers_online = 0;
@@ -933,9 +934,9 @@ void server_info(sockDetails_t *sd)
     }
     
     // Overall system status
-    printf(MAG "\n=========================================================\n" RESET);
+    printf(MAG "\n=========================================\n" RESET);
     printf(MAG "    SYSTEM STATUS SUMMARY\n" RESET);
-    printf(MAG "=========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
     
     // Server availability
     printf("Servers available: %d/%d ", servers_online, sd->number_of_servers);
@@ -982,7 +983,7 @@ void server_info(sockDetails_t *sd)
     }
     printf("DELETE - Remove files (may be incomplete with partial servers)\n\n");
     
-    printf(MAG "=========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
     
     // Free memory
     free(sd->server_sock_fds);
@@ -1008,14 +1009,14 @@ void server_info(sockDetails_t *sd)
 void *handle_req(sockDetails_t *sd)
 {
 
-    printf(MAG "\n========================================================\n" RESET);
+    printf(MAG "\n=========================================\n" RESET);
     printf(MAG "    OPERATION: %s\n" RESET,
            sd->command_int == PUT ? "PUT" : 
            sd->command_int == GET ? "GET" :
            sd->command_int == LS ? "LIST" :
            sd->command_int == DELETE ? "DELETE" :
            sd->command_int == SERVER_INFO ? "SERVER INFO" : "UNKNOWN");
-    printf(MAG "========================================================\n\n" RESET);
+    printf(MAG "=========================================\n\n" RESET);
 
     /* Process user commands through menu interface */
     switch (sd->command_int)
