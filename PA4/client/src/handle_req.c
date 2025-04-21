@@ -404,11 +404,9 @@ void get_file(sockDetails_t *sd)
                 .filename_length = strlen(sd->filename),
                 .data_length = 0
             };
-            bzero(recieve_buffer, sizeof(message_header));
 
-            memcpy(recieve_buffer, &message_header, sizeof(message_header_t));
             // Send request header and filename
-            numbytes = _send(current->client_sock_fd, recieve_buffer, sizeof(message_header_t), next);
+            numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
             numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
 
             // Wait for ACK/NACK response
@@ -427,14 +425,14 @@ void get_file(sockDetails_t *sd)
             numbytes = _recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), chunk_failed);
 
             int data_size = recv_message_header->data_length;
-            printf(MAG "    [*] Chunk size: %d bytes\n" RESET, data_size);
+            printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, recv_message_header->chunk_id+1, data_size);
 
             // Allocate memory for chunk data
             chunks[index] = malloc(data_size);
             if (chunks[index] == NULL) {
                 printf(RED "    [-] ERROR: Memory allocation failed for chunk %d\n" RESET, index + 1);
                 free(recv_message_header);
-                continue;
+                return;
             }
 
             // Receive chunk data
@@ -456,10 +454,6 @@ void get_file(sockDetails_t *sd)
             // Send ACK for received chunk
             numbytes = _send(current->client_sock_fd, ACK, 7, chunk_failed);
             
-            // Receive final ACK from server
-            // memset(recieve_buffer, 0, sizeof(recieve_buffer));
-            // numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), chunk_failed);
-
             // Mark chunk as successfully received
             chunks_stored[index] = 1;
             chunks_stored_sizes[index] = data_size;
@@ -468,21 +462,19 @@ void get_file(sockDetails_t *sd)
             printf(GRN "    [+] CHUNK %d DOWNLOADED SUCCESSFULLY (%d bytes)\n" RESET, index + 1, data_size);
             
             free(recv_message_header);
-            // continue;
+            continue;
             
-        // chunk_failed:
-        //     printf(RED "    [-] ERROR: Failed to download chunk %d\n" RESET, index + 1);
-        //     if (recv_message_header) free(recv_message_header);
-        //     if (chunks[index]) {
-        //         free(chunks[index]);
-        //         chunks[index] = NULL;
-        //     }
+        chunk_failed:
+            printf(RED "    [-] ERROR: Failed to download chunk %d\n" RESET, index + 1);
+            if (recv_message_header) free(recv_message_header);
+            if (chunks[index]) {
+                free(chunks[index]);
+                chunks[index] = NULL;
+            }
         }
 
     next:;
-        if (current->client_sock_fd >= 0) {
-            close(current->client_sock_fd);
-        }
+        close(current->client_sock_fd);
         current = current->next;
         i++;
     }

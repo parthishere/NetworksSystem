@@ -184,10 +184,9 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         .filename_length = strlen(filename),
         .data_length = file_size,
     };
-    bzero(transmit_buf, sizeof(transmit_buf));
 
-    memcpy(transmit_buf, &message_header_send, sizeof(message_header_t));
-    numbytes = _send(sd->client_sock_fd, transmit_buf, sizeof(message_header_send), done);
+
+    numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
     total_bytes = 0;
     while (total_bytes < file_size)
     {
@@ -218,8 +217,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         printf(RED "=========================================\n\n" RESET);
     }
 
-    // _send(sd->client_sock_fd, ACK, 7, done);
-    // else send(sd->client_sock_fd, NACK, 8, 0);
 
 done:
     free(filename);
