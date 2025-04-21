@@ -355,8 +355,7 @@ void delete_command(sockDetails_t *sd, message_header_t *message_header)
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
-    printf("filename : %s\n", recieved_buf);
-
+    
     char *filename;
     asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
 
@@ -366,7 +365,7 @@ void delete_command(sockDetails_t *sd, message_header_t *message_header)
         send(sd->client_sock_fd, NACK, 8, 0);
     }
 
-    if (remove(filename) < 0)
+    if (remove(filename) >= 0)
     {
         printf(GRN "\n=========================================\n" RESET);
         printf(GRN "    DELETE FILE SUCCESSFUL\n" RESET);

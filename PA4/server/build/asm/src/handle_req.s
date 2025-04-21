@@ -66,7 +66,7 @@ get_in_addr:
 	.string	"\033[31m[-] Send failed, error no: %d \n\033[0m"
 	.align 8
 .LC9:
-	.string	"\033[32m\n=========================================\n\033[0m"
+	.string	"\033[32m\n  =========================================\n\033[0m"
 .LC10:
 	.string	"\033[32m    PUT SUCCESSFUL\n\033[0m"
 .LC11:
@@ -534,11 +534,14 @@ put_command:
 	.string	"send bytes:%d\n"
 	.align 8
 .LC24:
-	.string	"\033[32m    GET FILE SUCCESSFUL\n\033[0m"
+	.string	"\033[32m\n=========================================\n\033[0m"
 	.align 8
 .LC25:
-	.string	"\033[32m    CHUNK: %d sent !\n\033[0m"
+	.string	"\033[32m    GET FILE SUCCESSFUL\n\033[0m"
+	.align 8
 .LC26:
+	.string	"\033[32m    CHUNK: %d sent !\n\033[0m"
+.LC27:
 	.string	"\033[31m    GET FAILED\n\033[0m"
 	.text
 	.globl	get_command
@@ -972,12 +975,12 @@ get_command:
 	testl	%eax, %eax
 	jne	.L37
 	.loc 1 205 9
-	leaq	.LC9(%rip), %rax
+	leaq	.LC24(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 206 9
-	leaq	.LC24(%rip), %rax
+	leaq	.LC25(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -994,7 +997,7 @@ get_command:
 	.loc 1 208 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
-	leaq	.LC25(%rip), %rax
+	leaq	.LC26(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1011,7 +1014,7 @@ get_command:
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 214 9
-	leaq	.LC26(%rip), %rax
+	leaq	.LC27(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1088,21 +1091,21 @@ get_command:
 	.size	get_command, .-get_command
 	.section	.rodata
 	.align 8
-.LC27:
+.LC28:
 	.string	"\033[36m\n=========================================\n\033[0m"
 	.align 8
-.LC28:
+.LC29:
 	.string	"\033[36m    PROCESSING LIST COMMAND\n\033[0m"
 	.align 8
-.LC29:
+.LC30:
 	.string	"\033[36m    Server directory: %s\n\033[0m"
 	.align 8
-.LC30:
-	.string	"\033[36m=========================================\n\n\033[0m"
 .LC31:
+	.string	"\033[36m=========================================\n\n\033[0m"
+.LC32:
 	.string	""
 	.align 8
-.LC32:
+.LC33:
 	.string	"\033[32m\n[+] Directory listing completed successfully\n\n\033[0m"
 	.text
 	.globl	ls_command
@@ -1131,12 +1134,12 @@ ls_command:
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
 	.loc 1 230 5
-	leaq	.LC27(%rip), %rax
+	leaq	.LC28(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 231 5
-	leaq	.LC28(%rip), %rax
+	leaq	.LC29(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1144,12 +1147,12 @@ ls_command:
 	movq	-30760(%rbp), %rax
 	movq	8(%rax), %rax
 	movq	%rax, %rsi
-	leaq	.LC29(%rip), %rax
+	leaq	.LC30(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 233 5
-	leaq	.LC30(%rip), %rax
+	leaq	.LC31(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1160,7 +1163,7 @@ ls_command:
 	movq	8(%rax), %rcx
 	.loc 1 239 5
 	movq	-30760(%rbp), %rax
-	leaq	.LC31(%rip), %rdx
+	leaq	.LC32(%rip), %rdx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	list_directory
@@ -1173,7 +1176,7 @@ ls_command:
 	movl	%eax, %edi
 	call	send@PLT
 	.loc 1 244 5
-	leaq	.LC32(%rip), %rax
+	leaq	.LC33(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1191,25 +1194,25 @@ ls_command:
 .LFE323:
 	.size	ls_command, .-ls_command
 	.section	.rodata
-.LC33:
-	.string	"%s"
 .LC34:
+	.string	"%s"
+.LC35:
 	.string	"%s/%s"
 	.align 8
-.LC35:
+.LC36:
 	.string	"\033[36m[*] Scanning directory: %s\n\033[0m"
 	.align 8
-.LC36:
-	.string	"\033[31m[-] Failed to open directory: %s\n\033[0m"
 .LC37:
-	.string	"."
+	.string	"\033[31m[-] Failed to open directory: %s\n\033[0m"
 .LC38:
+	.string	"."
+.LC39:
 	.string	".."
 	.align 8
-.LC39:
+.LC40:
 	.string	"\033[31m[-] Failed to get file status: %s\n\033[0m"
 	.align 8
-.LC40:
+.LC41:
 	.string	"\033[32m[+] Found chunk file: %s (Chunk ID: %d)\n\033[0m"
 	.text
 	.globl	list_directory
@@ -1250,7 +1253,7 @@ list_directory:
 	movq	-16624(%rbp), %rdx
 	leaq	-16416(%rbp), %rax
 	movq	%rdx, %rcx
-	leaq	.LC33(%rip), %rdx
+	leaq	.LC34(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1263,7 +1266,7 @@ list_directory:
 	leaq	-16416(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rdx, %rcx
-	leaq	.LC34(%rip), %rdx
+	leaq	.LC35(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1272,7 +1275,7 @@ list_directory:
 	.loc 1 271 5
 	leaq	-16416(%rbp), %rax
 	movq	%rax, %rsi
-	leaq	.LC35(%rip), %rax
+	leaq	.LC36(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1287,7 +1290,7 @@ list_directory:
 	.loc 1 276 9
 	movq	stderr(%rip), %rax
 	leaq	-16416(%rbp), %rdx
-	leaq	.LC36(%rip), %rcx
+	leaq	.LC37(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1317,7 +1320,7 @@ list_directory:
 	movq	-16592(%rbp), %rax
 	addq	$19, %rax
 	.loc 1 284 13
-	leaq	.LC37(%rip), %rdx
+	leaq	.LC38(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
@@ -1328,7 +1331,7 @@ list_directory:
 	movq	-16592(%rbp), %rax
 	addq	$19, %rax
 	.loc 1 284 48 discriminator 2
-	leaq	.LC38(%rip), %rdx
+	leaq	.LC39(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
@@ -1343,7 +1346,7 @@ list_directory:
 	leaq	-8224(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rdx, %rcx
-	leaq	.LC34(%rip), %rdx
+	leaq	.LC35(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1360,7 +1363,7 @@ list_directory:
 	.loc 1 296 13
 	movq	stderr(%rip), %rax
 	leaq	-8224(%rbp), %rdx
-	leaq	.LC39(%rip), %rcx
+	leaq	.LC40(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1380,7 +1383,7 @@ list_directory:
 	.loc 1 303 13
 	leaq	-12320(%rbp), %rax
 	movq	%rdx, %rcx
-	leaq	.LC33(%rip), %rdx
+	leaq	.LC34(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1395,7 +1398,7 @@ list_directory:
 	leaq	-12320(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rdx, %rcx
-	leaq	.LC34(%rip), %rdx
+	leaq	.LC35(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1449,7 +1452,7 @@ list_directory:
 	leaq	-4128(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rdx, %rcx
-	leaq	.LC34(%rip), %rdx
+	leaq	.LC35(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1462,7 +1465,7 @@ list_directory:
 	.loc 1 326 21
 	leaq	-4128(%rbp), %rax
 	movq	%rdx, %rcx
-	leaq	.LC33(%rip), %rdx
+	leaq	.LC34(%rip), %rdx
 	movl	$4096, %esi
 	movq	%rax, %rdi
 	movl	$0, %eax
@@ -1479,7 +1482,7 @@ list_directory:
 	movl	-16604(%rbp), %edx
 	leaq	-4128(%rbp), %rax
 	movq	%rax, %rsi
-	leaq	.LC40(%rip), %rax
+	leaq	.LC41(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1547,18 +1550,18 @@ list_directory:
 .LFE324:
 	.size	list_directory, .-list_directory
 	.section	.rodata
-.LC41:
+.LC42:
 	.string	"filename : %s\n"
 	.align 8
-.LC42:
+.LC43:
 	.string	"\033[32m    DELETE FILE SUCCESSFUL\n\033[0m"
 	.align 8
-.LC43:
-	.string	"\033[32m    CHUNK: %d deleted !\n\033[0m"
 .LC44:
+	.string	"\033[32m    CHUNK: %d deleted !\n\033[0m"
+.LC45:
 	.string	"\033[31m    DELETE FAILED\n\033[0m"
 	.align 8
-.LC45:
+.LC46:
 	.string	"\033[31m    CHUNK: %d deleted !\n\033[0m"
 	.text
 	.globl	delete_command
@@ -1652,7 +1655,7 @@ delete_command:
 	.loc 1 358 5
 	leaq	-30736(%rbp), %rax
 	movq	%rax, %rsi
-	leaq	.LC41(%rip), %rax
+	leaq	.LC42(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1695,14 +1698,14 @@ delete_command:
 	call	remove@PLT
 	.loc 1 369 8 discriminator 1
 	testl	%eax, %eax
-	jns	.L67
+	js	.L67
 	.loc 1 371 9
-	leaq	.LC9(%rip), %rax
+	leaq	.LC24(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 372 9
-	leaq	.LC42(%rip), %rax
+	leaq	.LC43(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1719,7 +1722,7 @@ delete_command:
 	.loc 1 374 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
-	leaq	.LC43(%rip), %rax
+	leaq	.LC44(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1744,7 +1747,7 @@ delete_command:
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 381 9
-	leaq	.LC44(%rip), %rax
+	leaq	.LC45(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1761,7 +1764,7 @@ delete_command:
 	.loc 1 383 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
-	leaq	.LC45(%rip), %rax
+	leaq	.LC46(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -1800,39 +1803,39 @@ delete_command:
 	.size	delete_command, .-delete_command
 	.section	.rodata
 	.align 8
-.LC46:
+.LC47:
 	.string	"\033[31m[-] (%d) Select syscall failed with error: %d (%s)\n\033[0m"
 	.align 8
-.LC47:
+.LC48:
 	.string	"\033[33m\n[!] (%d) CONNECTION TIMEOUT:\n[-] Client connection idle for %d seconds\n------------------------------------------------------------\n\033[0m"
 	.align 8
-.LC48:
-	.string	"\033[35m\n=========================================\n\033[0m"
 .LC49:
-	.string	"SERVER INFO"
+	.string	"\033[35m\n=========================================\n\033[0m"
 .LC50:
-	.string	"UNKNOWN"
+	.string	"SERVER INFO"
 .LC51:
-	.string	"DELETE"
+	.string	"UNKNOWN"
 .LC52:
-	.string	"LIST"
+	.string	"DELETE"
 .LC53:
-	.string	"GET"
+	.string	"LIST"
 .LC54:
-	.string	"PUT"
+	.string	"GET"
 .LC55:
+	.string	"PUT"
+.LC56:
 	.string	"\033[35m    OPERATION: %s\n\033[0m"
 	.align 8
-.LC56:
+.LC57:
 	.string	"\033[35m    CHUNK NUMBER: %d \n\033[0m"
 	.align 8
-.LC57:
+.LC58:
 	.string	"\033[35m    FILENAME LENGTH: %d \n\033[0m"
 	.align 8
-.LC58:
+.LC59:
 	.string	"\033[35m    DATA LENGTH: %d \n\033[0m"
 	.align 8
-.LC59:
+.LC60:
 	.string	"\033[35m=========================================\n\033[0m"
 	.text
 	.globl	handle_req
@@ -1938,7 +1941,7 @@ handle_req:
 	movq	stderr(%rip), %rax
 	movq	%r12, %r8
 	movl	%ebx, %ecx
-	leaq	.LC46(%rip), %rsi
+	leaq	.LC47(%rip), %rsi
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
@@ -1953,7 +1956,7 @@ handle_req:
 	.loc 1 439 13 is_stmt 0 discriminator 1
 	movl	$2, %edx
 	movl	%eax, %esi
-	leaq	.LC47(%rip), %rax
+	leaq	.LC48(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -2039,7 +2042,7 @@ handle_req:
 .L80:
 .LBE20:
 	.loc 1 456 13 is_stmt 1
-	leaq	.LC48(%rip), %rax
+	leaq	.LC49(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -2069,31 +2072,31 @@ handle_req:
 	cmpb	$5, %al
 	jne	.L85
 	.loc 1 462 96 is_stmt 0 discriminator 1
-	leaq	.LC49(%rip), %rax
+	leaq	.LC50(%rip), %rax
 	jmp	.L90
 .L85:
 	.loc 1 462 96 discriminator 2
-	leaq	.LC50(%rip), %rax
+	leaq	.LC51(%rip), %rax
 	jmp	.L90
 .L84:
 	.loc 1 461 56 is_stmt 1 discriminator 2
-	leaq	.LC51(%rip), %rax
+	leaq	.LC52(%rip), %rax
 	jmp	.L90
 .L83:
 	.loc 1 460 56 discriminator 2
-	leaq	.LC52(%rip), %rax
+	leaq	.LC53(%rip), %rax
 	jmp	.L90
 .L82:
 	.loc 1 459 56 discriminator 2
-	leaq	.LC53(%rip), %rax
+	leaq	.LC54(%rip), %rax
 	jmp	.L90
 .L81:
 	.loc 1 457 13 discriminator 1
-	leaq	.LC54(%rip), %rax
+	leaq	.LC55(%rip), %rax
 .L90:
 	.loc 1 457 13 is_stmt 0 discriminator 3
 	movq	%rax, %rsi
-	leaq	.LC55(%rip), %rax
+	leaq	.LC56(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
@@ -2102,26 +2105,26 @@ handle_req:
 	.loc 1 463 13
 	movzbl	%al, %eax
 	movl	%eax, %esi
-	leaq	.LC56(%rip), %rax
+	leaq	.LC57(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 464 13
 	movl	-30904(%rbp), %eax
 	movl	%eax, %esi
-	leaq	.LC57(%rip), %rax
+	leaq	.LC58(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 465 13
 	movl	-30900(%rbp), %eax
 	movl	%eax, %esi
-	leaq	.LC58(%rip), %rax
+	leaq	.LC59(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	.loc 1 466 13
-	leaq	.LC59(%rip), %rax
+	leaq	.LC60(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT

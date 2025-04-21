@@ -220,7 +220,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
         {
             printf(MAG"%d "RESET, (index + j) % sd->number_of_servers + 1);
         }
-        printf("\n\n");
+        printf("\n");
 
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -247,6 +247,9 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
             {
                 printf(RED "[-] ERROR: Received NACK from server for chunk %d\n" RESET, index + 1);
                 goto next;
+            }
+            else{
+                printf(GRN"[+] Stored chunk %d to server %d\n"RESET, index, i + 1);
             }
 
             (void)numbytes;
@@ -875,7 +878,6 @@ void delete_file(sockDetails_t *sd)
                 printf(GRN "    File: %s\n" RESET, sd->filename);
                 printf(GRN "    All chunks removed from servers\n" RESET);
                 printf(GRN "=========================================\n\n" RESET);
-                break;
             }
             if (strncmp(recieve_buffer, NACK, 8) == 0)
             {
