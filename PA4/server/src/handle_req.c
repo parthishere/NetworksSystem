@@ -114,7 +114,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     if (status >= 0)
     {
         numbytes = _send(sd->client_sock_fd, ACK, 7, done);
-        printf(GRN "\n  =========================================\n" RESET);
+        printf(GRN "\n=========================================\n" RESET);
         printf(GRN "    PUT SUCCESSFUL\n" RESET);
         printf(GRN "    FILE: %s\n" RESET, filename);
         printf(GRN "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
@@ -236,7 +236,7 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
     char transmit_buf[TRANSMIT_SIZE];
 
     // Recursive function to list directories
-    list_directory(sd, sd->dirname, "");
+    list_directory(sd, sd->dirname);
 
     // Send end-of-listing marker
     send(sd->client_sock_fd, ACK, 7, 0);
@@ -250,30 +250,20 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
  * @param base_path The base server directory path
  * @param rel_path The relative path from the base
  */
-void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_path)
+void list_directory(sockDetails_t *sd, const char *base_path)
 {
-    char full_path[PATH_MAX];
     char current_rel_path[PATH_MAX];
     DIR *dp;
     struct dirent *entry;
     struct stat statbuf;
+    
 
-    // Construct the full path to scan
-    if (strlen(rel_path) == 0)
-    {
-        snprintf(full_path, sizeof(full_path), "%s", base_path);
-    }
-    else
-    {
-        snprintf(full_path, sizeof(full_path), "%s/%s", base_path, rel_path);
-    }
+    printf(CYN "[*] Scanning directory: %s\n" RESET, base_path);
 
-    printf(CYN "[*] Scanning directory: %s\n" RESET, full_path);
-
-    dp = opendir(full_path);
+    dp = opendir(base_path);
     if (dp == NULL)
     {
-        fprintf(stderr, RED "[-] Failed to open directory: %s\n" RESET, full_path);
+        fprintf(stderr, RED "[-] Failed to open directory: %s\n" RESET, base_path);
         fprintf(stderr, RED "    Error: %s (code: %d)\n\n" RESET, strerror(errno), errno);
         return;
     }
@@ -288,7 +278,7 @@ void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_pa
 
         // Construct path for this entry
         char entry_path[PATH_MAX];
-        snprintf(entry_path, sizeof(entry_path), "%s/%s", full_path, entry->d_name);
+        snprintf(entry_path, sizeof(entry_path), "%s/%s", base_path, entry->d_name);
 
         // Get file status
         if (stat(entry_path, &statbuf) < 0)
@@ -297,16 +287,7 @@ void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_pa
             continue;
         }
 
-        // Construct relative path for this entry
-        if (strlen(rel_path) == 0)
-        {
-            snprintf(current_rel_path, sizeof(current_rel_path), "%s", entry->d_name);
-        }
-        else
-        {
-            snprintf(current_rel_path, sizeof(current_rel_path), "%s/%s", rel_path, entry->d_name);
-        }
-
+        
         if (S_ISREG(statbuf.st_mode))
         {
             // Regular file - check if it's a chunk file (has underscore and number at the end)
@@ -317,14 +298,7 @@ void list_directory(sockDetails_t *sd, const char *base_path, const char *rel_pa
                 char file_path[PATH_MAX];
 
                 // Only include the path part for the client
-                if (strlen(rel_path) > 0)
-                {
-                    snprintf(file_path, sizeof(file_path), "%s/%s", rel_path, entry->d_name);
-                }
-                else
-                {
-                    snprintf(file_path, sizeof(file_path), "%s", entry->d_name);
-                }
+                snprintf(file_path, sizeof(file_path), "%s", entry->d_name);
 
                 // Extract chunk ID from filename
                 int chunk_id = atoi(last_underscore + 1);
