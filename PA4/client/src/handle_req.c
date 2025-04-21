@@ -118,7 +118,6 @@ void cleanup_connection(sockDetails_t *sd)
     if (sd->server_sock_fds)
         free(sd->server_sock_fds);
     sd->server_sock_fds = NULL;
-    freeaddrinfo(sd->connect_to_info);
 }
 
 int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index)
@@ -285,9 +284,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
     printf(GRN "=========================================\n\n" RESET);
 }
 
-void get_file_chunks_and_join(sockDetails_t *sd, int hash)
-{
-}
+
 
 void put_file(sockDetails_t *sd)
 {

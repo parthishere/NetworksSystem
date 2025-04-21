@@ -1,0 +1,44 @@
+define WHT "\x1B[37m"  // Standard output
+#define RESET "\x1B[0m" // Reset to default color
+
+/* Protocol Message Definitions
+ * Standard messages used in the communication protocol
+ * Each message is padded with tabs for consistent length
+ */
+#define END_OF_DYNAMIC_DATA "EOF\t\n0\t\n\0"                                   // End of data marker
+#define ACK "ack\t\n0\t\n\0"                                                   // Positive acknowledgment
+#define NACK "nack\t\n0\t\n\0"                                                 // Negative acknowledgment
+#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\n0\t\n\0" // Operation failure
+#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\n0\t\n\0"                           // File not found error
+#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\n0\t\n\0"                         // File exists error
+#define WRONG_COMMAND "WRONG_COMMAND\t\n0\t\n\0"                             // Invalid command error
+#define TIMEOUT_HTTP_SEC 10
+
+/* Screen Management
+ * Terminal control sequence for clearing screen
+ */
+#define clrscr ({printf("\033[2J\033[H");\
+    fflush(stdout); })
+
+#define HASH_STR_LENGTH 33 // MD5 hex string (32 chars + null)
+
+/**
+ * Command Enumeration
+ * Defines supported FTP commands for the client
+ */
+typedef enum
+{
+    GET,    // Download file from server
+    PUT,    // Upload file to server
+    DELETE, // Remove file from server
+    LS,     // List directory contents
+    EXIT,   // Terminate connection
+    SERVER_INFO,
+    HELP,
+    number_of_command, // Total number of commands (used for validation)
+} commands_t;
+
+
+
+
+typedef struct serverD

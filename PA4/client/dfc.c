@@ -89,15 +89,18 @@ int main(int argc, char *argv[])
     sockDetails_t sd;
     sd.servers_details = NULL;
 
-    int status = mkdir(WHERE_TO_DOWNLOAD_FILE, 0777); 
-    if (status == 0) {
-        printf(GRN"[+] Directory '%s' created successfully.\n"RESET, argv[1]);
-    } else if (errno == EEXIST) {
-        printf(GRN"[+] Directory '%s' already exists.\n"RESET, argv[1]);
-    } else {
-        perror(RED"[-] Error creating directory");
-        exit(EXIT_FAILURE);
+    if(strncmp(WHERE_TO_DOWNLOAD_FILE, ".", strlen(WHERE_TO_DOWNLOAD_FILE)) != 0 && strlen(WHERE_TO_DOWNLOAD_FILE) == strlen(".")){
+        int status = mkdir(WHERE_TO_DOWNLOAD_FILE, 0777); 
+        if (status == 0) {
+            printf(GRN"[+] Directory '%s' created successfully.\n"RESET, argv[1]);
+        } else if (errno == EEXIST) {
+            printf(GRN"[+] Directory '%s' already exists.\n"RESET, argv[1]);
+        } else {
+            perror(RED"[-] Error creating directory");
+            exit(EXIT_FAILURE);
+        }
     }
+    
     
     pthread_mutex_init(&sd.lock, NULL);
 

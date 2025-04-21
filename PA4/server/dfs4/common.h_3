@@ -1,0 +1,59 @@
+etails_t {
+    int client_sock_fd;
+    char *server_port; // need to free it afterwards - server port to connect to
+    char *server_ip;  // need to free it afterwards - client ip to connect to 
+    int dfsno;
+    struct serverDetails_t *next; // need to free it afterwards, next element - link list
+}serverDetails_t;
+
+/**
+ * @struct sockdetails_t
+ * @brief Socket Details Structure
+ *
+ * Encapsulates connection state and socket information for a client connection,
+ * including file descriptors, address information, and transfer statistics.
+ */
+typedef struct
+{
+    int sockfd; // Socket file descriptor
+    char *command; // no need to free it (argv)
+    char *filename; // no need to free it (argv)
+    commands_t command_int;
+    serverDetails_t *servers_details;
+    struct addrinfo *connect_to_info;        // Client address information
+    int *server_sock_fds;
+    int number_of_servers;
+    int number_of_available_servers;
+
+    pthread_mutex_t lock;
+} sockDetails_t;
+
+
+/**
+ * @struct threadParams_t
+ * @brief Thread Parameters Structure
+ *
+ * Contains parameters passed to worker threads.
+ */
+typedef struct
+{
+    int threadIdx;
+} threadParams_t;
+
+/**
+ * Extract IP address from socket address structure
+ *
+ * Handles both IPv4 and IPv6 addresses, extracting the appropriate address
+ * field from the socket address structure.
+ *
+ * @param sa  Pointer to socket address structure (sockaddr)
+ * @return    Pointer to IP address field, NULL if family not supported
+ */
+void *getin_addr(struct sockaddr *sa);
+
+#endif
+
+
+// server dfs2 127.0.0.1:8004
+// server dfs3 127.0.0.1:8005
+// server dfs4 127.0.0.1:8006
