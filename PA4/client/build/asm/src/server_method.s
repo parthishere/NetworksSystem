@@ -144,10 +144,9 @@ whichcmd:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	subq	$48, %rsp
+	subq	$32, %rsp
 	movl	%edi, -20(%rbp)
 	movq	%rsi, -32(%rbp)
-	movq	%rdx, -40(%rbp)
 	.loc 1 55 11
 	movq	-32(%rbp), %rax
 	movq	8(%rax), %rax
@@ -210,157 +209,142 @@ whichcmd:
 	cmpq	$3, %rax
 	jne	.L7
 	.loc 1 62 12
-	cmpl	$3, -20(%rbp)
-	jne	.L18
-	.loc 1 64 19
-	movq	-32(%rbp), %rax
-	movq	16(%rax), %rdx
-	movq	-40(%rbp), %rax
-	movq	%rdx, (%rax)
-	.loc 1 65 16
+	cmpl	$2, -20(%rbp)
+	jle	.L18
+	.loc 1 64 16
 	movl	$0, %eax
 	jmp	.L6
 .L7:
-	.loc 1 67 14
+	.loc 1 66 14
 	movq	-8(%rbp), %rax
 	movl	$3, %edx
 	leaq	.LC14(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 67 13 discriminator 1
+	.loc 1 66 13 discriminator 1
 	testl	%eax, %eax
 	jne	.L10
-	.loc 1 67 57 discriminator 1
+	.loc 1 66 57 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 67 54 discriminator 1
+	.loc 1 66 54 discriminator 1
 	cmpq	$3, %rax
 	jne	.L10
-	.loc 1 69 12
-	cmpl	$3, -20(%rbp)
-	jne	.L19
-	.loc 1 71 19
-	movq	-32(%rbp), %rax
-	movq	16(%rax), %rdx
-	movq	-40(%rbp), %rax
-	movq	%rdx, (%rax)
-	.loc 1 72 16
+	.loc 1 68 12
+	cmpl	$2, -20(%rbp)
+	jle	.L19
+	.loc 1 70 16
 	movl	$1, %eax
 	jmp	.L6
 .L10:
-	.loc 1 74 14
+	.loc 1 72 14
 	movq	-8(%rbp), %rax
 	movl	$4, %edx
 	leaq	.LC15(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 74 13 discriminator 1
+	.loc 1 72 13 discriminator 1
 	testl	%eax, %eax
 	jne	.L12
-	.loc 1 74 59 discriminator 1
+	.loc 1 72 59 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 74 56 discriminator 1
+	.loc 1 72 56 discriminator 1
 	cmpq	$4, %rax
 	jne	.L12
-	.loc 1 76 16
+	.loc 1 74 16
 	movl	$4, %eax
 	jmp	.L6
 .L12:
-	.loc 1 78 14
+	.loc 1 76 14
 	movq	-8(%rbp), %rax
 	movl	$6, %edx
 	leaq	.LC16(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 78 13 discriminator 1
+	.loc 1 76 13 discriminator 1
 	testl	%eax, %eax
 	jne	.L13
-	.loc 1 78 63 discriminator 1
+	.loc 1 76 63 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 78 60 discriminator 1
+	.loc 1 76 60 discriminator 1
 	cmpq	$6, %rax
 	jne	.L13
-	.loc 1 80 12
-	cmpl	$3, -20(%rbp)
-	jne	.L20
-	.loc 1 82 19
-	movq	-32(%rbp), %rax
-	movq	16(%rax), %rdx
-	movq	-40(%rbp), %rax
-	movq	%rdx, (%rax)
-	.loc 1 83 16
+	.loc 1 78 12
+	cmpl	$2, -20(%rbp)
+	jle	.L20
+	.loc 1 80 16
 	movl	$2, %eax
 	jmp	.L6
 .L13:
-	.loc 1 85 15
+	.loc 1 82 15
 	movq	-8(%rbp), %rax
 	movl	$10, %edx
 	leaq	.LC17(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 85 13 discriminator 1
+	.loc 1 82 13 discriminator 1
 	testl	%eax, %eax
 	jne	.L15
-	.loc 1 85 72 discriminator 1
+	.loc 1 82 72 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 85 69 discriminator 1
+	.loc 1 82 69 discriminator 1
 	cmpq	$10, %rax
 	je	.L16
 .L15:
-	.loc 1 85 113 discriminator 3
+	.loc 1 82 113 discriminator 3
 	movq	-8(%rbp), %rax
 	movl	$4, %edx
 	leaq	.LC18(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 85 109 discriminator 1
+	.loc 1 82 109 discriminator 1
 	testl	%eax, %eax
 	jne	.L17
-	.loc 1 85 158 discriminator 4
+	.loc 1 82 158 discriminator 4
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 85 155 discriminator 1
+	.loc 1 82 155 discriminator 1
 	cmpq	$4, %rax
 	jne	.L17
 .L16:
-	.loc 1 87 16
+	.loc 1 84 16
 	movl	$5, %eax
 	jmp	.L6
 .L17:
-	.loc 1 89 14
+	.loc 1 86 14
 	movq	-8(%rbp), %rax
 	movl	$4, %edx
 	leaq	.LC19(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 89 13 discriminator 1
+	.loc 1 86 13 discriminator 1
 	testl	%eax, %eax
 	jne	.L21
-	.loc 1 89 59 discriminator 1
+	.loc 1 86 59 discriminator 1
 	movq	-8(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 89 56 discriminator 1
+	.loc 1 86 56 discriminator 1
 	cmpq	$4, %rax
 	jne	.L21
-	.loc 1 91 9
+	.loc 1 88 9
 	movl	$0, %eax
 	call	print_menu
-	.loc 1 92 16
+	.loc 1 89 16
 	movl	$6, %eax
 	jmp	.L6
 .L18:
@@ -368,29 +352,29 @@ whichcmd:
 	nop
 	jmp	.L9
 .L19:
-	.loc 1 70 13
+	.loc 1 69 13
 	nop
 	jmp	.L9
 .L20:
-	.loc 1 81 13
+	.loc 1 79 13
 	nop
 	jmp	.L9
 .L21:
-	.loc 1 95 1
+	.loc 1 92 1
 	nop
 .L9:
-	.loc 1 96 5
+	.loc 1 93 5
 	leaq	.LC20(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 97 5
+	.loc 1 94 5
 	movl	$0, %eax
 	call	print_menu
-	.loc 1 99 12
+	.loc 1 96 12
 	movl	$-1, %eax
 .L6:
-	.loc 1 100 1
+	.loc 1 97 1
 	leave
 	.cfi_def_cfa 7, 8
 	ret
@@ -404,20 +388,20 @@ whichcmd:
 	.file 5 "/usr/include/stdio.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0x1c9
+	.long	0x1bc
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
 	.long	.Ldebug_abbrev0
 	.uleb128 0x9
-	.long	.LASF28
+	.long	.LASF27
 	.byte	0x1d
 	.long	.LASF0
 	.long	.LASF1
 	.quad	.Ltext0
 	.quad	.Letext0-.Ltext0
 	.long	.Ldebug_line0
-	.uleb128 0x7
+	.uleb128 0x6
 	.long	.LASF20
 	.byte	0x2
 	.byte	0xd6
@@ -520,13 +504,13 @@ whichcmd:
 	.long	.LASF19
 	.byte	0x7
 	.byte	0
-	.uleb128 0x7
+	.uleb128 0x6
 	.long	.LASF21
 	.byte	0x3
 	.byte	0x81
 	.byte	0x3
 	.long	0xb0
-	.uleb128 0x8
+	.uleb128 0x7
 	.long	.LASF22
 	.byte	0x4
 	.value	0x197
@@ -550,7 +534,7 @@ whichcmd:
 	.uleb128 0x3
 	.long	0x3a
 	.byte	0
-	.uleb128 0x8
+	.uleb128 0x7
 	.long	.LASF24
 	.byte	0x5
 	.value	0x16b
@@ -562,7 +546,7 @@ whichcmd:
 	.uleb128 0xe
 	.byte	0
 	.uleb128 0xf
-	.long	.LASF29
+	.long	.LASF28
 	.byte	0x1
 	.byte	0x34
 	.byte	0xc
@@ -571,28 +555,21 @@ whichcmd:
 	.quad	.LFE321-.LFB321
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x1b2
-	.uleb128 0x6
+	.long	0x1a5
+	.uleb128 0x8
 	.long	.LASF25
 	.byte	0x19
 	.long	0x64
 	.uleb128 0x2
 	.byte	0x91
 	.sleb128 -36
-	.uleb128 0x6
+	.uleb128 0x8
 	.long	.LASF26
 	.byte	0x25
 	.long	0x96
 	.uleb128 0x2
 	.byte	0x91
 	.sleb128 -48
-	.uleb128 0x6
-	.long	.LASF27
-	.byte	0x34
-	.long	0x96
-	.uleb128 0x2
-	.byte	0x91
-	.sleb128 -56
 	.uleb128 0x10
 	.string	"cmd"
 	.byte	0x1
@@ -603,14 +580,14 @@ whichcmd:
 	.byte	0x91
 	.sleb128 -24
 	.uleb128 0x11
-	.long	.LASF30
+	.long	.LASF29
 	.byte	0x1
-	.byte	0x5f
+	.byte	0x5c
 	.byte	0x1
 	.quad	.L9
 	.byte	0
 	.uleb128 0x12
-	.long	.LASF31
+	.long	.LASF30
 	.byte	0x1
 	.byte	0xd
 	.byte	0x6
@@ -668,25 +645,6 @@ whichcmd:
 	.byte	0
 	.byte	0
 	.uleb128 0x6
-	.uleb128 0x5
-	.byte	0
-	.uleb128 0x3
-	.uleb128 0xe
-	.uleb128 0x3a
-	.uleb128 0x21
-	.sleb128 1
-	.uleb128 0x3b
-	.uleb128 0x21
-	.sleb128 52
-	.uleb128 0x39
-	.uleb128 0xb
-	.uleb128 0x49
-	.uleb128 0x13
-	.uleb128 0x2
-	.uleb128 0x18
-	.byte	0
-	.byte	0
-	.uleb128 0x7
 	.uleb128 0x16
 	.byte	0
 	.uleb128 0x3
@@ -701,7 +659,7 @@ whichcmd:
 	.uleb128 0x13
 	.byte	0
 	.byte	0
-	.uleb128 0x8
+	.uleb128 0x7
 	.uleb128 0x2e
 	.byte	0x1
 	.uleb128 0x3f
@@ -722,6 +680,25 @@ whichcmd:
 	.uleb128 0x19
 	.uleb128 0x1
 	.uleb128 0x13
+	.byte	0
+	.byte	0
+	.uleb128 0x8
+	.uleb128 0x5
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x3a
+	.uleb128 0x21
+	.sleb128 1
+	.uleb128 0x3b
+	.uleb128 0x21
+	.sleb128 52
+	.uleb128 0x39
+	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
 	.byte	0
 	.byte	0
 	.uleb128 0x9
@@ -916,10 +893,8 @@ whichcmd:
 	.string	"size_t"
 .LASF3:
 	.string	"unsigned int"
-.LASF29:
+.LASF28:
 	.string	"whichcmd"
-.LASF22:
-	.string	"strlen"
 .LASF11:
 	.string	"long long unsigned int"
 .LASF4:
@@ -934,17 +909,17 @@ whichcmd:
 	.string	"short unsigned int"
 .LASF12:
 	.string	"__int128"
-.LASF31:
+.LASF30:
 	.string	"print_menu"
 .LASF15:
 	.string	"DELETE"
-.LASF27:
-	.string	"filename"
+.LASF22:
+	.string	"strlen"
 .LASF9:
 	.string	"char"
 .LASF25:
 	.string	"argc"
-.LASF30:
+.LASF29:
 	.string	"error"
 .LASF10:
 	.string	"long long int"
@@ -960,7 +935,7 @@ whichcmd:
 	.string	"argv"
 .LASF8:
 	.string	"long int"
-.LASF28:
+.LASF27:
 	.string	"GNU C17 14.2.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF14:
 	.string	"long double"

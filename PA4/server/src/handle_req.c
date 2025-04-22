@@ -187,6 +187,8 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
 
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
+    printf("Numbbytes send for header %d \n", numbytes);
+    
     total_bytes = 0;
     while (total_bytes < file_size)
     {

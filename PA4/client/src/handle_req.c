@@ -361,7 +361,7 @@ void get_file(sockDetails_t *sd)
 
     
     // Try to get chunks from each server
-    while (current && total_chunks_downloaded < NUMBER_OF_PAIRS)
+    while (current)
     {
         servers_contacted++;
         
@@ -418,8 +418,8 @@ void get_file(sockDetails_t *sd)
             printf(GRN "    [+] Server has chunk %d, downloading...\n" RESET, index + 1);
 
             // Receive chunk header
-            message_header_t *recv_message_header = malloc(sizeof(message_header_t)); // free it later
-            numbytes = _recv(current->client_sock_fd, recv_message_header, sizeof(message_header_t), chunk_failed);
+            message_header_t *recv_message_header = malloc(sizeof(*recv_message_header)); // free it later
+            numbytes = _recv(current->client_sock_fd, recv_message_header, sizeof(*recv_message_header), chunk_failed);
 
             int data_size = recv_message_header->data_length;
             printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, recv_message_header->chunk_id+1, data_size);

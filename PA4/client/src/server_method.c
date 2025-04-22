@@ -49,7 +49,7 @@ void print_menu()
  *
  * Note: Uses strncmp for command matching to prevent buffer overflows
  */
-commands_t whichcmd(int argc, char *argv[], char **filename)
+commands_t whichcmd(int argc, char *argv[])
 {
 
     char *cmd = argv[1];
@@ -59,16 +59,14 @@ commands_t whichcmd(int argc, char *argv[], char **filename)
     }
     else if (strncmp(cmd, "get", strlen("get")) == 0 && strlen(cmd) == strlen("get"))
     {
-        if (argc != 3)
+        if (argc < 3)
             goto error;
-        *filename = argv[2];
         return GET;
     }
     else if (strncmp(cmd, "put", strlen("put")) == 0 && strlen(cmd) == strlen("put"))
     {
-        if (argc != 3)
+        if (argc < 3)
             goto error;
-        *filename = argv[2];
         return PUT;
     }
     else if (strncmp(cmd, "exit", strlen("exit")) == 0 && strlen(cmd) == strlen("exit"))
@@ -77,9 +75,8 @@ commands_t whichcmd(int argc, char *argv[], char **filename)
     }
     else if (strncmp(cmd, "delete", strlen("delete")) == 0 && strlen(cmd) == strlen("delete"))
     {
-        if (argc != 3)
+        if (argc < 3)
             goto error;
-        *filename = argv[2];
         return DELETE;
     }
     else if ((strncmp(cmd, "serverinfo", strlen("serverinfo")) == 0 && strlen(cmd) == strlen("serverinfo")) || (strncmp(cmd, "info", strlen("info")) == 0 && strlen(cmd) == strlen("info")))

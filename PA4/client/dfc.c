@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&sd.lock, NULL);
 
     /* Validate command line arguments */
-    if (argc != 3 && argc != 2)
+    if (argc < 2)
     {
         printf(RED "[-] ERROR: Invalid command usage\n" RESET);
         printf(RED "    Usage: ./dfc <COMMAND> [FILENAME]\n" RESET);
@@ -116,13 +116,18 @@ int main(int argc, char *argv[])
     }
 
     read_server_conf(&sd);
-    char *filename = NULL;
-    sd.command_int = whichcmd(argc, argv, &filename);
-    sd.filename = filename;
+    // char *filenames[]
+    int total_filenames = argc - 2;
+    int filename_index = 2;
+    sd.command_int = whichcmd(argc, argv);
+    if(sd.command_int >= 3) handle_req(&sd);
+    else{
+        for(int i = 0; i < total_filenames; i++){
+            sd.filename = argv[filename_index];
+            handle_req(&sd);
+            filename_index++;
+        }
+    }
     
-    
-    handle_req(&sd);
-
-
     return EXIT_SUCCESS;
 }
