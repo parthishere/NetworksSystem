@@ -182,6 +182,8 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     numbytes = _send(sd->client_sock_fd, ACK, ACK_LEN, done);
     printf("numbytes ACK sent %d \n", numbytes);
 
+    numbytes = _recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), done);
+
     message_header_t message_header_send = {
         .command = GET,
         .chunk_id = message_header->chunk_id,
@@ -232,7 +234,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
 
 done:
-    free(filename);
+    // free(filename);
     fclose(fs);
 }
 

@@ -184,11 +184,11 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     printf(GRN "\n[+] CONNECTION ESTABLISHED: Server %d\n" RESET, server_index + 1);
     printf(GRN "    Address: %s:%s\n" RESET, current->server_ip, current->server_port);
 
-    struct timeval tv;
-    tv.tv_sec = 1;  // 5 second timeout
-    tv.tv_usec = 0;
-    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    // struct timeval tv;
+    // tv.tv_sec = TIMEOUT_SEC;  // 5 second timeout
+    // tv.tv_usec = 0;
+    // setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    // setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     // fprintf(stderr, YEL "\n[!] Connection timeout to server %d (%s:%s)\n" RESET, server_index+1, current->server_ip, current->server_port);
     // fprintf(stderr, YEL "    Server did not respond within timeout period\n\n" RESET);
@@ -431,10 +431,13 @@ void get_file(sockDetails_t *sd)
                 continue; // Try next chunk instead of giving up on the server
             }
             
+            numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
+            
             printf(GRN "    [+] Server has chunk %d, downloading...\n" RESET, index + 1);
 
-
+            memset(&message_header, 0, sizeof(message_header_t));
             numbytes = _recv(current->client_sock_fd, &message_header, sizeof(message_header), chunk_failed);
+            
             printf("message_header recieved %d \n", numbytes);
             printf("Raw header bytes: (recv)");
             bytes = (unsigned char*)&message_header;
@@ -469,7 +472,7 @@ void get_file(sockDetails_t *sd)
                 }
             }
 
-            // Send ACK for received chunk
+            // // Send ACK for received chunk
             numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
             
             // Mark chunk as successfully received
