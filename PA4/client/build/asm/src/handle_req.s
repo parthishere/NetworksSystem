@@ -1531,7 +1531,7 @@ put_file:
 .LC65:
 	.string	"\033[36m[*] REASSEMBLING FILE: All chunks available\n\033[0m"
 .LC66:
-	.string	".   "
+	.string	"./download"
 .LC67:
 	.string	"%s/%s"
 .LC68:

@@ -40,4 +40,4 @@
 #include <netdb.h>      // Network database operations
 #include <arpa/inet.h>  // Internet operations
 #include <netinet/in.h> // Internet address family
-#include <sys/stat.h>   // File status and informa
+#include <sys/stat.h>   // File status and informat

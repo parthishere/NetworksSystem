@@ -1,4 +1,4 @@
-etails_t {
+erDetails_t {
     int client_sock_fd;
     char *server_port; // need to free it afterwards - server port to connect to
     char *server_ip;  // need to free it afterwards - client ip to connect to 

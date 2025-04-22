@@ -1,4 +1,4 @@
-tion
+ion
 #include <fcntl.h>      // File control options
 
 /* Process and Thread Management Headers */
@@ -18,7 +18,7 @@ tion
  * @name Server Configuration Constants
  * @{
  */
-#define WHERE_TO_DOWNLOAD_FILE ".   "
+#define WHERE_TO_DOWNLOAD_FILE "./download"
 #define SERVER_CONF "./dfc.conf"
 #define MAX_SIZE (1024 * 30)   /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE  /* Receive buffer size */
@@ -45,5 +45,4 @@ tion
 #define GRN "\x1B[32m"  // Success messages
 #define YEL "\x1B[33m"  // Warnings and prompts
 #define BLU "\x1B[34m"  // Informational messages
-#define MAG "\x1B[36m"  // Alternative highlighting
-#
+#define MAG "\x1B[36m"  // Alternative highlighti

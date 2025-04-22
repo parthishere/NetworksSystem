@@ -1,4 +1,5 @@
-define WHT "\x1B[37m"  // Standard output
+ng
+#define WHT "\x1B[37m"  // Standard output
 #define RESET "\x1B[0m" // Reset to default color
 
 /* Protocol Message Definitions
@@ -41,4 +42,4 @@ typedef enum
 
 
 
-typedef struct serverD
+typedef struct serv
