@@ -65,7 +65,7 @@
 #define RECIEVE_SIZE MAX_SIZE  /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE /* Transmit buffer size */
 #define USE_FORK 0             /* Use threading instead of forking */
-#define TOTAL_THREADS 1        /* Number of worker threads */
+#define TOTAL_THREADS 5        /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
 #define TIMEOUT_SEC 2          /* Connection timeout in seconds */
 #define RETRY_COUNT 3
@@ -118,6 +118,7 @@ typedef enum
     GET,    // Download file from server
     PUT,    // Upload file to server
     DELETE, // Remove file from server
+    /* below commands does not have filename */
     LS,     // List directory contents
     EXIT,   // Terminate connection
     SERVER_INFO,

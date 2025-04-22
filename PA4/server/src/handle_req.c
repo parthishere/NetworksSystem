@@ -177,6 +177,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     printf("file size %d \n", file_size);
     // send ack
     numbytes = _send(sd->client_sock_fd, ACK, 7, done);
+    printf("numbytes ACK sent %d \n", numbytes);
 
     message_header_t message_header_send = {
         .command = GET,
@@ -187,8 +188,8 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
 
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
-    printf("Numbbytes send for header %d \n", numbytes);
-    
+    printf("Numbbytes send for header %d, chunk id sent %d, file length %d data len %d \n", numbytes, message_header_send.chunk_id, message_header_send.filename_length, message_header_send.data_length);;
+
     total_bytes = 0;
     while (total_bytes < file_size)
     {

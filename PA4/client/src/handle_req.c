@@ -361,7 +361,7 @@ void get_file(sockDetails_t *sd)
 
     
     // Try to get chunks from each server
-    while (current)
+    while (current && total_chunks_downloaded <= NUMBER_OF_PAIRS)
     {
         servers_contacted++;
         
@@ -418,17 +418,17 @@ void get_file(sockDetails_t *sd)
             printf(GRN "    [+] Server has chunk %d, downloading...\n" RESET, index + 1);
 
             // Receive chunk header
-            message_header_t *recv_message_header = malloc(sizeof(*recv_message_header)); // free it later
-            numbytes = _recv(current->client_sock_fd, recv_message_header, sizeof(*recv_message_header), chunk_failed);
+            message_header_t recv_message_header; 
+            numbytes = _recv(current->client_sock_fd, &recv_message_header, sizeof(recv_message_header), chunk_failed);
+            printf("message_header recieved %d \n", numbytes);
 
-            int data_size = recv_message_header->data_length;
-            printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, recv_message_header->chunk_id+1, data_size);
+            int data_size = recv_message_header.data_length;
+            printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, recv_message_header.chunk_id+1, data_size);
 
             // Allocate memory for chunk data
             chunks[index] = malloc(data_size);
             if (chunks[index] == NULL) {
                 printf(RED "    [-] ERROR: Memory allocation failed for chunk %d\n" RESET, index + 1);
-                free(recv_message_header);
                 return;
             }
 
@@ -458,12 +458,10 @@ void get_file(sockDetails_t *sd)
             
             printf(GRN "    [+] CHUNK %d DOWNLOADED SUCCESSFULLY (%d bytes)\n" RESET, index + 1, data_size);
             
-            free(recv_message_header);
             continue;
             
         chunk_failed:
             printf(RED "    [-] ERROR: Failed to download chunk %d\n" RESET, index + 1);
-            if (recv_message_header) free(recv_message_header);
             if (chunks[index]) {
                 free(chunks[index]);
                 chunks[index] = NULL;
