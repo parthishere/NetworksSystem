@@ -92,15 +92,11 @@
  * Standard messages used in the communication protocol
  * Each message is padded with tabs for consistent length
  */
-#define END_OF_DYNAMIC_DATA "EOF\t\n0\t\n\0"                                 // End of data marker
-#define ACK "ack\t\n0\t\n\0"                                                 // Positive acknowledgment
-#define NACK "nack\t\n0\t\n\0"                                               // Negative acknowledgment
-#define ERROR_FOR_DYNAMIC_DATA "UNABLE_TO_COMPLETE_THE_OPERATION\t\n0\t\n\0" // Operation failure
-#define FILE_NOT_FOUND "FILE_NOT_FOUND\t\n0\t\n\0"                           // File not found error
-#define FILE_EXISTS "FILE_ALREADY_EXISTS\t\n0\t\n\0"                         // File exists error
-#define WRONG_COMMAND "WRONG_COMMAND\t\n0\t\n\0"                             // Invalid command error
-#define TIMEOUT_HTTP_SEC 10
+#define ACK "ack\t\n0\t\n\0"                                                   // Positive acknowledgment
+#define ACK_LEN 7
 
+#define NACK "nack\t\n0\t\n\0"                                                 // Negative acknowledgment
+#define NACK_LEN 8
 /* Screen Management
  * Terminal control sequence for clearing screen
  */

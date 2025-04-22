@@ -42,6 +42,7 @@
     numbytes;                                                                         \
 })
 
+#pragma pack(push, 1)
 typedef struct message_header_s
 {
     uint8_t command;          // 0=put, 1=get
@@ -49,6 +50,7 @@ typedef struct message_header_s
     uint32_t filename_length; // length of filename
     uint32_t data_length;     // Length of following data
 } message_header_t;
+#pragma pack(pop)
 
 uint32_t str2md5(char *str, int length)
 {
@@ -182,6 +184,12 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     printf(GRN "\n[+] CONNECTION ESTABLISHED: Server %d\n" RESET, server_index + 1);
     printf(GRN "    Address: %s:%s\n" RESET, current->server_ip, current->server_port);
 
+    struct timeval tv;
+    tv.tv_sec = 1;  // 5 second timeout
+    tv.tv_usec = 0;
+    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
     // fprintf(stderr, YEL "\n[!] Connection timeout to server %d (%s:%s)\n" RESET, server_index+1, current->server_ip, current->server_port);
     // fprintf(stderr, YEL "    Server did not respond within timeout period\n\n" RESET);
 
@@ -242,7 +250,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
 
-            if (strncmp(recieve_buffer, ACK, 7) != 0)
+            if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
             {
                 printf(RED "[-] ERROR: Received NACK from server for chunk %d\n" RESET, index + 1);
                 goto next;
@@ -381,6 +389,8 @@ void get_file(sockDetails_t *sd)
         }
         printf("\n");
 
+        
+
         // Try to get each chunk from this server
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
@@ -402,6 +412,12 @@ void get_file(sockDetails_t *sd)
                 .data_length = 0
             };
 
+            printf("Raw header bytes: (send)");
+            unsigned char *bytes = (unsigned char*)&message_header;
+            for (int i = 0; i < sizeof(message_header_t); i++) {
+                printf("%02x ", bytes[i]);
+            }
+            printf("\n");
             // Send request header and filename
             numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
             numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
@@ -409,7 +425,7 @@ void get_file(sockDetails_t *sd)
             // Wait for ACK/NACK response
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
 
-            if (strncmp(recieve_buffer, ACK, 7) != 0)
+            if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
             {
                 printf(RED "    [-] Server %d does not have chunk %d\n" RESET, i + 1, index + 1);
                 continue; // Try next chunk instead of giving up on the server
@@ -417,13 +433,18 @@ void get_file(sockDetails_t *sd)
             
             printf(GRN "    [+] Server has chunk %d, downloading...\n" RESET, index + 1);
 
-            // Receive chunk header
-            message_header_t recv_message_header; 
-            numbytes = _recv(current->client_sock_fd, &recv_message_header, sizeof(recv_message_header), chunk_failed);
-            printf("message_header recieved %d \n", numbytes);
 
-            int data_size = recv_message_header.data_length;
-            printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, recv_message_header.chunk_id+1, data_size);
+            numbytes = _recv(current->client_sock_fd, &message_header, sizeof(message_header), chunk_failed);
+            printf("message_header recieved %d \n", numbytes);
+            printf("Raw header bytes: (recv)");
+            bytes = (unsigned char*)&message_header;
+            for (int i = 0; i < sizeof(message_header_t); i++) {
+                printf("%02x ", bytes[i]);
+            }
+            printf("\n");
+
+            int data_size = message_header.data_length;
+            printf(MAG "    [*] Chunk %d size: %d bytes\n" RESET, message_header.chunk_id+1, data_size);
 
             // Allocate memory for chunk data
             chunks[index] = malloc(data_size);
@@ -449,7 +470,7 @@ void get_file(sockDetails_t *sd)
             }
 
             // Send ACK for received chunk
-            numbytes = _send(current->client_sock_fd, ACK, 7, chunk_failed);
+            numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
             
             // Mark chunk as successfully received
             chunks_stored[index] = 1;
@@ -697,12 +718,12 @@ void list_file(sockDetails_t *sd)
                 break;
 
             memcpy(recieve_buffer, (void *)&message_header, numbytes);
-            if (strncmp(recieve_buffer, ACK, 7) == 0 || strncmp(recieve_buffer, NACK, 8) == 0)
+            if (strncmp(recieve_buffer, ACK, ACK_LEN) == 0 || strncmp(recieve_buffer, NACK, NACK_LEN) == 0)
                 break;
 
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = recv(current->client_sock_fd, recieve_buffer, message_header.filename_length, 0);
-            if (numbytes <= 0 || strncmp(recieve_buffer, ACK, 7) == 0 || strncmp(recieve_buffer, NACK, 8) == 0)
+            if (numbytes <= 0 || strncmp(recieve_buffer, ACK, ACK_LEN) == 0 || strncmp(recieve_buffer, NACK, NACK_LEN) == 0)
                 break;
             
             // Parse filename to extract original name and chunk ID
@@ -867,7 +888,7 @@ void delete_file(sockDetails_t *sd)
             numbytes = _send(current->client_sock_fd, sd->filename, message_header.filename_length, next);
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
-            if (strncmp(recieve_buffer, ACK, 7) == 0)
+            if (strncmp(recieve_buffer, ACK, ACK_LEN) == 0)
             {
                 printf(GRN "\n=========================================\n" RESET);
                 printf(GRN "    FILE DELETE SUCCESSFUL\n" RESET);
@@ -875,7 +896,7 @@ void delete_file(sockDetails_t *sd)
                 printf(GRN "    All chunks removed from servers\n" RESET);
                 printf(GRN "=========================================\n\n" RESET);
             }
-            if (strncmp(recieve_buffer, NACK, 8) == 0)
+            if (strncmp(recieve_buffer, NACK, NACK_LEN) == 0)
             {
                 printf(RED "[-] ERROR: File not found or permission denied on server\n" RESET);
             }
