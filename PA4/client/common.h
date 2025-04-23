@@ -70,7 +70,7 @@
 #define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
 #define TIMEOUT_SEC 1         /* Connection timeout in seconds */
 #define RETRY_COUNT 3
-#define MAX_NUMBER_OF_SERVERS 1024
+#define MAX_NUMBER_OF_SERVERS 4
 #define NUMBER_OF_PAIRS 4
 #define MAX_NUMBER_OF_CHUNKS_PER_SERVER 2
 /** @} */
@@ -151,7 +151,7 @@ typedef struct
     commands_t command_int;
     serverDetails_t *servers_details;
     struct addrinfo *connect_to_info;        // Client address information
-    int *server_sock_fds;
+    int server_sock_fds[MAX_NUMBER_OF_SERVERS];
     int number_of_servers;
     int number_of_available_servers;
 

@@ -1,0 +1,19 @@
+SRC_DIR = src
+INCLUDE_DIR = includes
+PORT ?= 8080
+TIMEOUT ?= 60
+
+OUTPUT_DIR = ./build
+OBJ_DIR = $(OUTPUT_DIR)/obj $(OUTPUT_DIR)/obj/$(SRC_DIR)
+ASM_DIR = $(OUTPUT_DIR)/asm $(OUTPUT_DIR)/asm/$(SRC_DIR)
+
+CC := gcc
+CFLAGS := -Wall -Werror
+LDFLAGS := -lpthread -lssl -lcrypto -g
+INC := -I$(INCLUDE_DIR) -I./ -I$(SRC_DIR) 
+
+ROOT_SRC = $(wildcard *.c)
+SRC_DIR_SRC = $(wildcard $(SRC_DIR)/*.c)
+ALL_SRC = $(ROOT_SRC) $(SRC_DIR_SRC)
+
+ROOT_OBJS = $(patsubst %.c, $(OUTPUT_D
