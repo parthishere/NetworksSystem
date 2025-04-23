@@ -185,11 +185,11 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     printf(GRN "\n[+] CONNECTION ESTABLISHED: Server %d\n" RESET, server_index + 1);
     printf(GRN "    Address: %s:%s\n" RESET, current->server_ip, current->server_port);
 
-    // struct timeval tv;
-    // tv.tv_sec = TIMEOUT_SEC;  // 5 second timeout
-    // tv.tv_usec = 0;
-    // setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-    // setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    struct timeval tv;
+    tv.tv_sec = TIMEOUT_SEC;  // 5 second timeout
+    tv.tv_usec = 0;
+    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     // fprintf(stderr, YEL "\n[!] Connection timeout to server %d (%s:%s)\n" RESET, server_index+1, current->server_ip, current->server_port);
     // fprintf(stderr, YEL "    Server did not respond within timeout period\n\n" RESET);
@@ -220,7 +220,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
         if (connect_server(sd, current, i) < 0)
             goto next;
 
-        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
+        int index = (hash + i) % sd->number_of_servers;
 
         printf(MAG "[*] CHUNK ASSIGNMENT: Server %d\n" RESET, i + 1);
         printf(MAG "    Storing chunks: " RESET);
@@ -250,7 +250,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
-                
+
             if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
             {
                 printf(RED "[-] ERROR: Received NACK from server for chunk %d\n" RESET, index + 1);
@@ -301,7 +301,20 @@ void put_file(sockDetails_t *sd)
         fprintf(stderr, RED "[-] Error opening file %d \n" RESET, errno);
         return;
     }
-    uint32_t hash = str2md5(sd->filename, strlen(sd->filename));
+
+
+    char *temp_filename = strrchr(sd->filename, '/');
+    if (temp_filename == NULL)
+    {
+        temp_filename = sd->filename;
+    }
+    else
+    {
+        temp_filename++;
+    }
+    
+    uint32_t hash = str2md5(temp_filename, strlen(temp_filename));
+    sd->filename = temp_filename;
 
     fseek(fs, 0L, SEEK_END);
     int size = ftell(fs);
@@ -345,6 +358,7 @@ void get_file(sockDetails_t *sd)
 
     // Calculate file hash to determine starting server
     int hash = str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers;
+    
 
     int i = 0, numbytes = 0;
     serverDetails_t *current = sd->servers_details;
@@ -380,7 +394,7 @@ void get_file(sockDetails_t *sd)
         printf(GRN "[+] CONNECTION ESTABLISHED: Server %d is online\n" RESET, i + 1);
 
         // Calculate which chunks should be on this server based on the hash
-        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
+        int index = (hash + i) % sd->number_of_servers;
         
         printf(MAG "[*] REQUESTING CHUNKS: Server %d should have chunks " RESET, i + 1);
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++) {

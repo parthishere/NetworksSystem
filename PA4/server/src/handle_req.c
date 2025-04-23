@@ -86,17 +86,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     }
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
 
-    temp_filename = strrchr(recieved_buf, '/');
-    if (temp_filename == NULL)
-    {
-        temp_filename = recieved_buf;
-    }
-    else
-    {
-        temp_filename++;
-    }
-
-    if (asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id) < 0)
+    if (asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id) < 0)
         goto done;
 
     FILE *fs = fopen(filename, "wb");
@@ -156,31 +146,20 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     char transmit_buf[TRANSMIT_SIZE];
     int status = 0;
     char *filename;
-    char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
     if(message_header->filename_length > RECIEVE_SIZE) {
-        printf("Too large filename size \n");
+        printf(RED"[-] Too large filename size \n"RESET);
         goto done;
     }
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     
-    temp_filename = strrchr(recieved_buf, '/');
-    if (temp_filename == NULL)
-    {
-        temp_filename = recieved_buf;
-    }
-    else
-    {
-        temp_filename++;
-    }
-
-    asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id);
+    asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
 
     FILE *fs = fopen(filename, "rb");
     if (fs == NULL)
     {
-        printf("Reading failed \n");
+        printf(RED"[-] Reading failed \n"RESET);
         numbytes = _send(sd->client_sock_fd, NACK, NACK_LEN, done);
         status = -1;
         free(filename);
@@ -191,10 +170,8 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     int file_size = ftell(fs);
     fseek(fs, 0, SEEK_SET);
 
-    printf("file size %d \n", file_size);
     // send ack
     numbytes = _send(sd->client_sock_fd, ACK, ACK_LEN, done);
-    printf("numbytes ACK sent %d \n", numbytes);
 
     numbytes = _recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), done);
 
@@ -206,8 +183,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     };
 
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
-    printf("Numbbytes send for header %d, chunk id sent %d, file length %d data len %d \n", numbytes, message_header_send.chunk_id, message_header_send.filename_length, message_header_send.data_length);
-    printf("Raw header bytes: (sent)");
 
     unsigned char *bytes = (unsigned char *)&message_header_send;
     for (int i = 0; i < sizeof(message_header_t); i++)
@@ -217,14 +192,12 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     printf("\n");
 
     total_bytes = 0;
-    while (total_bytes < file_size)
+    while ((numbytes = fread(transmit_buf, 1, sizeof(transmit_buf), fs)) > 0)
     {
-        memset(transmit_buf, 0, sizeof(transmit_buf));
-        numbytes = fread(transmit_buf, 1, file_size, fs);
         numbytes = _send(sd->client_sock_fd, transmit_buf, numbytes, done);
         printf("send bytes:%d\n", numbytes);
 
-        total_bytes += numbytes;
+        memset(transmit_buf, 0, sizeof(transmit_buf));
     }
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
