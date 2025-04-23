@@ -1,0 +1,45 @@
+socket call successful\n" RESET);
+
+        int yes = 1;
+        /* Set socket options */
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        {
+            perror(RED "setsockopt");
+            exit(1);
+        }
+
+        /*
+        int bind(int sockfd, const struct sockaddr *addr,
+                socklen_t addrlen);
+        */
+        if (bind(sockfd, temp->ai_addr, temp->ai_addrlen) < 0)
+        {
+            close(sockfd);
+            perror(RED "server: bind");
+            continue;
+        }
+
+        break;
+    }
+
+    /* Verify socket creation and binding */
+    if (temp == NULL)
+    {
+        fprintf(stderr, RED "[-] socket connection failed for server \n" RESET);
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+    sd->sockfd = sockfd;
+
+    /* Display server information */
+    inet_ntop(temp->ai_family, getin_addr(temp->ai_addr), ip, sizeof ip);
+    printf(GRN "[+] Server recieving TCP/HTTP1.0 packet to : %s\n" RESET, ip);
+
+    freeaddrinfo(temp);
+
+    if (listen(sockfd, TOTAL_THREADS * 2) < 0)
+    {
+        perror("listen");
+        exit(1);
+    }
+}

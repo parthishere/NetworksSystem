@@ -1,0 +1,38 @@
+alizes and configures a server-side TCP socket
+ *
+ * @param sd Pointer to socket details structure
+ * @param argv Command line arguments array containing port number
+ *
+ * This function performs complete server socket setup:
+ * 1. Configures address parameters
+ * 2. Creates and binds socket
+ * 3. Sets socket options
+ * 4. Prepares for listening
+ *
+ * @note Port number must be > 1024 (non-privileged ports)
+ * @note Supports both IPv4 and IPv6
+ */
+void init_socket(sockDetails_t *sd, char *port)
+{
+    struct addrinfo hints, *temp;
+    char ip[INET6_ADDRSTRLEN];
+
+    int status;
+    int sockfd;
+
+    /* Configure address hints structure */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM; // for TCP
+    hints.ai_flags = AI_PASSIVE;     // fill up my IP
+
+    char *server_port = port;
+    // printf("Passed Server Port %s\n", server_port);
+    if (atoi(server_port) <= 1024)
+    {
+        fprintf(stderr, RED "[-] Port Value < 1024 ! keep port value higher than 1024 \n" RESET);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Validate and set port number */
+
