@@ -97,13 +97,6 @@ void *get_in_addr(struct sockaddr *sa)
 void cleanup_current_connection(serverDetails_t *current)
 {
     close(current->client_sock_fd);
-    current->client_sock_fd = -1;
-    if (current->server_ip)
-        free(current->server_ip);
-    current->server_ip = NULL;
-    if (current->server_port)
-        free(current->server_port);
-    current->server_port = NULL;
 }
 
 void cleanup_connection(sockDetails_t *sd)
@@ -112,11 +105,19 @@ void cleanup_connection(sockDetails_t *sd)
     while (current)
     {
         serverDetails_t *temp = current;
+
+        current->client_sock_fd = -1;
+        if (current->server_ip)
+            free(current->server_ip);
+        current->server_ip = NULL;
+        if (current->server_port)
+            free(current->server_port);
+        current->server_port = NULL;
+
         current = current->next;
+
         free(temp);
     }
-    sd->number_of_available_servers = 0;
-    sd->number_of_servers = 0;
     if (sd->server_sock_fds)
         free(sd->server_sock_fds);
     sd->server_sock_fds = NULL;
@@ -249,7 +250,7 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
 
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
-
+                
             if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
             {
                 printf(RED "[-] ERROR: Received NACK from server for chunk %d\n" RESET, index + 1);
@@ -281,8 +282,6 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
             return;
         }
     }
-
-    cleanup_connection(sd);
 
     // Put operation success
     printf(GRN "\n=========================================\n" RESET);

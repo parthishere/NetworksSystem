@@ -128,6 +128,8 @@ int main(int argc, char *argv[])
             filename_index++;
         }
     }
+
+    cleanup_connection(&sd);
     
     return EXIT_SUCCESS;
 }

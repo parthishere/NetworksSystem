@@ -39,4 +39,6 @@
  */   
 void *handle_req(sockDetails_t *sd);
 
+void cleanup_connection(sockDetails_t *sd);
+
 

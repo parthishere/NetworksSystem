@@ -17,15 +17,21 @@
 #include "handle_req.h"
 #include <ctype.h>
 
-#define _send(sockfd, message, message_len, goto_where) ({           \
-    int nbytes;                                                      \
-    if ((nbytes = send(sockfd, message, message_len, 0)) <= 0)       \
-    {                                                                \
-        printf(RED "[-] Send failed, error no: %d \n" RESET, errno); \
-        close(sockfd);                                               \
-        goto goto_where;                                             \
-    }                                                                \
-    nbytes;                                                          \
+#define _send(sockfd, message, message_len, goto_where) ({                            \
+    int nbytes;                                                                       \
+    if ((nbytes = send(sockfd, message, message_len, 0)) < 0)                         \
+    {                                                                                 \
+        printf(RED "[-] Send failed, error no: %d \n" RESET, errno);                  \
+        close(sockfd);                                                                \
+        goto goto_where;                                                              \
+    }                                                                                 \
+    else if (nbytes == 0)                                                             \
+    {                                                                                 \
+        close(sockfd);                                                                \
+        printf(YEL "[-] Client Closed the Connection, error no: %d \n" RESET, errno); \
+        goto goto_where;                                                              \
+    }                                                                                 \
+    nbytes;                                                                           \
 })
 
 #define _recv(sockfd, message, message_len, goto_where) ({                            \
@@ -55,7 +61,6 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-
 #pragma pack(push, 1)
 typedef struct message_header_s
 {
@@ -75,6 +80,10 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
+    if(message_header->filename_length > RECIEVE_SIZE) {
+        printf("Too large filename size \n");
+        goto done;
+    }
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
 
     temp_filename = strrchr(recieved_buf, '/');
@@ -87,7 +96,8 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
         temp_filename++;
     }
 
-    asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id);
+    if (asprintf(&filename, "%s/%s_%d", sd->dirname, temp_filename, message_header->chunk_id) < 0)
+        goto done;
 
     FILE *fs = fopen(filename, "wb");
     if (fs == NULL)
@@ -101,7 +111,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     while (total_bytes < message_header->data_length)
     {
         memset(recieved_buf, 0, sizeof(recieved_buf));
-        numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->data_length, done);
+        numbytes = _recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), done);
         numbytes_w = fwrite(recieved_buf, numbytes, 1, fs);
 
         if (numbytes != numbytes_w * numbytes)
@@ -149,8 +159,12 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
+    if(message_header->filename_length > RECIEVE_SIZE) {
+        printf("Too large filename size \n");
+        goto done;
+    }
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
-
+    
     temp_filename = strrchr(recieved_buf, '/');
     if (temp_filename == NULL)
     {
@@ -191,13 +205,13 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         .data_length = file_size,
     };
 
-
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
     printf("Numbbytes send for header %d, chunk id sent %d, file length %d data len %d \n", numbytes, message_header_send.chunk_id, message_header_send.filename_length, message_header_send.data_length);
     printf("Raw header bytes: (sent)");
 
-    unsigned char *bytes = (unsigned char*)&message_header_send;
-    for (int i = 0; i < sizeof(message_header_t); i++) {
+    unsigned char *bytes = (unsigned char *)&message_header_send;
+    for (int i = 0; i < sizeof(message_header_t); i++)
+    {
         printf("%02x ", bytes[i]);
     }
     printf("\n");
@@ -231,7 +245,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         printf(RED "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
         printf(RED "=========================================\n\n" RESET);
     }
-
 
 done:
     // free(filename);
@@ -269,7 +282,6 @@ void list_directory(sockDetails_t *sd, const char *base_path)
     DIR *dp;
     struct dirent *entry;
     struct stat statbuf;
-    
 
     printf(CYN "[*] Scanning directory: %s\n" RESET, base_path);
 
@@ -300,7 +312,6 @@ void list_directory(sockDetails_t *sd, const char *base_path)
             continue;
         }
 
-        
         if (S_ISREG(statbuf.st_mode))
         {
             // Regular file - check if it's a chunk file (has underscore and number at the end)
@@ -341,8 +352,13 @@ void delete_command(sockDetails_t *sd, message_header_t *message_header)
     char recieved_buf[RECIEVE_SIZE];
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
+    if(message_header->filename_length > RECIEVE_SIZE) {
+        printf("Too large filename size \n");
+        goto done;
+    }
     numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     
+
     char *filename;
     asprintf(&filename, "%s/%s_%d", sd->dirname, recieved_buf, message_header->chunk_id);
 
@@ -436,6 +452,7 @@ void *handle_req(sockDetails_t *sd)
             /* Read incoming request with error checking */
             int total_bytes = 0;
             message_header_t message_header;
+            memset(&message_header, 0, sizeof(message_header_t));
 
             _recv(sd->client_sock_fd, &message_header, sizeof(message_header_t), cleanup);
 
