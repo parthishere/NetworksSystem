@@ -62,22 +62,19 @@
  */
 #define WHERE_TO_DOWNLOAD_FILE "./download"
 #define SERVER_CONF "./dfc.conf"
+
 #define MAX_SIZE (1024 * 30)   /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE  /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE /* Transmit buffer size */
-#define USE_FORK 0             /* Use threading instead of forking */
+
 #define TOTAL_THREADS 10       /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
+
 #define TIMEOUT_SEC 1         /* Connection timeout in seconds */
-#define RETRY_COUNT 3
 #define MAX_NUMBER_OF_SERVERS 4
 #define NUMBER_OF_PAIRS 4
 #define MAX_NUMBER_OF_CHUNKS_PER_SERVER 2
 /** @} */
-
-#if USE_FORK == 0
-#define USE_THREADPOOL 1
-#endif
 
 /* Terminal Color Definitions
  * ANSI escape sequences for colored output
