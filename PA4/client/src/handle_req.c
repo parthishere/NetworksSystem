@@ -893,7 +893,7 @@ void delete_file(sockDetails_t *sd)
             goto next;
 
         int hash = str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers;
-        int index = (((i - hash) < 0) ? sd->number_of_servers : (i - hash));
+        int index = (hash + i) % sd->number_of_servers;
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
             index = (index + j) % sd->number_of_servers;
