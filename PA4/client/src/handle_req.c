@@ -76,7 +76,7 @@ uint32_t str2md5(char *str, int length)
     EVP_DigestFinal_ex(context, digest, &md_len);
     EVP_MD_CTX_free(context);
     uint32_t hash = 0;
-    for (int n = 0; n < md_len; ++n)
+    for (unsigned int n = 0; n < md_len; ++n)
     {
         hash += digest[n];
     }

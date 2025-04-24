@@ -68,7 +68,6 @@
 #define TRANSMIT_SIZE MAX_SIZE /* Transmit buffer size */
 
 #define TOTAL_THREADS 10       /* Number of worker threads */
-#define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
 
 #define TIMEOUT_SEC 1         /* Connection timeout in seconds */
 #define MAX_NUMBER_OF_SERVERS 4
@@ -179,8 +178,3 @@ typedef struct
 void *getin_addr(struct sockaddr *sa);
 
 #endif
-
-
-// server dfs2 127.0.0.1:8004
-// server dfs3 127.0.0.1:8005
-// server dfs4 127.0.0.1:8006

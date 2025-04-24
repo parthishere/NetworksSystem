@@ -81,25 +81,23 @@ str2md5:
 	.loc 1 78 14
 	movl	$0, -56(%rbp)
 .LBB2:
-	.loc 1 79 14
+	.loc 1 79 23
 	movl	$0, -52(%rbp)
 	.loc 1 79 5
 	jmp	.L6
 .L7:
 	.loc 1 81 23
 	movl	-52(%rbp), %eax
-	cltq
 	movzbl	-32(%rbp,%rax), %eax
 	movzbl	%al, %eax
 	.loc 1 81 14
 	addl	%eax, -56(%rbp)
-	.loc 1 79 33 discriminator 3
+	.loc 1 79 42 discriminator 3
 	addl	$1, -52(%rbp)
 .L6:
-	.loc 1 79 23 discriminator 1
-	movl	-52(%rbp), %edx
+	.loc 1 79 32 discriminator 1
 	movl	-60(%rbp), %eax
-	cmpl	%eax, %edx
+	cmpl	%eax, -52(%rbp)
 	jb	.L7
 .LBE2:
 	.loc 1 84 12
@@ -5479,7 +5477,7 @@ handle_req:
 	.byte	0x4
 	.long	0x41
 	.byte	0x13
-	.byte	0x72
+	.byte	0x71
 	.byte	0x1
 	.long	0x7c7
 	.uleb128 0x1e
@@ -5510,48 +5508,48 @@ handle_req:
 	.uleb128 0x4
 	.long	.LASF139
 	.byte	0x13
-	.byte	0x7b
+	.byte	0x7a
 	.byte	0x3
 	.long	0x789
 	.uleb128 0x11
 	.long	.LASF140
 	.byte	0x28
 	.byte	0x13
-	.byte	0x80
+	.byte	0x7f
 	.byte	0x10
 	.long	0x822
 	.uleb128 0x2
 	.long	.LASF141
 	.byte	0x13
-	.byte	0x81
+	.byte	0x80
 	.byte	0x9
 	.long	0x83
 	.byte	0
 	.uleb128 0x2
 	.long	.LASF142
 	.byte	0x13
-	.byte	0x82
+	.byte	0x81
 	.byte	0xb
 	.long	0xe5
 	.byte	0x8
 	.uleb128 0x2
 	.long	.LASF143
 	.byte	0x13
-	.byte	0x83
+	.byte	0x82
 	.byte	0xb
 	.long	0xe5
 	.byte	0x10
 	.uleb128 0x2
 	.long	.LASF144
 	.byte	0x13
-	.byte	0x84
+	.byte	0x83
 	.byte	0x9
 	.long	0x83
 	.byte	0x18
 	.uleb128 0x2
 	.long	.LASF145
 	.byte	0x13
-	.byte	0x85
+	.byte	0x84
 	.byte	0x1d
 	.long	0x822
 	.byte	0x20
@@ -5561,82 +5559,82 @@ handle_req:
 	.uleb128 0x4
 	.long	.LASF140
 	.byte	0x13
-	.byte	0x86
+	.byte	0x85
 	.byte	0x2
 	.long	0x7d3
 	.uleb128 0x32
 	.byte	0x70
 	.byte	0x13
-	.byte	0x8f
+	.byte	0x8e
 	.byte	0x9
 	.long	0x8bf
 	.uleb128 0x2
 	.long	.LASF146
 	.byte	0x13
-	.byte	0x91
+	.byte	0x90
 	.byte	0x9
 	.long	0x83
 	.byte	0
 	.uleb128 0x2
 	.long	.LASF147
 	.byte	0x13
-	.byte	0x92
+	.byte	0x91
 	.byte	0xb
 	.long	0xe5
 	.byte	0x8
 	.uleb128 0x2
 	.long	.LASF148
 	.byte	0x13
-	.byte	0x93
+	.byte	0x92
 	.byte	0xb
 	.long	0xe5
 	.byte	0x10
 	.uleb128 0x2
 	.long	.LASF149
 	.byte	0x13
-	.byte	0x94
+	.byte	0x93
 	.byte	0x10
 	.long	0x7c7
 	.byte	0x18
 	.uleb128 0x2
 	.long	.LASF150
 	.byte	0x13
-	.byte	0x95
+	.byte	0x94
 	.byte	0x16
 	.long	0x8bf
 	.byte	0x20
 	.uleb128 0x2
 	.long	.LASF151
 	.byte	0x13
-	.byte	0x96
+	.byte	0x95
 	.byte	0x16
 	.long	0x70e
 	.byte	0x28
 	.uleb128 0x2
 	.long	.LASF152
 	.byte	0x13
-	.byte	0x97
+	.byte	0x96
 	.byte	0x9
 	.long	0x8c4
 	.byte	0x30
 	.uleb128 0x2
 	.long	.LASF153
 	.byte	0x13
-	.byte	0x98
+	.byte	0x97
 	.byte	0x9
 	.long	0x83
 	.byte	0x40
 	.uleb128 0x2
 	.long	.LASF154
 	.byte	0x13
-	.byte	0x99
+	.byte	0x98
 	.byte	0x9
 	.long	0x83
 	.byte	0x44
 	.uleb128 0x2
 	.long	.LASF155
 	.byte	0x13
-	.byte	0x9b
+	.byte	0x9a
 	.byte	0x15
 	.long	0x43e
 	.byte	0x48
@@ -5653,7 +5651,7 @@ handle_req:
 	.uleb128 0x4
 	.long	.LASF156
 	.byte	0x13
-	.byte	0x9c
+	.byte	0x9b
 	.byte	0x3
 	.long	0x833
 	.uleb128 0x11
@@ -7670,8 +7668,8 @@ handle_req:
 	.uleb128 0x14
 	.string	"n"
 	.byte	0x4f
-	.byte	0xe
-	.long	0x83
+	.byte	0x17
+	.long	0x41
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -68

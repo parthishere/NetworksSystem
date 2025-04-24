@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
     sockDetails_t sd;
     sd.servers_details = NULL;
 
-    // if((strncmp(WHERE_TO_DOWNLOAD_FILE, ".", strlen(WHERE_TO_DOWNLOAD_FILE)) != 0) &&
-    //  (strlen(WHERE_TO_DOWNLOAD_FILE) == 1)){
+    if((strncmp(WHERE_TO_DOWNLOAD_FILE, ".", strlen(WHERE_TO_DOWNLOAD_FILE)) != 0) &&
+     (strlen(WHERE_TO_DOWNLOAD_FILE) == 1)){
         int status = mkdir(WHERE_TO_DOWNLOAD_FILE, 0777); 
         if (status == 0) {
             printf(GRN"[+] Directory '%s' created successfully.\n"RESET, WHERE_TO_DOWNLOAD_FILE);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
             perror(RED"[-] Error creating directory");
             exit(EXIT_FAILURE);
         }
-    // }
+    }
     
     
     pthread_mutex_init(&sd.lock, NULL);
@@ -116,11 +116,14 @@ int main(int argc, char *argv[])
     }
 
     read_server_conf(&sd);
-    // char *filenames[]
-    int total_filenames = argc - 2;
+
     int filename_index = 2;
+    int total_filenames = argc - filename_index;
+    
     sd.command_int = whichcmd(argc, argv);
-    if(sd.command_int >= 3) handle_req(&sd);
+    
+    if(sd.command_int >= LS) handle_req(&sd);
+
     else{
         for(int i = 0; i < total_filenames; i++){
             sd.filename = argv[filename_index];

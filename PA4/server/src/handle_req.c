@@ -77,7 +77,6 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
     char recieved_buf[RECIEVE_SIZE];
     int status = 0;
     char *filename;
-    char *temp_filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
     if(message_header->filename_length > RECIEVE_SIZE) {
@@ -98,7 +97,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
         goto done;
     }
 
-    while (total_bytes < message_header->data_length)
+    while (total_bytes < (int)message_header->data_length)
     {
         memset(recieved_buf, 0, sizeof(recieved_buf));
         numbytes = _recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), done);
@@ -141,10 +140,9 @@ done:
 
 void get_command(sockDetails_t *sd, message_header_t *message_header)
 {
-    int numbytes = 0, total_bytes = 0, numbytes_r = 0;
+    int numbytes = 0;
     char recieved_buf[RECIEVE_SIZE];
     char transmit_buf[TRANSMIT_SIZE];
-    int status = 0;
     char *filename;
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -161,7 +159,6 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     {
         printf(RED"[-] Reading failed \n"RESET);
         numbytes = _send(sd->client_sock_fd, NACK, NACK_LEN, done);
-        status = -1;
         free(filename);
         return;
     }
@@ -185,13 +182,12 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
 
     unsigned char *bytes = (unsigned char *)&message_header_send;
-    for (int i = 0; i < sizeof(message_header_t); i++)
+    for (long unsigned int i = 0; i < sizeof(message_header_t); i++)
     {
         printf("%02x ", bytes[i]);
     }
     printf("\n");
 
-    total_bytes = 0;
     while ((numbytes = fread(transmit_buf, 1, sizeof(transmit_buf), fs)) > 0)
     {
         numbytes = _send(sd->client_sock_fd, transmit_buf, numbytes, done);
@@ -231,11 +227,11 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
     printf(CYN "    Server directory: %s\n" RESET, sd->dirname);
     printf(CYN "=========================================\n\n" RESET);
 
-    int numbytes = 0;
-    char transmit_buf[TRANSMIT_SIZE];
 
     // Recursive function to list directories
     list_directory(sd, sd->dirname);
+
+    (void)message_header;
 
     // Send end-of-listing marker
     send(sd->client_sock_fd, ACK, ACK_LEN, 0);
@@ -251,7 +247,6 @@ void ls_command(sockDetails_t *sd, message_header_t *message_header)
  */
 void list_directory(sockDetails_t *sd, const char *base_path)
 {
-    char current_rel_path[PATH_MAX];
     DIR *dp;
     struct dirent *entry;
     struct stat statbuf;
@@ -321,7 +316,7 @@ void list_directory(sockDetails_t *sd, const char *base_path)
 
 void delete_command(sockDetails_t *sd, message_header_t *message_header)
 {
-    int numbytes = 0;
+
     char recieved_buf[RECIEVE_SIZE];
 
     memset(recieved_buf, 0, sizeof(recieved_buf));
@@ -329,7 +324,7 @@ void delete_command(sockDetails_t *sd, message_header_t *message_header)
         printf("Too large filename size \n");
         goto done;
     }
-    numbytes = _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
+    _recv(sd->client_sock_fd, recieved_buf, message_header->filename_length, done);
     
 
     char *filename;
@@ -385,10 +380,8 @@ done:;
  */
 void *handle_req(sockDetails_t *sd)
 {
-    int numbytes;                     /* Number of bytes received */
     char recieved_buf[TRANSMIT_SIZE]; /* Buffer for incoming requests */
     fd_set readfds;                   /* File descriptor set for select() */
-    int file_fd;
 
     while (1)
     {
@@ -423,7 +416,6 @@ void *handle_req(sockDetails_t *sd)
         {
             memset(recieved_buf, 0, sizeof(recieved_buf));
             /* Read incoming request with error checking */
-            int total_bytes = 0;
             message_header_t message_header;
             memset(&message_header, 0, sizeof(message_header_t));
 

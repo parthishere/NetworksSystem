@@ -60,20 +60,16 @@
  * @name Server Configuration Constants
  * @{
  */
-#define SERVER_CONF "./dfc.conf"
 #define MAX_SIZE (1024 * 30)   /* Maximum buffer size (30KB) */
 #define RECIEVE_SIZE MAX_SIZE  /* Receive buffer size */
 #define TRANSMIT_SIZE MAX_SIZE /* Transmit buffer size */
-#define USE_FORK 0             /* Use threading instead of forking */
-#define TOTAL_THREADS 5        /* Number of worker threads */
+
+#define TOTAL_THREADS 10        /* Number of worker threads */
 #define MAX_THREAD_IN_POOL 200 /* Maximum thread pool size */
-#define TIMEOUT_SEC 5          /* Connection timeout in seconds */
-#define RETRY_COUNT 3
+
+#define TIMEOUT_SEC 10          /* Connection timeout in seconds */
 /** @} */
 
-#if USE_FORK == 0
-#define USE_THREADPOOL 1
-#endif
 
 /* Terminal Color Definitions
  * ANSI escape sequences for colored output
@@ -103,7 +99,7 @@
 #define clrscr ({printf("\033[2J\033[H");\
     fflush(stdout); })
 
-#define HASH_STR_LENGTH 33 // MD5 hex string (32 chars + null)
+
 
 /**
  * Command Enumeration

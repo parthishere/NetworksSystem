@@ -17,7 +17,6 @@
 #pragma once
 
 #include "common.h"
-#include "setup.h"
 
 /**
  * @function handle_req
