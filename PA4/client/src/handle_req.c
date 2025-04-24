@@ -352,7 +352,17 @@ void get_file(sockDetails_t *sd)
 {
 
     // Calculate file hash to determine starting server
-    int hash = str2md5(sd->filename, strlen(sd->filename)) % sd->number_of_servers;
+    char *temp_filename = strrchr(sd->filename, '/');
+    if (temp_filename == NULL)
+    {
+        temp_filename = sd->filename;
+    }
+    else
+    {
+        temp_filename++;
+    }
+    uint32_t hash = str2md5(temp_filename, strlen(temp_filename));
+    sd->filename = temp_filename;
 
     int i = 0, numbytes = 0;
     serverDetails_t *current = sd->servers_details;
