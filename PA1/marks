@@ -1,0 +1,25 @@
+80
++ found server
++ found client
++ bar1 found in ls
++ bar2 found in ls
++ bar3 found in ls
++ bar4 found in ls
+- bar1 get
+- bar2 get
+- bar3 get
+- bar4 get
++ bar1 put
++ bar2 put
++ bar3 put
++ bar4 put
++ bar1 delete
++ bar2 delete
++ bar3 delete
++ bar4 delete
++ server running on exit
++ client not running on exit
+CJ Herman, Feb 10 at 12:34pm
+10MB binary file with 1% packet loss
+- bar4 get
+- bar4 put
