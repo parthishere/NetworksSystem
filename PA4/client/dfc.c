@@ -17,6 +17,11 @@ void print_menu();
 
 void read_server_conf(sockDetails_t *sd){
     FILE *fs = fopen(SERVER_CONF, "r");
+    if(fs == NULL) {
+        fprintf(stderr, "[-] Could not open conf file %s \n\r", SERVER_CONF);
+        system("ls");
+        exit(EXIT_FAILURE);
+    }
     char line[1024];
     
     int i = 0;
@@ -122,11 +127,24 @@ int main(int argc, char *argv[])
     
     sd.command_int = whichcmd(argc, argv);
     
-    if(sd.command_int >= LS) handle_req(&sd);
-
-    else{
+    if(sd.command_int >= LS) {
+        // Commands without filenames (LS, SERVER_INFO, EXIT)
+        sd.filename = NULL; // Ensure filename is NULL for these commands
+        handle_req(&sd);
+    } else if (total_filenames <= 0) {
+        // Command requires a filename but none provided
+        printf(RED "[-] ERROR: No filename specified for %s command\n" RESET, 
+            sd.command_int == GET ? "GET" : 
+            sd.command_int == PUT ? "PUT" : 
+            sd.command_int == DELETE ? "DELETE" : "this");
+        print_menu();
+        exit(EXIT_FAILURE);
+    } else {
+        // Process each filename individually
         for(int i = 0; i < total_filenames; i++){
             sd.filename = argv[filename_index];
+            printf(GRN "[+] Processing file %d of %d: %s\n" RESET, 
+                i+1, total_filenames, sd.filename);
             handle_req(&sd);
             filename_index++;
         }

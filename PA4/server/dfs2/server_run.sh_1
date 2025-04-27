@@ -1,3 +1,0 @@
-
-nc -l localhost 8001 &
-nc -l loc

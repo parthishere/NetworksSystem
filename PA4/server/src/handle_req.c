@@ -96,6 +96,7 @@ void put_command(sockDetails_t *sd, message_header_t *message_header)
         status = -1;
         goto done;
     }
+    numbytes = _send(sd->client_sock_fd, ACK, ACK_LEN, done);
 
     while (total_bytes < (int)message_header->data_length)
     {
@@ -181,12 +182,12 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
 
-    unsigned char *bytes = (unsigned char *)&message_header_send;
-    for (long unsigned int i = 0; i < sizeof(message_header_t); i++)
-    {
-        printf("%02x ", bytes[i]);
-    }
-    printf("\n");
+    // unsigned char *bytes = (unsigned char *)&message_header_send;
+    // for (long unsigned int i = 0; i < sizeof(message_header_t); i++)
+    // {
+    //     printf("%02x ", bytes[i]);
+    // }
+    // printf("\n");
 
     while ((numbytes = fread(transmit_buf, 1, sizeof(transmit_buf), fs)) > 0)
     {
@@ -214,10 +215,12 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         printf(RED "    CHUNK: %d stored !\n" RESET, message_header->chunk_id);
         printf(RED "=========================================\n\n" RESET);
     }
+    numbytes = _send(sd->client_sock_fd, ACK, ACK_LEN, done);
 
 done:
     // free(filename);
-    fclose(fs);
+    if(fs)
+        fclose(fs);
 }
 
 void ls_command(sockDetails_t *sd, message_header_t *message_header)
@@ -433,6 +436,8 @@ void *handle_req(sockDetails_t *sd)
             printf(MAG "    DATA LENGTH: %d \n" RESET, message_header.data_length);
             printf(MAG "=========================================\n" RESET);
 
+            _send(sd->client_sock_fd, ACK, ACK_LEN, cleanup);
+            
             switch (message_header.command)
             {
             case PUT:

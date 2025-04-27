@@ -242,13 +242,17 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
                 .data_length = chunk_sizes[index]};
 
             numbytes = _send(current->client_sock_fd, &message, sizeof(message_header_t), next);
+            memset(recieve_buffer, 0 ,sizeof(recieve_buffer));
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
 
             numbytes = _send(current->client_sock_fd, sd->filename, message.filename_length, next);
+            memset(recieve_buffer, 0 ,sizeof(recieve_buffer));
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
 
             numbytes = _send(current->client_sock_fd, chunks[index], chunk_sizes[index], next);
-
             memset(recieve_buffer, 0, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
+
 
             if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
             {
@@ -435,10 +439,11 @@ void get_file(sockDetails_t *sd)
             // }
             // printf("\n");
             // Send request header and filename
-            numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
-            numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
 
-            // Wait for ACK/NACK response
+            numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
+            numbytes = _recv(current->client_sock_fd, ACK, ACK_LEN, next);
+
+            numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
 
             if (strncmp(recieve_buffer, ACK, ACK_LEN) != 0)
@@ -447,10 +452,9 @@ void get_file(sockDetails_t *sd)
                 continue; // Try next chunk instead of giving up on the server
             }
 
-            numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
-
             printf(GRN "    [+] Server has chunk %d, downloading...\n" RESET, index + 1);
 
+            numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
             memset(&message_header, 0, sizeof(message_header_t));
             numbytes = _recv(current->client_sock_fd, &message_header, sizeof(message_header), chunk_failed);
 
@@ -474,6 +478,7 @@ void get_file(sockDetails_t *sd)
                 return;
             }
 
+            numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
             // Receive chunk data
             int total_bytes = 0;
             while (total_bytes < data_size)
@@ -493,6 +498,8 @@ void get_file(sockDetails_t *sd)
 
             // // Send ACK for received chunk
             numbytes = _send(current->client_sock_fd, ACK, ACK_LEN, chunk_failed);
+
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, chunk_failed);
 
             // Mark chunk as successfully received
             chunks_stored[index] = 1;
@@ -729,8 +736,9 @@ void list_file(sockDetails_t *sd)
             .chunk_id = 0,
             .filename_length = 0,
             .data_length = 0};
-        numbytes = send(current->client_sock_fd, &message_header, sizeof(message_header), 0);
+        numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header), next);
         printf(MAG "[*] LIST REQUEST SENT\n" RESET);
+        numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, next);
 
         int files_found = 0;
 
@@ -738,7 +746,7 @@ void list_file(sockDetails_t *sd)
         while (1)
         {
             memset(&message_header, 0, sizeof(message_header_t));
-            numbytes = recv(current->client_sock_fd, &message_header, sizeof(message_header_t), 0);
+            numbytes = _recv(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
             if (numbytes <= 0)
                 break;
 
@@ -915,6 +923,9 @@ void delete_file(sockDetails_t *sd)
                 .data_length = 0};
 
             numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
+            bzero(recieve_buffer, sizeof(recieve_buffer));
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
+
             numbytes = _send(current->client_sock_fd, sd->filename, message_header.filename_length, next);
             bzero(recieve_buffer, sizeof(recieve_buffer));
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
