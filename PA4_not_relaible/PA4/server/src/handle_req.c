@@ -432,6 +432,18 @@ void *handle_req(sockDetails_t *sd)
 
             _recv(sd->client_sock_fd, &message_header, sizeof(message_header_t), cleanup);
 
+            // Validate header values to prevent processing corrupted data
+            if (message_header.command > SERVER_INFO || 
+                message_header.chunk_id > 3 ||
+                message_header.filename_length > 1024 || 
+                message_header.data_length > 100 * 1024 * 1024) {  // 100MB max
+                printf(RED "\n[-] Received corrupted message header data\n" RESET);
+                printf(RED "    Command: %d, Chunk: %d, Filename len: %d, Data len: %d\n" RESET,
+                      message_header.command, message_header.chunk_id, 
+                      message_header.filename_length, message_header.data_length);
+                goto cleanup;
+            }
+
             printf(MAG "\n=========================================\n" RESET);
             printf(MAG "    OPERATION: %s\n" RESET,
                    message_header.command == PUT ? "PUT" : message_header.command == GET       ? "GET"
