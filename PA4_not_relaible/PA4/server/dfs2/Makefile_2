@@ -1,0 +1,18 @@
+@./$(TARGET) $(PORT) $(TIMEOUT)
+
+$(TARGET): $(ALL_OBJS)
+	@echo "Linking target: $@"
+	@$(CC) $(CFLAGS) $(INC) $^ -o $@ $(LDFLAGS)
+	@echo ""
+
+$(OUTPUT_DIR)/obj/%.o : %.c
+	@echo "Compiling c file: $< -> $@"
+	@$(CC) $(CFLAGS) $(INC) -c $< -o $@ $(LDFLAGS)
+
+$(OUTPUT_DIR)/obj/$(SRC_DIR)/%.o : $(SRC_DIR)/%.c
+	@echo "Compiling src directory c file: $< -> $@"
+	@$(CC) $(CFLAGS) $(INC) -c $< -o $@ $(LDFLAGS)
+
+
+$(OUTPUT_DIR)/asm/%.s : %.c
+	@echo "Assembling asm file: $<

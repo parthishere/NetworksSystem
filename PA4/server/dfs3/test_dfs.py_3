@@ -1,0 +1,162 @@
+iginal_path, arg, "Mixed Ops", client_id)
+                    results.append(success)
+                else:
+                    log(f"Client {client_id}: Cannot verify {arg} - original path not found", Colors.YELLOW)
+                    results.append("FILE DOWNLOAD SUCCESSFUL" in result.stdout)
+                    
+            elif op == "ls":
+                result = run_client_command(op, client_id=client_id)
+                # Just consider it successful if it runs without error
+                success = result.returncode == 0
+                log(f"Client {client_id}: LIST - {'SUCCESS' if success else 'FAIL'}", 
+                    Colors.GREEN if success else Colors.RED)
+                results.append(success)
+        
+        return all(results) if results else True
+    
+    # Run all client routines in parallel
+    with ThreadPoolExecutor(max_workers=MAX_CLIENTS) as executor:
+        future_to_client = {
+            executor.submit(client_routine, i, ops): i
+            for i, ops in enumerate(operations)
+        }
+        
+        all_successful = True
+        for future in as_completed(future_to_client):
+            client_id = future_to_client[future]
+            try:
+                success = future.result()
+                if not success:
+                    all_successful = False
+            except Exception as e:
+                log(f"Client {client_id}: Error in mixed operations: {e}", Colors.RED)
+                all_successful = False
+    
+    if all_successful:
+        log("Mixed operations test: PASSED", Colors.GREEN)
+        return True
+    else:
+        log("Mixed operations test: FAILED", Colors.RED)
+        return False
+
+def test_server_failure():
+    """Test system behavior when a server fails"""
+    log("\n" + Colors.BOLD + "TEST: SERVER FAILURE RECOVERY" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    # First, upload files with all servers running
+    test_file = os.path.join(TEST_DIR, "medium.txt")
+    filename = os.path.basename(test_file)
+    
+    log("\nUploading test file with all servers running...", Colors.YELLOW)
+    result = run_client_command("put", test_file)
+    
+    # Check that the file was uploaded successfully
+    if "FILE UPLOAD SUCCESSFUL" not in result.stdout:
+        log("Initial upload failed, cannot continue server failure test", Colors.RED)
+        return False
+    
+    # Now stop one server
+    log("\nSimulating server failure by stopping server 1...", Colors.YELLOW)
+    failed_server_id = 0  # First server
+    failed_server_process = server_processes[failed_server_id][0]
+    failed_server_log = server_processes[failed_server_id][1]
+    
+    failed_server_process.terminate()
+    failed_server_process.wait()
+    failed_server_log.close()
+    
+    # Try to download the file with one server down
+    log("\nAttempting to download file with one server down...", Colors.YELLOW)
+    result = run_client_command("get", filename)
+    
+    # Check if download succeeded
+    download_success = verify_file_transfer(test_file, filename, "Server Failure")
+    
+    # Restart the failed server
+    log("\nRestarting failed server...", Colors.YELLOW)
+    cmd = [SERVER_BINARY, DFS_DIRS[failed_server_id], DFS_PORTS[failed_server_id]]
+    log_file = open(f"{RESULTS_DIR}/server{failed_server_id+1}_restarted.log", "w")
+    new_process = subprocess.Popen(
+        cmd, 
+        stdout=log_file, 
+        stderr=log_file,
+        universal_newlines=True
+    )
+    
+    # Replace the process in the server_processes list
+    server_processes[failed_server_id] = (new_process, log_file)
+    
+    # Give the server time to start
+    time.sleep(2)
+    
+    if download_success:
+        log("Server failure recovery test: PASSED", Colors.GREEN)
+        log("System successfully recovered file with one server down", Colors.GREEN)
+        return True
+    else:
+        log("Server failure recovery test: FAILED", Colors.RED)
+        log("System could not recover file with one server down", Colors.RED)
+        return False
+
+def run_all_tests():
+    """Run all tests and report results"""
+    test_results = {}
+    
+    try:
+        # Basic functionality tests
+        test_results["Basic Functionality"] = test_basic_functionality()
+        test_results["Multiple Files"] = test_multiple_files()
+        test_results["Large File"] = test_large_file()
+        
+        # Advanced tests
+        test_results["Parallel Operations"] = test_parallel_operations()
+        test_results["Mixed Operations"] = test_mixed_operations()
+        test_results["Server Failure Recovery"] = test_server_failure()
+        
+        # Generate summary report
+        log("\n" + Colors.BOLD + "TEST SUMMARY" + Colors.RESET)
+        log("=" * 50)
+        
+        passed = 0
+        for test_name, result in test_results.items():
+            status = "PASS" if result else "FAIL"
+            color = Colors.GREEN if result else Colors.RED
+            log(f"{test_name}: {color}{status}{Colors.RESET}")
+            if result:
+                passed += 1
+        
+        log("\n" + "-" * 50)
+        log(f"Tests Passed: {passed}/{len(test_results)}")
+        log("-" * 50)
+        
+        if passed == len(test_results):
+            log(Colors.GREEN + Colors.BOLD + "\nALL TESTS PASSED! Your DFS implementation is working correctly." + Colors.RESET)
+        else:
+            log(Colors.YELLOW + Colors.BOLD + f"\n{passed}/{len(test_results)} TESTS PASSED. Some issues were detected in your DFS implementation." + Colors.RESET)
+        
+    except Exception as e:
+        log(f"Error during test execution: {e}", Colors.RED)
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    try:
+        # Setup test environment
+        setup()
+        
+        # Start servers
+        server_processes = start_servers()
+        
+        # Run tests
+        run_all_tests()
+        
+    finally:
+        # Stop servers
+        try:
+            stop_servers(server_processes)
+        except:
+            log("Error stopping servers", Colors.RED)

@@ -1951,9 +1951,9 @@ get_file:
 	.loc 1 444 24
 	movq	-30848(%rbp), %rax
 	movl	(%rax), %eax
+	leaq	-30752(%rbp), %rsi
 	movl	$0, %ecx
-	movl	$7, %edx
-	leaq	.LC17(%rip), %rsi
+	movl	$30720, %edx
 	movl	%eax, %edi
 	call	recv@PLT
 	.loc 1 444 24 is_stmt 0 discriminator 1

@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""
+Comprehensive Test Suite for Distributed File System (DFC/DFS)
+
+This script tests the DFC client and DFS servers with various scenarios:
+- Sequential and parallel operations
+- Multiple clients sending requests simultaneously
+- Various file types and sizes
+- Server failure scenarios
+- Verification of file integrity
+
+Usage:
+    python3 test_dfs.py
+"""
+
+import os
+import sys
+import time
+import random
+import string
+import subprocess
+import threading
+import hashlib
+import filecmp
+import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Configuration
+CLIENT_BINARY = "./dfc"
+SERVER_BINARY = "../server/dfs"
+DFS_DIRS = ["../server/dfs1", "../server/dfs2", "../server/dfs3", "../server/dfs4"]
+DFS_PORTS = ["8000", "8001", "8002", "8003"]
+TEST_DIR = "./test_files"
+DOWNLOAD_DIR = "./download"
+RESULTS_DIR = "./test_results"
+MAX_CLIENTS = 3
+VERBOSE = True  # Set to False to reduce output
+
+# Colors for terminal output
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+def log(message, color=Colors.RESET, verbose=False):
+    """Print a message with color, respecting verbose setting"""
+    if verbose and not VERBOSE:
+        return
+    print(f"{color}{message}{Colors.RESET}")
+
+def generate_random_file(filename, size_kb):
+    """Generate a file with random content of specified size"""
+    with open(filename, 'wb') as f:
+        f.write(os.urandom(size_kb * 1024))
+    log(f"Generated random file: {filename} ({size_kb} KB)", Colors.BLUE, True)
+
+def calculate_md5(filename):
+    """Calculate MD5 hash of a file"""
+    hash_md5 = hashlib.md5()
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+def setup():
+    """Setup test environment"""
+    log("\n" + Colors.BOLD + "SETTING UP TEST ENVIRONMENT" + Colors.RESET)
+    
+    # Create test directories
+    for directory in [TEST_DIR, RESULTS_DIR]:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            log(f"Created directory: {directory}")
+    
+    # Generate test files of different sizes
+    if not os.listdir(TEST_DIR):
+        file_sizes = [
+            ("tiny.txt", 1),          # 1 KB
+            ("small.txt", 10),        # 10 KB
+            ("medium.txt", 100),      # 100 KB
+            ("large.txt", 1000),      # 1 MB
+            ("huge.txt", 5000)        # 5 MB
+        ]
+        
+        for filename, size in file_sizes:
+            generate_random_file(os.path.join(TEST_DIR, filename), size)
+        
+        # Create a text file with readable content
+        with open(os.path.join(TEST_DIR, "readable.txt"), 'w') as f:
+            f.write("This is a readable text file for the DFS test.\n")
+            f.write("It contains multiple lines of text to test line integrity.\n")
+            f.write("Each line should be preserved exactly as written.\n")
+            f.write("1234567890!@#$%^&*()_+\n")  # Special characters
+        
+        log("Generated all test files", Colors.GREEN)
+    
+    # Create a configuration file for the client
+    config_content = ""
+    for i, (port, directory) in enumerate(zip(DFS_PORTS, DFS_DIRS)):
+        config_content += f"server dfs{i+1} 127.0.0.1:{port}\n"
+    
+    with open("./dfc.conf", 'w') as f:
+        f.write(config_content)
+    
+    log("Created client configuration file", Colors.GREEN)
+
+def start_servers():
+    """Start all DFS servers"""
+    log("\n" + Colors.BOLD + "STARTING DFS SERVERS" + Colors.RESET)
+    
+    processes = []
+    for i, (port, directory) in enumerate(zip(DFS_PORTS, DFS_DIRS)):
+        cmd = [SERVER_BINARY, directory, port]
+        log(f"Starting server {i+1}: {' '.join(cmd)}", Colors.CYAN)
+        
+        # Start the server process and redirect output to a log file
+        log_file = open(f"{RESULTS_DIR}/server{i+1}.log", "w")
+        process = subprocess.Popen(
+            cmd, 
+            stdout=log_file, 
+            stderr=log_file,
+            universal_newlines=True
+        )
+        processes.append((process, log_file))
+    
+    # Give servers time to start
+    time.sleep(2)
+    log("All servers started", Colors.GREEN)
+    return processes
+
+def stop_servers(server_processes):
+    """Stop all DFS servers"""
+    log("\n" + Colors.BOLD + "STOPPING DFS SERVERS" + Colors.RESET)
+    
+    for i, (process, log_file) in enumerate(server_processes):
+        log(f"Stopping server {i+1}", Colors.CYAN)
+        process.terminate()
+        process.wait()
+        log_file.close()
+    
+    log("All servers stopped", Colors.GREEN)
+
+def run_client_command(command, args=None, client_id=0):
+    """Run a DFC client command and return the result"""
+    cmd = [CLIENT_BINARY, command]
+    if args:
+        if isinstance(args, list):
+            cmd.extend(args)
+        else:
+            cmd.append(args)
+    
+    log(f"Client {client_id}: Running command: {' '.join(cmd)}", Colors.CYAN, True)
+    
+    result = subprocess.run(
+        cmd, 
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE,
+        universal_newlines=True
+    )
+    print(result.stdout)
+    
+    if result.returncode != 0:
+        log(f"Client {client_id}: Command failed with code {result.returncode}", Colors.RED)
+        log(f"Error: {result.stderr}", Colors.RED, True)
+    else:
+        log(f"Client {client_id}: Command completed successfully", Colors.GREEN, True)
+    
+    return result
+
+def verify_file_transfer(original_path, downloaded_file, test_name, client_id=0):
+    """Verify that a file was transferred correctly by comparing MD5 hashes"""
+    original_file = os.path.basename(original_path)
+    downloaded_path = os.path.join(DOWNLOAD_DIR, downloaded_file)
+    
+    if not os.path.exists(downloaded_path):
+        log(f"Client {client_id}: [{test_name}] FAIL - Downloaded file does not exist: {downloaded_path}", Colors.RED)
+        return False
+    
+    original_md5 = calculate_md5(original_path)

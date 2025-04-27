@@ -441,7 +441,7 @@ void get_file(sockDetails_t *sd)
             // Send request header and filename
 
             numbytes = _send(current->client_sock_fd, &message_header, sizeof(message_header_t), next);
-            numbytes = _recv(current->client_sock_fd, ACK, ACK_LEN, next);
+            numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);
 
             numbytes = _send(current->client_sock_fd, sd->filename, strlen(sd->filename), next);
             numbytes = _recv(current->client_sock_fd, recieve_buffer, sizeof(recieve_buffer), next);

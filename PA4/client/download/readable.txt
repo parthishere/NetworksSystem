@@ -1,0 +1,4 @@
+This is a readable text file for the DFS test.
+It contains multiple lines of text to test line integrity.
+Each line should be preserved exactly as written.
+1234567890!@#$%^&*()_+

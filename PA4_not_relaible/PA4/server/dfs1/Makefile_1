@@ -1,0 +1,17 @@
+IR)/obj/%.o, $(ROOT_SRC))
+SRC_DIR_OBJS = $(patsubst $(SRC_DIR)/%.c, $(OUTPUT_DIR)/obj/$(SRC_DIR)/%.o, $(SRC_DIR_SRC))
+ALL_OBJS = $(ROOT_OBJS) $(SRC_DIR_OBJS)
+
+ROOT_ASMS = $(patsubst %.c, $(OUTPUT_DIR)/asm/%.s, $(ROOT_SRC))
+SRC_DIR_ASMS = $(patsubst $(SRC_DIR)/%.c, $(OUTPUT_DIR)/asm/$(SRC_DIR)/%.s, $(SRC_DIR_SRC))
+ALL_ASMS = $(ROOT_ASMS) $(SRC_DIR_ASMS)
+
+
+TARGET = dfc
+
+
+all: clean pre-build $(TARGET) $(ALL_ASMS) 
+# run
+
+run: pre-build $(TARGET) $(ALL_ASMS) 
+	

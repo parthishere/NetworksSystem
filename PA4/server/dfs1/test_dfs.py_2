@@ -1,0 +1,153 @@
+to run uploads in parallel
+    with ThreadPoolExecutor(max_workers=MAX_CLIENTS) as executor:
+        future_to_file = {
+            executor.submit(client_upload, i, file_path): (i, file_path)
+            for i, file_path in enumerate(client_files)
+        }
+        
+        for future in as_completed(future_to_file):
+            client_id, file_path = future_to_file[future]
+            try:
+                success = future.result()
+                if success:
+                    log(f"Client {client_id}: Successfully uploaded {os.path.basename(file_path)}", Colors.GREEN)
+                else:
+                    log(f"Client {client_id}: Failed to upload {os.path.basename(file_path)}", Colors.RED)
+            except Exception as e:
+                log(f"Client {client_id}: Error uploading file: {e}", Colors.RED)
+    
+    # Now test parallel downloads
+    log("\nDownloading files from multiple clients in parallel...", Colors.YELLOW)
+    clean_download_folder()
+    
+    def client_download(client_id, file_path):
+        filename = os.path.basename(file_path)
+        result = run_client_command("get", filename, client_id)
+        return verify_file_transfer(file_path, filename, "Parallel", client_id)
+    
+    all_downloads_successful = True
+    
+    with ThreadPoolExecutor(max_workers=MAX_CLIENTS) as executor:
+        future_to_file = {
+            executor.submit(client_download, i, file_path): (i, file_path)
+            for i, file_path in enumerate(client_files)
+        }
+        
+        for future in as_completed(future_to_file):
+            client_id, file_path = future_to_file[future]
+            try:
+                success = future.result()
+                if not success:
+                    all_downloads_successful = False
+            except Exception as e:
+                log(f"Client {client_id}: Error downloading file: {e}", Colors.RED)
+                all_downloads_successful = False
+    
+    # Test parallel LIST operations
+    log("\nTesting parallel LIST operations...", Colors.YELLOW)
+    
+    def client_list(client_id):
+        result = run_client_command("ls", client_id=client_id)
+        # Check if all files are in the list output
+        for file_path in client_files:
+            filename = os.path.basename(file_path)
+            if filename not in result.stdout:
+                log(f"Client {client_id}: File {filename} not found in LIST output", Colors.RED)
+                return False
+        return True
+    
+    all_lists_successful = True
+    
+    with ThreadPoolExecutor(max_workers=MAX_CLIENTS) as executor:
+        future_to_client = {
+            executor.submit(client_list, i): i
+            for i in range(MAX_CLIENTS)
+        }
+        
+        for future in as_completed(future_to_client):
+            client_id = future_to_client[future]
+            try:
+                success = future.result()
+                if not success:
+                    all_lists_successful = False
+            except Exception as e:
+                log(f"Client {client_id}: Error listing files: {e}", Colors.RED)
+                all_lists_successful = False
+    
+    if all_downloads_successful and all_lists_successful:
+        log("Parallel operations test: PASSED", Colors.GREEN)
+        return True
+    else:
+        log("Parallel operations test: FAILED", Colors.RED)
+        return False
+
+def test_mixed_operations():
+    """Test a mix of PUT, GET, and LIST operations from multiple clients"""
+    log("\n" + Colors.BOLD + "TEST: MIXED OPERATIONS" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    # Define operation sequences for each client
+    operations = [
+        # Client 0: Upload and then download files
+        [
+            ("put", os.path.join(TEST_DIR, "small.txt")),
+            ("put", os.path.join(TEST_DIR, "medium.txt")),
+            ("get", "small.txt"),
+            ("get", "medium.txt")
+        ],
+        # Client 1: List files, upload a file, list again
+        [
+            ("ls", None),
+            ("put", os.path.join(TEST_DIR, "tiny.txt")),
+            ("ls", None),
+            ("get", "tiny.txt")
+        ],
+        # Client 2: Wait, then download files uploaded by other clients
+        [
+            ("sleep", 2),  # Wait for other clients to upload
+            ("ls", None),
+            ("get", "small.txt"),
+            ("get", "tiny.txt")
+        ]
+    ]
+    
+    def client_routine(client_id, ops):
+        results = []
+        
+        for op, arg in ops:
+            if op == "sleep":
+                time.sleep(arg)
+                continue
+                
+            if op == "put":
+                result = run_client_command(op, arg, client_id)
+                filename = os.path.basename(arg)
+                success = "FILE UPLOAD SUCCESSFUL" in result.stdout
+                log(f"Client {client_id}: PUT {filename} - {'SUCCESS' if success else 'FAIL'}", 
+                    Colors.GREEN if success else Colors.RED)
+                results.append(success)
+                
+            elif op == "get":
+                # First find the original file path for verification
+                original_path = None
+                for test_op, test_arg in operations[client_id]:
+                    if test_op == "put" and os.path.basename(test_arg) == arg:
+                        original_path = test_arg
+                        break
+                
+                # If this client didn't upload it, look at other clients
+                if not original_path:
+                    for other_client_ops in operations:
+                        for test_op, test_arg in other_client_ops:
+                            if test_op == "put" and os.path.basename(test_arg) == arg:
+                                original_path = test_arg
+                                break
+                        if original_path:
+                            break
+                
+                result = run_client_command(op, arg, client_id)
+                if original_path:
+                    success = verify_file_transfer(or

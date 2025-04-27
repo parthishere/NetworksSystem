@@ -1,0 +1,173 @@
+
+    downloaded_md5 = calculate_md5(downloaded_path)
+    
+    if original_md5 == downloaded_md5:
+        log(f"Client {client_id}: [{test_name}] PASS - File integrity verified: {downloaded_file}", Colors.GREEN)
+        return True
+    else:
+        log(f"Client {client_id}: [{test_name}] FAIL - File integrity check failed: {downloaded_file}", Colors.RED)
+        log(f"Original MD5: {original_md5}", Colors.RED, True)
+        log(f"Downloaded MD5: {downloaded_md5}", Colors.RED, True)
+        return False
+
+def clean_download_folder():
+    """Clean the download folder between tests"""
+    for file in os.listdir(DOWNLOAD_DIR):
+        file_path = os.path.join(DOWNLOAD_DIR, file)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    log("Cleaned download folder", Colors.BLUE, True)
+
+def clean_servers():
+    """Clean the server directories"""
+    for directory in DFS_DIRS:
+        for file in os.listdir(directory):
+            if file != "Makefile" and not file.endswith(".sh"):  # Skip makefiles and scripts
+                file_path = os.path.join(directory, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+    log("Cleaned server directories", Colors.BLUE, True)
+
+def test_basic_functionality():
+    """Test basic PUT, GET, and LIST operations"""
+    log("\n" + Colors.BOLD + "TEST: BASIC FUNCTIONALITY" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    test_file = os.path.join(TEST_DIR, "small.txt")
+    filename = os.path.basename(test_file)
+    
+    # Test PUT
+    log("\nTesting PUT command...", Colors.YELLOW)
+    result = run_client_command("put", test_file)
+    if "FILE UPLOAD SUCCESSFUL" not in result.stdout:
+        log("PUT command failed", Colors.RED)
+        log(result.stdout, Colors.RED, True)
+        return False
+    
+    # Test LIST
+    log("\nTesting LIST command...", Colors.YELLOW)
+    result = run_client_command("ls")
+    if filename not in result.stdout:
+        log("LIST command failed to show uploaded file", Colors.RED)
+        log(result.stdout, Colors.RED, True)
+        return False
+    
+    # Test GET
+    log("\nTesting GET command...", Colors.YELLOW)
+    result = run_client_command("get", filename)
+    
+    # Verify file integrity
+    if verify_file_transfer(test_file, filename, "Basic GET"):
+        log("Basic functionality test: PASSED", Colors.GREEN)
+        return True
+    else:
+        log("Basic functionality test: FAILED", Colors.RED)
+        return False
+
+def test_multiple_files():
+    """Test uploading and downloading multiple files"""
+    log("\n" + Colors.BOLD + "TEST: MULTIPLE FILES" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    test_files = [
+        os.path.join(TEST_DIR, "tiny.txt"),
+        os.path.join(TEST_DIR, "small.txt"),
+        os.path.join(TEST_DIR, "medium.txt"),
+        os.path.join(TEST_DIR, "readable.txt")
+    ]
+    
+    # Upload all files one by one
+    log("\nUploading multiple files...", Colors.YELLOW)
+    for file_path in test_files:
+        log(f"Uploading file: {os.path.basename(file_path)}...", Colors.CYAN)
+        result = run_client_command("put", file_path)
+    
+    # Check LIST command
+    log("\nVerifying files are listed correctly...", Colors.YELLOW)
+    result = run_client_command("ls")
+    
+    all_files_listed = True
+    for file_path in test_files:
+        filename = os.path.basename(file_path)
+        if filename not in result.stdout:
+            log(f"File {filename} not found in LIST output", Colors.RED)
+            all_files_listed = False
+    
+    if not all_files_listed:
+        log("Multiple files test (LIST): FAILED", Colors.RED)
+        return False
+    
+    # Download and verify each file
+    all_files_verified = True
+    for file_path in test_files:
+        filename = os.path.basename(file_path)
+        log(f"\nDownloading file: {filename}...", Colors.YELLOW)
+        result = run_client_command("get", filename)
+        
+        if not verify_file_transfer(file_path, filename, "Multiple Files"):
+            all_files_verified = False
+    
+    if all_files_verified:
+        log("Multiple files test: PASSED", Colors.GREEN)
+        return True
+    else:
+        log("Multiple files test: FAILED", Colors.RED)
+        return False
+
+def test_large_file():
+    """Test uploading and downloading a large file"""
+    log("\n" + Colors.BOLD + "TEST: LARGE FILE" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    test_file = os.path.join(TEST_DIR, "large.txt")
+    filename = os.path.basename(test_file)
+    
+    # Upload large file
+    log("\nUploading large file...", Colors.YELLOW)
+    result = run_client_command("put", test_file)
+    
+    # Download and verify
+    log("\nDownloading large file...", Colors.YELLOW)
+    result = run_client_command("get", filename)
+    
+    if verify_file_transfer(test_file, filename, "Large File"):
+        log("Large file test: PASSED", Colors.GREEN)
+        return True
+    else:
+        log("Large file test: FAILED", Colors.RED)
+        return False
+
+def test_parallel_operations():
+    """Test multiple clients performing operations in parallel"""
+    log("\n" + Colors.BOLD + "TEST: PARALLEL OPERATIONS" + Colors.RESET)
+    
+    # Clean any previous files
+    clean_download_folder()
+    clean_servers()
+    
+    # Define test files for each client
+    client_files = [
+        os.path.join(TEST_DIR, "tiny.txt"),
+        os.path.join(TEST_DIR, "small.txt"),
+        os.path.join(TEST_DIR, "medium.txt")
+    ]
+    
+    # First, upload all files
+    log("\nUploading test files from multiple clients in parallel...", Colors.YELLOW)
+    
+    def client_upload(client_id, file_path):
+        log(f"Client {client_id}: Uploading {os.path.basename(file_path)}", Colors.BLUE, True)
+        result = run_client_command("put", file_path, client_id)
+        success = "FILE UPLOAD SUCCESSFUL" in result.stdout
+        return success
+    
+    # Use ThreadPoolExecutor 

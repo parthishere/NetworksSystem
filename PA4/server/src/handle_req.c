@@ -167,10 +167,10 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
     fseek(fs, 0, SEEK_END);
     int file_size = ftell(fs);
     fseek(fs, 0, SEEK_SET);
-
     // send ack
     numbytes = _send(sd->client_sock_fd, ACK, ACK_LEN, done);
 
+    
     numbytes = _recv(sd->client_sock_fd, recieved_buf, sizeof(recieved_buf), done);
 
     message_header_t message_header_send = {
@@ -437,7 +437,7 @@ void *handle_req(sockDetails_t *sd)
             printf(MAG "=========================================\n" RESET);
 
             _send(sd->client_sock_fd, ACK, ACK_LEN, cleanup);
-            
+
             switch (message_header.command)
             {
             case PUT:

@@ -1,0 +1,2 @@
+alhost 8002 &
+nc -l localhost 800
