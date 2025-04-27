@@ -1,7 +1,7 @@
 	.file	"dfc.c"
 	.text
 .Ltext0:
-	.file 0 "/home/parth/Work/All_data/university/Network System/Assignments/PA4/client" "dfc.c"
+	.file 0 "/home/parth/Work/All_data/university/Network System/Assignments/PA4_not_relaible/PA4/client" "dfc.c"
 	.section	.rodata
 .LC0:
 	.string	"r"
@@ -2512,10 +2512,10 @@ main:
 .LASF135:
 	.string	"print_menu"
 	.section	.debug_line_str,"MS",@progbits,1
-.LASF1:
-	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4/client"
 .LASF0:
 	.string	"dfc.c"
+.LASF1:
+	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4_not_relaible/PA4/client"
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

@@ -1,7 +1,7 @@
 	.file	"server_method.c"
 	.text
 .Ltext0:
-	.file 0 "/home/parth/Work/All_data/university/Network System/Assignments/PA4/client" "src/server_method.c"
+	.file 0 "/home/parth/Work/All_data/university/Network System/Assignments/PA4_not_relaible/PA4/client" "src/server_method.c"
 	.section	.rodata
 	.align 8
 .LC0:
@@ -947,7 +947,7 @@ whichcmd:
 .LASF0:
 	.string	"src/server_method.c"
 .LASF1:
-	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4/client"
+	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4_not_relaible/PA4/client"
 	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
