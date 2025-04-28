@@ -158,21 +158,87 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
             goto cleanup;
         }
 
-        if ((connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen)) < 0)
-        {
-            fprintf(stderr, RED "\n[-] CONNECTION FAILED: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
-            fprintf(stderr, RED "    Error: %s (errno: %d)\n" RESET, strerror(errno), errno);
-            close(current->client_sock_fd);
-            status = -1; // exit if there is an error
-            goto cleanup;
-        }
+        // Set socket to non-blocking mode for connection attempt
+        int flags = fcntl(current->client_sock_fd, F_GETFL, 0);
+        fcntl(current->client_sock_fd, F_SETFL, flags | O_NONBLOCK);
 
+        // Try to connect
+        int connect_result = connect(current->client_sock_fd, temp->ai_addr, temp->ai_addrlen);
+        
+        if (connect_result < 0)
+        {
+            if (errno == EINPROGRESS)
+            {
+                // Connection in progress, wait for it with select
+                fd_set write_fds;
+                struct timeval tv;
+                
+                FD_ZERO(&write_fds);
+                FD_SET(current->client_sock_fd, &write_fds);
+                
+                // Set timeout to 1 second as per specification
+                tv.tv_sec = TIMEOUT_SEC;
+                tv.tv_usec = 0;
+                
+                // Wait for socket to become writable (connected) or timeout
+                int select_result = select(current->client_sock_fd + 1, NULL, &write_fds, NULL, &tv);
+                
+                if (select_result == 0)
+                {
+                    // Timeout occurred
+                    fprintf(stderr, YEL "\n[!] CONNECTION TIMEOUT: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
+                    fprintf(stderr, YEL "    Server did not respond within 1 second\n" RESET);
+                    close(current->client_sock_fd);
+                    status = -1;
+                    continue; // Try next address if available
+                }
+                else if (select_result > 0)
+                {
+                    // Socket became writable, check if connection succeeded
+                    int error = 0;
+                    socklen_t len = sizeof(error);
+                    if (getsockopt(current->client_sock_fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || error != 0)
+                    {
+                        // Connection failed
+                        fprintf(stderr, RED "\n[-] CONNECTION FAILED: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
+                        fprintf(stderr, RED "    Error: %s (errno: %d)\n" RESET, strerror(error), error);
+                        close(current->client_sock_fd);
+                        status = -1;
+                        continue; // Try next address if available
+                    }
+                    // Connection successful, continue below
+                }
+                else
+                {
+                    // select() error
+                    fprintf(stderr, RED "\n[-] SELECT ERROR: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
+                    fprintf(stderr, RED "    Error: %s (errno: %d)\n" RESET, strerror(errno), errno);
+                    close(current->client_sock_fd);
+                    status = -1;
+                    continue; // Try next address if available
+                }
+            }
+            else
+            {
+                // Immediate connection failure
+                fprintf(stderr, RED "\n[-] CONNECTION FAILED: Server %d (%s:%s)\n" RESET, server_index + 1, current->server_ip, current->server_port);
+                fprintf(stderr, RED "    Error: %s (errno: %d)\n" RESET, strerror(errno), errno);
+                close(current->client_sock_fd);
+                status = -1;
+                continue; // Try next address if available
+            }
+        }
+        
+        // Set socket back to blocking mode
+        fcntl(current->client_sock_fd, F_SETFL, flags);
+        
+        // Connected successfully
         break;
     }
 
     if (temp == NULL)
     {
-        fprintf(stderr, RED "\n[-] ERROR: Connection attempt exhausted all available addresses (thread: %d, errno: %d)\n" RESET, gettid(), errno);
+        fprintf(stderr, RED "\n[-] ERROR: Connection attempt exhausted 1 sec timeout (thread: %d, errno: %d)\n" RESET, gettid(), errno);
         status = -1; // exit if there is an error
         goto cleanup;
     }
@@ -186,16 +252,16 @@ int connect_server(sockDetails_t *sd, serverDetails_t *current, int server_index
     printf(GRN "    Address: %s:%s\n" RESET, current->server_ip, current->server_port);
 
     struct timeval tv;
-    tv.tv_sec = TIMEOUT_SEC; // 5 second timeout
+    tv.tv_sec = TIMEOUT_SEC; // 1 second timeout for send/receive
     tv.tv_usec = 0;
     setsockopt(current->client_sock_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
     setsockopt(current->client_sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-    // fprintf(stderr, YEL "\n[!] Connection timeout to server %d (%s:%s)\n" RESET, server_index+1, current->server_ip, current->server_port);
-    // fprintf(stderr, YEL "    Server did not respond within timeout period\n\n" RESET);
-
 cleanup:
-    freeaddrinfo(temp);
+    if (sd->connect_to_info) {
+        freeaddrinfo(sd->connect_to_info);
+        sd->connect_to_info = NULL;
+    }
     return status;
 }
 
