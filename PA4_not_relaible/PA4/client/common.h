@@ -72,7 +72,7 @@
 #define TIMEOUT_SEC 1         /* Connection timeout in seconds */
 #define MAX_NUMBER_OF_SERVERS 4
 #define NUMBER_OF_PAIRS 4
-#define MAX_NUMBER_OF_CHUNKS_PER_SERVER 3
+#define MAX_NUMBER_OF_CHUNKS_PER_SERVER 2
 /** @} */
 
 /* Terminal Color Definitions

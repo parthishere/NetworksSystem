@@ -284,11 +284,21 @@ void connect_and_put_chunks(sockDetails_t *sd, char *chunks[], int chunk_sizes[]
         }
     }
 
+    for (int i = 0; i < NUMBER_OF_PAIRS; i++)
+    {
+        if (chunks_stored[i] < 2)
+        {
+            printf(YEL "\n=========================================\n" RESET);
+            printf(YEL "    RELIABLE PUT OPERATION FAILED FOR CHUNK (<2) %d\n" RESET, i + 1);
+            printf(YEL "=========================================\n\n" RESET);
+        }
+    }
+
     // Put operation success
     printf(GRN "\n=========================================\n" RESET);
     printf(GRN "    FILE UPLOAD SUCCESSFUL\n" RESET);
     printf(GRN "    File: %s\n" RESET, sd->filename);
-    printf(GRN "    All chunks stored with redundancy\n" RESET);
+    printf(GRN "    All chunks stored (if not reliable you still can get the file)\n" RESET);
     printf(GRN "=========================================\n\n" RESET);
 }
 
