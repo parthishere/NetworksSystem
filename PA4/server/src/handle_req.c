@@ -180,6 +180,7 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
         .data_length = file_size,
     };
 
+
     numbytes = _send(sd->client_sock_fd, &message_header_send, sizeof(message_header_send), done);
 
     // unsigned char *bytes = (unsigned char *)&message_header_send;
@@ -219,8 +220,10 @@ void get_command(sockDetails_t *sd, message_header_t *message_header)
 
 done:
     // free(filename);
-    if(fs)
+    if(fs){
         fclose(fs);
+        fs = NULL;
+    }
 }
 
 void ls_command(sockDetails_t *sd, message_header_t *message_header)

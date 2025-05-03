@@ -40,7 +40,7 @@
 	.globl	print_menu
 	.type	print_menu, @function
 print_menu:
-.LFB320:
+.LFB309:
 	.file 1 "src/server_method.c"
 	.loc 1 14 1
 	.cfi_startproc
@@ -107,7 +107,7 @@ print_menu:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE320:
+.LFE309:
 	.size	print_menu, .-print_menu
 	.section	.rodata
 .LC11:
@@ -135,7 +135,7 @@ print_menu:
 	.globl	whichcmd
 	.type	whichcmd, @function
 whichcmd:
-.LFB321:
+.LFB310:
 	.loc 1 53 1
 	.cfi_startproc
 	endbr64
@@ -379,10 +379,10 @@ whichcmd:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE321:
+.LFE310:
 	.size	whichcmd, .-whichcmd
 .Letext0:
-	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/14/include/stddef.h"
+	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h"
 	.file 3 "./common.h"
 	.file 4 "/usr/include/string.h"
 	.file 5 "/usr/include/stdio.h"
@@ -532,7 +532,7 @@ whichcmd:
 	.uleb128 0x3
 	.long	0x83
 	.uleb128 0x3
-	.long	0x3a
+	.long	0x2e
 	.byte	0
 	.uleb128 0x7
 	.long	.LASF24
@@ -551,8 +551,8 @@ whichcmd:
 	.byte	0x34
 	.byte	0xc
 	.long	0xee
-	.quad	.LFB321
-	.quad	.LFE321-.LFB321
+	.quad	.LFB310
+	.quad	.LFE310-.LFB310
 	.uleb128 0x1
 	.byte	0x9c
 	.long	0x1a5
@@ -591,8 +591,8 @@ whichcmd:
 	.byte	0x1
 	.byte	0xd
 	.byte	0x6
-	.quad	.LFB320
-	.quad	.LFE320-.LFB320
+	.quad	.LFB309
+	.quad	.LFE309-.LFB309
 	.uleb128 0x1
 	.byte	0x9c
 	.byte	0
@@ -893,8 +893,8 @@ whichcmd:
 	.string	"size_t"
 .LASF3:
 	.string	"unsigned int"
-.LASF28:
-	.string	"whichcmd"
+.LASF27:
+	.string	"GNU C17 13.3.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF11:
 	.string	"long long unsigned int"
 .LASF4:
@@ -911,6 +911,8 @@ whichcmd:
 	.string	"__int128"
 .LASF30:
 	.string	"print_menu"
+.LASF28:
+	.string	"whichcmd"
 .LASF15:
 	.string	"DELETE"
 .LASF22:
@@ -935,8 +937,6 @@ whichcmd:
 	.string	"argv"
 .LASF8:
 	.string	"long int"
-.LASF27:
-	.string	"GNU C17 14.2.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF14:
 	.string	"long double"
 .LASF6:
@@ -948,7 +948,7 @@ whichcmd:
 	.string	"src/server_method.c"
 .LASF1:
 	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4/client"
-	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
+	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
 	.align 8

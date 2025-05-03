@@ -1,0 +1,18 @@
+$< -> $@"
+	@$(CC) $(CFLAGS) $(INC) -S $< -o $@ $(LDFLAGS)
+
+$(OUTPUT_DIR)/asm/$(SRC_DIR)/%.s : $(SRC_DIR)/%.c
+	@echo "Assembling src directory asm file: $< -> $@"
+	@$(CC) $(CFLAGS) $(INC) -S $< -o $@ $(LDFLAGS)
+
+
+pre-build:
+	@echo "SRCS "$(ALL_SRC) 
+	@echo "OBJS " $(ALL_OBJS)
+	@echo "ASMS " $(ALL_ASMS)
+	@echo "Creating folders.."
+	@mkdir -p $(SRC_DIR) $(INCLUDE_DIR) $(OUTPUT_DIR) $(ASM_DIR) $(OBJ_DIR)
+
+.PHONY: clean
+clean:
+	- rm -rf $(OSRC) $(TARGET) $(OUTPUT_DIR)

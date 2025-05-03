@@ -13,7 +13,7 @@
 	.globl	sig_handler
 	.type	sig_handler, @function
 sig_handler:
-.LFB320:
+.LFB309:
 	.file 1 "dfs.c"
 	.loc 1 11 27
 	.cfi_startproc
@@ -46,7 +46,7 @@ sig_handler:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE320:
+.LFE309:
 	.size	sig_handler, .-sig_handler
 	.section	.rodata
 	.align 8
@@ -67,7 +67,7 @@ sig_handler:
 	.globl	main
 	.type	main, @function
 main:
-.LFB321:
+.LFB310:
 	.loc 1 19 1
 	.cfi_startproc
 	endbr64
@@ -284,10 +284,10 @@ main:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE321:
+.LFE310:
 	.size	main, .-main
 .Letext0:
-	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/14/include/stddef.h"
+	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h"
 	.file 3 "/usr/include/x86_64-linux-gnu/bits/types.h"
 	.file 4 "/usr/include/stdio.h"
 	.file 5 "/usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h"
@@ -661,20 +661,20 @@ main:
 	.long	.LASF45
 	.byte	0x10
 	.byte	0xc
-	.byte	0xb8
-	.byte	0x27
+	.byte	0xb7
+	.byte	0x8
 	.long	0x2cb
 	.uleb128 0x1
 	.long	.LASF46
 	.byte	0xc
-	.byte	0xba
+	.byte	0xb9
 	.byte	0x5
 	.long	0x297
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF47
 	.byte	0xc
-	.byte	0xbb
+	.byte	0xba
 	.byte	0xa
 	.long	0x2cb
 	.byte	0x2
@@ -690,27 +690,27 @@ main:
 	.long	.LASF48
 	.byte	0x80
 	.byte	0xc
-	.byte	0xc5
-	.byte	0x27
+	.byte	0xc4
+	.byte	0x8
 	.long	0x310
 	.uleb128 0x1
 	.long	.LASF49
 	.byte	0xc
-	.byte	0xc7
+	.byte	0xc6
 	.byte	0x5
 	.long	0x297
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF50
 	.byte	0xc
-	.byte	0xc8
+	.byte	0xc7
 	.byte	0xa
 	.long	0x310
 	.byte	0x2
 	.uleb128 0x1
 	.long	.LASF51
 	.byte	0xc
-	.byte	0xc9
+	.byte	0xc8
 	.byte	0x14
 	.long	0x3a
 	.byte	0x78
@@ -1510,7 +1510,7 @@ main:
 	.uleb128 0x24
 	.long	.LASF140
 	.byte	0x4
-	.value	0x364
+	.value	0x36e
 	.byte	0xd
 	.long	0x929
 	.uleb128 0x2
@@ -1604,7 +1604,7 @@ main:
 	.uleb128 0x2
 	.long	0x66
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.byte	0
 	.uleb128 0x9
 	.long	.LASF148
@@ -1636,8 +1636,8 @@ main:
 	.byte	0x12
 	.byte	0x5
 	.long	0x66
-	.quad	.LFB321
-	.quad	.LFE321-.LFB321
+	.quad	.LFB310
+	.quad	.LFE310-.LFB310
 	.uleb128 0x1
 	.byte	0x9c
 	.long	0xab3
@@ -1699,8 +1699,8 @@ main:
 	.byte	0x1
 	.byte	0xb
 	.byte	0x6
-	.quad	.LFB320
-	.quad	.LFE320-.LFB320
+	.quad	.LFB309
+	.quad	.LFE309-.LFB309
 	.uleb128 0x1
 	.byte	0x9c
 	.uleb128 0x2b
@@ -2400,8 +2400,8 @@ main:
 	.string	"sockDetails_t"
 .LASF19:
 	.string	"ssize_t"
-.LASF154:
-	.string	"GNU C17 14.2.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+.LASF107:
+	.string	"sa_flags"
 .LASF101:
 	.string	"__sighandler_t"
 .LASF23:
@@ -2444,6 +2444,8 @@ main:
 	.string	"_sigchld"
 .LASF10:
 	.string	"long int"
+.LASF154:
+	.string	"GNU C17 13.3.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF15:
 	.string	"__ssize_t"
 .LASF77:
@@ -2504,8 +2506,6 @@ main:
 	.string	"si_uid"
 .LASF76:
 	.string	"_lower"
-.LASF107:
-	.string	"sa_flags"
 .LASF53:
 	.string	"sival_int"
 .LASF121:
@@ -2693,7 +2693,7 @@ main:
 	.string	"dfs.c"
 .LASF1:
 	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4/server"
-	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
+	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
 	.align 8

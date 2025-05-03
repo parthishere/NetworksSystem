@@ -392,10 +392,7 @@ void get_file(sockDetails_t *sd)
     {
         servers_contacted++;
 
-        if (connect_server(sd, current, i) < 0)
-        {
-            goto next;
-        }
+        
 
         servers_available++;
         printf(GRN "[+] CONNECTION ESTABLISHED: Server %d is online\n" RESET, i + 1);
@@ -413,6 +410,11 @@ void get_file(sockDetails_t *sd)
         // Try to get each chunk from this server
         for (int j = 0; j < MAX_NUMBER_OF_CHUNKS_PER_SERVER; j++)
         {
+            if (connect_server(sd, current, i) < 0)
+            {
+                goto next;
+            }
+
             index = (index + j) % sd->number_of_servers;
 
             // Skip if we already have this chunk
@@ -485,7 +487,14 @@ void get_file(sockDetails_t *sd)
             {
                 memset(recieve_buffer, 0, sizeof(recieve_buffer));
                 numbytes = _recv(current->client_sock_fd, recieve_buffer, RECIEVE_SIZE, chunk_failed);
-                memcpy(&chunks[index][total_bytes], recieve_buffer, numbytes);
+                
+
+                int bytes_to_copy = numbytes;
+                if (total_bytes + bytes_to_copy > data_size) {
+                    bytes_to_copy = data_size - total_bytes;
+                }
+
+                memcpy(&chunks[index][total_bytes], recieve_buffer, bytes_to_copy);
                 total_bytes += numbytes;
 
                 // Show progress for large chunks
@@ -508,9 +517,11 @@ void get_file(sockDetails_t *sd)
 
             printf(GRN "    [+] CHUNK %d DOWNLOADED SUCCESSFULLY (%d bytes)\n" RESET, index + 1, data_size);
 
+            close(current->client_sock_fd);
             continue;
 
         chunk_failed:
+            close(current->client_sock_fd);
             printf(RED "    [-] ERROR: Failed to download chunk %d\n" RESET, index + 1);
             if (chunks[index])
             {

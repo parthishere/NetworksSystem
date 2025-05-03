@@ -5,7 +5,7 @@
 	.globl	get_in_addr
 	.type	get_in_addr, @function
 get_in_addr:
-.LFB320:
+.LFB309:
 	.file 1 "src/handle_req.c"
 	.loc 1 55 1
 	.cfi_startproc
@@ -36,7 +36,7 @@ get_in_addr:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE320:
+.LFE309:
 	.size	get_in_addr, .-get_in_addr
 	.section	.rodata
 .LC0:
@@ -99,7 +99,7 @@ get_in_addr:
 	.globl	put_command
 	.type	put_command, @function
 put_command:
-.LFB321:
+.LFB310:
 	.loc 1 75 1
 	.cfi_startproc
 	endbr64
@@ -619,7 +619,7 @@ put_command:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE321:
+.LFE310:
 	.size	put_command, .-put_command
 	.section	.rodata
 	.align 8
@@ -643,7 +643,7 @@ put_command:
 	.globl	get_command
 	.type	get_command, @function
 get_command:
-.LFB322:
+.LFB311:
 	.loc 1 143 1
 	.cfi_startproc
 	endbr64
@@ -970,7 +970,7 @@ get_command:
 	movl	-61520(%rbp), %eax
 	movl	%eax, -61460(%rbp)
 .LBB11:
-	.loc 1 183 16
+	.loc 1 184 16
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	leaq	-61466(%rbp), %rsi
@@ -978,7 +978,7 @@ get_command:
 	movl	$10, %edx
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 183 16 is_stmt 0 discriminator 1
+	.loc 1 184 16 is_stmt 0 discriminator 1
 	movl	%eax, -61508(%rbp)
 	cmpl	$0, -61508(%rbp)
 	jns	.L39
@@ -989,44 +989,44 @@ get_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 183 16 discriminator 2
+	.loc 1 184 16 discriminator 2
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 183 16
+	.loc 1 184 16
 	jmp	.L28
 .L39:
-	.loc 1 183 16 discriminator 2
+	.loc 1 184 16 discriminator 2
 	cmpl	$0, -61508(%rbp)
 	jne	.L40
-	.loc 1 183 16 discriminator 3
+	.loc 1 184 16 discriminator 3
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 183 16 discriminator 1
+	.loc 1 184 16 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 183 16 discriminator 2
+	.loc 1 184 16 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 183 16
+	.loc 1 184 16
 	jmp	.L28
 .L40:
-	.loc 1 183 16 discriminator 4
+	.loc 1 184 16 discriminator 4
 	movl	-61508(%rbp), %eax
 .LBE11:
-	.loc 1 183 14 is_stmt 1 discriminator 4
+	.loc 1 184 14 is_stmt 1 discriminator 4
 	movl	%eax, -61528(%rbp)
-	.loc 1 192 11
+	.loc 1 193 11
 	jmp	.L41
 .L44:
 .LBB12:
-	.loc 1 194 20
+	.loc 1 195 20
 	movl	-61528(%rbp), %eax
 	movslq	%eax, %rdx
 	movq	-61544(%rbp), %rax
@@ -1035,7 +1035,7 @@ get_command:
 	movl	$0, %ecx
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 194 20 is_stmt 0 discriminator 1
+	.loc 1 195 20 is_stmt 0 discriminator 1
 	movl	%eax, -61496(%rbp)
 	cmpl	$0, -61496(%rbp)
 	jns	.L42
@@ -1046,54 +1046,54 @@ get_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 194 20 discriminator 2
+	.loc 1 195 20 discriminator 2
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 194 20
+	.loc 1 195 20
 	jmp	.L28
 .L42:
-	.loc 1 194 20 discriminator 2
+	.loc 1 195 20 discriminator 2
 	cmpl	$0, -61496(%rbp)
 	jne	.L43
-	.loc 1 194 20 discriminator 3
+	.loc 1 195 20 discriminator 3
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 194 20 discriminator 1
+	.loc 1 195 20 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 194 20 discriminator 2
+	.loc 1 195 20 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 194 20
+	.loc 1 195 20
 	jmp	.L28
 .L43:
-	.loc 1 194 20 discriminator 4
+	.loc 1 195 20 discriminator 4
 	movl	-61496(%rbp), %eax
 .LBE12:
-	.loc 1 194 18 is_stmt 1 discriminator 4
+	.loc 1 195 18 is_stmt 1 discriminator 4
 	movl	%eax, -61528(%rbp)
-	.loc 1 195 9
+	.loc 1 196 9
 	movl	-61528(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC24(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 197 9
+	.loc 1 198 9
 	leaq	-30736(%rbp), %rax
 	movl	$30720, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
 .L41:
-	.loc 1 192 24
+	.loc 1 193 24
 	movq	-61480(%rbp), %rdx
 	leaq	-30736(%rbp), %rax
 	movq	%rdx, %rcx
@@ -1101,19 +1101,19 @@ get_command:
 	movl	$1, %esi
 	movq	%rax, %rdi
 	call	fread@PLT
-	.loc 1 192 22 discriminator 1
+	.loc 1 193 22 discriminator 1
 	movl	%eax, -61528(%rbp)
-	.loc 1 192 74 discriminator 1
+	.loc 1 193 74 discriminator 1
 	cmpl	$0, -61528(%rbp)
 	jg	.L44
-	.loc 1 200 5
+	.loc 1 201 5
 	leaq	-61456(%rbp), %rax
 	movl	$30720, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
 .LBB13:
-	.loc 1 201 16
+	.loc 1 202 16
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	leaq	-61456(%rbp), %rsi
@@ -1121,7 +1121,7 @@ get_command:
 	movl	$30720, %edx
 	movl	%eax, %edi
 	call	recv@PLT
-	.loc 1 201 16 is_stmt 0 discriminator 1
+	.loc 1 202 16 is_stmt 0 discriminator 1
 	movl	%eax, -61504(%rbp)
 	cmpl	$0, -61504(%rbp)
 	jns	.L45
@@ -1132,118 +1132,118 @@ get_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 201 16 discriminator 2
+	.loc 1 202 16 discriminator 2
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 201 16
+	.loc 1 202 16
 	jmp	.L28
 .L45:
-	.loc 1 201 16 discriminator 2
+	.loc 1 202 16 discriminator 2
 	cmpl	$0, -61504(%rbp)
 	jne	.L46
-	.loc 1 201 16 discriminator 3
+	.loc 1 202 16 discriminator 3
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 201 16 discriminator 1
+	.loc 1 202 16 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 201 16 discriminator 2
+	.loc 1 202 16 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 201 16
+	.loc 1 202 16
 	jmp	.L28
 .L46:
-	.loc 1 201 16 discriminator 4
+	.loc 1 202 16 discriminator 4
 	movl	-61504(%rbp), %eax
 .LBE13:
-	.loc 1 201 14 is_stmt 1 discriminator 4
+	.loc 1 202 14 is_stmt 1 discriminator 4
 	movl	%eax, -61528(%rbp)
-	.loc 1 202 9
+	.loc 1 203 9
 	leaq	-61456(%rbp), %rax
 	movl	$7, %edx
 	leaq	.LC7(%rip), %rcx
 	movq	%rcx, %rsi
 	movq	%rax, %rdi
 	call	strncmp@PLT
-	.loc 1 202 8 discriminator 1
+	.loc 1 203 8 discriminator 1
 	testl	%eax, %eax
 	jne	.L47
-	.loc 1 204 9
+	.loc 1 205 9
 	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 205 9
+	.loc 1 206 9
 	leaq	.LC25(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 206 9
+	.loc 1 207 9
 	movq	-61488(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 207 66
+	.loc 1 208 66
 	movq	-61552(%rbp), %rax
 	movzbl	1(%rax), %eax
-	.loc 1 207 9
+	.loc 1 208 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
 	leaq	.LC26(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 208 9
+	.loc 1 209 9
 	leaq	.LC14(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 	jmp	.L48
 .L47:
-	.loc 1 212 9
+	.loc 1 213 9
 	leaq	.LC16(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 213 9
+	.loc 1 214 9
 	leaq	.LC27(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 214 9
+	.loc 1 215 9
 	movq	-61488(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC18(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 215 68
+	.loc 1 216 68
 	movq	-61552(%rbp), %rax
 	movzbl	1(%rax), %eax
-	.loc 1 215 9
+	.loc 1 216 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
 	leaq	.LC19(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 216 9
+	.loc 1 217 9
 	leaq	.LC20(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 .L48:
 .LBB14:
-	.loc 1 218 16
+	.loc 1 219 16
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -1251,7 +1251,7 @@ get_command:
 	leaq	.LC7(%rip), %rsi
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 218 16 is_stmt 0 discriminator 1
+	.loc 1 219 16 is_stmt 0 discriminator 1
 	movl	%eax, -61500(%rbp)
 	cmpl	$0, -61500(%rbp)
 	jns	.L49
@@ -1262,49 +1262,51 @@ get_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 218 16 discriminator 2
+	.loc 1 219 16 discriminator 2
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 218 16
+	.loc 1 219 16
 	jmp	.L28
 .L49:
-	.loc 1 218 16 discriminator 2
+	.loc 1 219 16 discriminator 2
 	cmpl	$0, -61500(%rbp)
 	jne	.L50
-	.loc 1 218 16 discriminator 3
+	.loc 1 219 16 discriminator 3
 	movq	-61544(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 218 16 discriminator 1
+	.loc 1 219 16 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 218 16 discriminator 2
+	.loc 1 219 16 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 218 16
+	.loc 1 219 16
 	jmp	.L28
 .L50:
-	.loc 1 218 16 discriminator 4
+	.loc 1 219 16 discriminator 4
 	movl	-61500(%rbp), %eax
 .LBE14:
-	.loc 1 218 14 is_stmt 1 discriminator 4
+	.loc 1 219 14 is_stmt 1 discriminator 4
 	movl	%eax, -61528(%rbp)
 .L28:
-	.loc 1 222 7
+	.loc 1 223 7
 	cmpq	$0, -61480(%rbp)
 	je	.L26
-	.loc 1 223 9
+	.loc 1 224 9
 	movq	-61480(%rbp), %rax
 	movq	%rax, %rdi
 	call	fclose@PLT
+	.loc 1 225 12
+	movq	$0, -61480(%rbp)
 .L26:
-	.loc 1 224 1
+	.loc 1 227 1
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
 	je	.L52
@@ -1314,7 +1316,7 @@ get_command:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE322:
+.LFE311:
 	.size	get_command, .-get_command
 	.section	.rodata
 	.align 8
@@ -1336,8 +1338,8 @@ get_command:
 	.globl	ls_command
 	.type	ls_command, @function
 ls_command:
-.LFB323:
-	.loc 1 227 1
+.LFB312:
+	.loc 1 230 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -1348,17 +1350,17 @@ ls_command:
 	subq	$16, %rsp
 	movq	%rdi, -8(%rbp)
 	movq	%rsi, -16(%rbp)
-	.loc 1 228 5
+	.loc 1 231 5
 	leaq	.LC28(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 229 5
+	.loc 1 232 5
 	leaq	.LC29(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 230 5
+	.loc 1 233 5
 	movq	-8(%rbp), %rax
 	movq	8(%rax), %rax
 	movq	%rax, %rsi
@@ -1366,20 +1368,20 @@ ls_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 231 5
+	.loc 1 234 5
 	leaq	.LC31(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 235 26
+	.loc 1 238 26
 	movq	-8(%rbp), %rax
 	movq	8(%rax), %rdx
-	.loc 1 235 5
+	.loc 1 238 5
 	movq	-8(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	list_directory
-	.loc 1 240 5
+	.loc 1 243 5
 	movq	-8(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -1387,18 +1389,18 @@ ls_command:
 	leaq	.LC7(%rip), %rsi
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 242 5
+	.loc 1 245 5
 	leaq	.LC32(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 243 1
+	.loc 1 246 1
 	nop
 	leave
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE323:
+.LFE312:
 	.size	ls_command, .-ls_command
 	.section	.rodata
 	.align 8
@@ -1425,8 +1427,8 @@ ls_command:
 	.globl	list_directory
 	.type	list_directory, @function
 list_directory:
-.LFB324:
-	.loc 1 252 1
+.LFB313:
+	.loc 1 255 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -1443,26 +1445,26 @@ list_directory:
 	.cfi_offset 3, -24
 	movq	%rdi, -8424(%rbp)
 	movq	%rsi, -8432(%rbp)
-	.loc 1 252 1
+	.loc 1 255 1
 	movq	%fs:40, %rax
 	movq	%rax, -24(%rbp)
 	xorl	%eax, %eax
-	.loc 1 257 5
+	.loc 1 260 5
 	movq	-8432(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC33(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 259 10
+	.loc 1 262 10
 	movq	-8432(%rbp), %rax
 	movq	%rax, %rdi
 	call	opendir@PLT
 	movq	%rax, -8408(%rbp)
-	.loc 1 260 8
+	.loc 1 263 8
 	cmpq	$0, -8408(%rbp)
 	jne	.L57
-	.loc 1 262 9
+	.loc 1 265 9
 	movq	stderr(%rip), %rax
 	movq	-8432(%rbp), %rdx
 	leaq	.LC34(%rip), %rcx
@@ -1470,18 +1472,18 @@ list_directory:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
-	.loc 1 263 84
+	.loc 1 266 84
 	call	__errno_location@PLT
-	.loc 1 263 9 discriminator 1
+	.loc 1 266 9 discriminator 1
 	movl	(%rax), %ebx
-	.loc 1 263 76 discriminator 1
+	.loc 1 266 76 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 263 9 discriminator 2
+	.loc 1 266 9 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %edi
 	call	strerror@PLT
 	movq	%rax, %rdx
-	.loc 1 263 9 is_stmt 0 discriminator 3
+	.loc 1 266 9 is_stmt 0 discriminator 3
 	movq	stderr(%rip), %rax
 	movl	%ebx, %ecx
 	leaq	.LC6(%rip), %rsi
@@ -1491,32 +1493,32 @@ list_directory:
 	jmp	.L54
 .L64:
 .LBB15:
-	.loc 1 270 25 is_stmt 1
+	.loc 1 273 25 is_stmt 1
 	movq	-8400(%rbp), %rax
 	addq	$19, %rax
-	.loc 1 270 13
+	.loc 1 273 13
 	leaq	.LC35(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
-	.loc 1 270 12 discriminator 1
+	.loc 1 273 12 discriminator 1
 	testl	%eax, %eax
 	je	.L66
-	.loc 1 270 60 discriminator 2
+	.loc 1 273 60 discriminator 2
 	movq	-8400(%rbp), %rax
 	addq	$19, %rax
-	.loc 1 270 48 discriminator 2
+	.loc 1 273 48 discriminator 2
 	leaq	.LC36(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	strcmp@PLT
-	.loc 1 270 45 discriminator 1
+	.loc 1 273 45 discriminator 1
 	testl	%eax, %eax
 	je	.L66
-	.loc 1 277 75
+	.loc 1 280 75
 	movq	-8400(%rbp), %rax
 	leaq	19(%rax), %rcx
-	.loc 1 277 9
+	.loc 1 280 9
 	movq	-8432(%rbp), %rdx
 	leaq	-8224(%rbp), %rax
 	movq	%rcx, %r8
@@ -1526,16 +1528,16 @@ list_directory:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	snprintf@PLT
-	.loc 1 280 13
+	.loc 1 283 13
 	leaq	-8368(%rbp), %rdx
 	leaq	-8224(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	stat@PLT
-	.loc 1 280 12 discriminator 1
+	.loc 1 283 12 discriminator 1
 	testl	%eax, %eax
 	jns	.L61
-	.loc 1 282 13
+	.loc 1 285 13
 	movq	stderr(%rip), %rax
 	leaq	-8224(%rbp), %rdx
 	leaq	.LC38(%rip), %rcx
@@ -1543,28 +1545,28 @@ list_directory:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
-	.loc 1 283 13
+	.loc 1 286 13
 	jmp	.L57
 .L61:
-	.loc 1 286 13
+	.loc 1 289 13
 	movl	-8344(%rbp), %eax
 	andl	$61440, %eax
-	.loc 1 286 12
+	.loc 1 289 12
 	cmpl	$32768, %eax
 	jne	.L57
 .LBB16:
-	.loc 1 289 50
+	.loc 1 292 50
 	movq	-8400(%rbp), %rax
 	addq	$19, %rax
-	.loc 1 289 37
+	.loc 1 292 37
 	movl	$95, %esi
 	movq	%rax, %rdi
 	call	strrchr@PLT
 	movq	%rax, -8392(%rbp)
-	.loc 1 290 16
+	.loc 1 293 16
 	cmpq	$0, -8392(%rbp)
 	je	.L57
-	.loc 1 290 44 discriminator 1
+	.loc 1 293 44 discriminator 1
 	call	__ctype_b_loc@PLT
 	movq	(%rax), %rax
 	movq	-8392(%rbp), %rdx
@@ -1576,14 +1578,14 @@ list_directory:
 	movzwl	(%rax), %eax
 	movzwl	%ax, %eax
 	andl	$2048, %eax
-	.loc 1 290 41 discriminator 1
+	.loc 1 293 41 discriminator 1
 	testl	%eax, %eax
 	je	.L57
 .LBB17:
-	.loc 1 296 67
+	.loc 1 299 67
 	movq	-8400(%rbp), %rax
 	leaq	19(%rax), %rdx
-	.loc 1 296 17
+	.loc 1 299 17
 	leaq	-4128(%rbp), %rax
 	movq	%rdx, %rcx
 	leaq	.LC39(%rip), %rdx
@@ -1591,14 +1593,14 @@ list_directory:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	snprintf@PLT
-	.loc 1 299 53
+	.loc 1 302 53
 	movq	-8392(%rbp), %rax
 	addq	$1, %rax
-	.loc 1 299 32
+	.loc 1 302 32
 	movq	%rax, %rdi
 	call	atoi@PLT
 	movl	%eax, -8412(%rbp)
-	.loc 1 301 17
+	.loc 1 304 17
 	movl	-8412(%rbp), %edx
 	leaq	-4128(%rbp), %rax
 	movq	%rax, %rsi
@@ -1606,18 +1608,18 @@ list_directory:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 304 34
+	.loc 1 307 34
 	movb	$3, -8378(%rbp)
 	movl	-8412(%rbp), %eax
 	movb	%al, -8377(%rbp)
-	.loc 1 307 40
+	.loc 1 310 40
 	leaq	-4128(%rbp), %rax
 	movq	%rax, %rdi
 	call	strlen@PLT
-	.loc 1 304 34
+	.loc 1 307 34
 	movl	%eax, -8376(%rbp)
 	movl	$0, -8372(%rbp)
-	.loc 1 311 17
+	.loc 1 314 17
 	movq	-8424(%rbp), %rax
 	movl	4(%rax), %eax
 	leaq	-8378(%rbp), %rsi
@@ -1625,9 +1627,9 @@ list_directory:
 	movl	$10, %edx
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 312 72
+	.loc 1 315 72
 	movl	-8376(%rbp), %eax
-	.loc 1 312 17
+	.loc 1 315 17
 	movl	%eax, %edx
 	movq	-8424(%rbp), %rax
 	movl	4(%rax), %eax
@@ -1639,24 +1641,24 @@ list_directory:
 .L66:
 .LBE17:
 .LBE16:
-	.loc 1 272 13
+	.loc 1 275 13
 	nop
 .L57:
 .LBE15:
-	.loc 1 267 21
+	.loc 1 270 21
 	movq	-8408(%rbp), %rax
 	movq	%rax, %rdi
 	call	readdir@PLT
 	movq	%rax, -8400(%rbp)
-	.loc 1 267 34 discriminator 1
+	.loc 1 270 34 discriminator 1
 	cmpq	$0, -8400(%rbp)
 	jne	.L64
-	.loc 1 317 5
+	.loc 1 320 5
 	movq	-8408(%rbp), %rax
 	movq	%rax, %rdi
 	call	closedir@PLT
 .L54:
-	.loc 1 318 1
+	.loc 1 321 1
 	movq	-24(%rbp), %rax
 	subq	%fs:40, %rax
 	je	.L65
@@ -1667,7 +1669,7 @@ list_directory:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE324:
+.LFE313:
 	.size	list_directory, .-list_directory
 	.section	.rodata
 	.align 8
@@ -1685,8 +1687,8 @@ list_directory:
 	.globl	delete_command
 	.type	delete_command, @function
 delete_command:
-.LFB325:
-	.loc 1 321 1
+.LFB314:
+	.loc 1 324 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -1703,31 +1705,31 @@ delete_command:
 	subq	$2112, %rsp
 	movq	%rdi, -30776(%rbp)
 	movq	%rsi, -30784(%rbp)
-	.loc 1 321 1
+	.loc 1 324 1
 	movq	%fs:40, %rax
 	movq	%rax, -8(%rbp)
 	xorl	%eax, %eax
-	.loc 1 325 5
+	.loc 1 328 5
 	leaq	-30736(%rbp), %rax
 	movl	$30720, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	.loc 1 326 22
+	.loc 1 329 22
 	movq	-30784(%rbp), %rax
 	movl	2(%rax), %eax
-	.loc 1 326 7
+	.loc 1 329 7
 	cmpl	$30720, %eax
 	jbe	.L68
-	.loc 1 327 9
+	.loc 1 330 9
 	leaq	.LC0(%rip), %rax
 	movq	%rax, %rdi
 	call	puts@PLT
-	.loc 1 328 9
+	.loc 1 331 9
 	jmp	.L69
 .L68:
 .LBB18:
-	.loc 1 330 5
+	.loc 1 333 5
 	movq	-30784(%rbp), %rax
 	movl	2(%rax), %eax
 	movl	%eax, %edx
@@ -1737,7 +1739,7 @@ delete_command:
 	movl	$0, %ecx
 	movl	%eax, %edi
 	call	recv@PLT
-	.loc 1 330 5 is_stmt 0 discriminator 1
+	.loc 1 333 5 is_stmt 0 discriminator 1
 	movl	%eax, -30756(%rbp)
 	cmpl	$0, -30756(%rbp)
 	jns	.L70
@@ -1748,39 +1750,39 @@ delete_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 330 5 discriminator 2
+	.loc 1 333 5 discriminator 2
 	movq	-30776(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 330 5
+	.loc 1 333 5
 	jmp	.L69
 .L70:
-	.loc 1 330 5 discriminator 2
+	.loc 1 333 5 discriminator 2
 	cmpl	$0, -30756(%rbp)
 	jne	.L71
-	.loc 1 330 5 discriminator 3
+	.loc 1 333 5 discriminator 3
 	movq	-30776(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 330 5 discriminator 1
+	.loc 1 333 5 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 330 5 discriminator 2
+	.loc 1 333 5 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 330 5
+	.loc 1 333 5
 	jmp	.L69
 .L71:
 .LBE18:
-	.loc 1 334 78 is_stmt 1
+	.loc 1 337 78 is_stmt 1
 	movq	-30784(%rbp), %rax
 	movzbl	1(%rax), %eax
-	.loc 1 334 5
+	.loc 1 337 5
 	movzbl	%al, %esi
 	movq	-30776(%rbp), %rax
 	movq	8(%rax), %rdx
@@ -1791,17 +1793,17 @@ delete_command:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	asprintf@PLT
-	.loc 1 336 16
+	.loc 1 339 16
 	movq	-30752(%rbp), %rax
 	leaq	.LC4(%rip), %rdx
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
 	call	fopen@PLT
 	movq	%rax, -30744(%rbp)
-	.loc 1 337 8
+	.loc 1 340 8
 	cmpq	$0, -30744(%rbp)
 	jne	.L72
-	.loc 1 339 9
+	.loc 1 342 9
 	movq	-30776(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -1810,46 +1812,46 @@ delete_command:
 	movl	%eax, %edi
 	call	send@PLT
 .L72:
-	.loc 1 342 9
+	.loc 1 345 9
 	movq	-30752(%rbp), %rax
 	movq	%rax, %rdi
 	call	remove@PLT
-	.loc 1 342 8 discriminator 1
+	.loc 1 345 8 discriminator 1
 	testl	%eax, %eax
 	js	.L73
-	.loc 1 344 9
+	.loc 1 347 9
 	leaq	.LC10(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 345 9
+	.loc 1 348 9
 	leaq	.LC41(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 346 9
+	.loc 1 349 9
 	movq	-30752(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC12(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 347 69
+	.loc 1 350 69
 	movq	-30784(%rbp), %rax
 	movzbl	1(%rax), %eax
-	.loc 1 347 9
+	.loc 1 350 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
 	leaq	.LC42(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 348 9
+	.loc 1 351 9
 	leaq	.LC14(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 349 9
+	.loc 1 352 9
 	movq	-30776(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -1859,39 +1861,39 @@ delete_command:
 	call	send@PLT
 	jmp	.L74
 .L73:
-	.loc 1 353 9
+	.loc 1 356 9
 	leaq	.LC16(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 354 9
+	.loc 1 357 9
 	leaq	.LC43(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 355 9
+	.loc 1 358 9
 	movq	-30752(%rbp), %rax
 	movq	%rax, %rsi
 	leaq	.LC18(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 356 69
+	.loc 1 359 69
 	movq	-30784(%rbp), %rax
 	movzbl	1(%rax), %eax
-	.loc 1 356 9
+	.loc 1 359 9
 	movzbl	%al, %eax
 	movl	%eax, %esi
 	leaq	.LC44(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 357 9
+	.loc 1 360 9
 	leaq	.LC20(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 358 9
+	.loc 1 361 9
 	movq	-30776(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -1900,14 +1902,14 @@ delete_command:
 	movl	%eax, %edi
 	call	send@PLT
 .L74:
-	.loc 1 361 5
+	.loc 1 364 5
 	movq	-30752(%rbp), %rax
 	movq	%rax, %rdi
 	call	free@PLT
 .L69:
-	.loc 1 364 5
+	.loc 1 367 5
 	nop
-	.loc 1 365 1
+	.loc 1 368 1
 	movq	-8(%rbp), %rax
 	subq	%fs:40, %rax
 	je	.L76
@@ -1917,7 +1919,7 @@ delete_command:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE325:
+.LFE314:
 	.size	delete_command, .-delete_command
 	.section	.rodata
 	.align 8
@@ -1959,8 +1961,8 @@ delete_command:
 	.globl	handle_req
 	.type	handle_req, @function
 handle_req:
-.LFB326:
-	.loc 1 385 1
+.LFB315:
+	.loc 1 388 1
 	.cfi_startproc
 	endbr64
 	pushq	%rbp
@@ -1980,30 +1982,30 @@ handle_req:
 	.cfi_offset 12, -24
 	.cfi_offset 3, -32
 	movq	%rdi, -30952(%rbp)
-	.loc 1 385 1
+	.loc 1 388 1
 	movq	%fs:40, %rax
 	movq	%rax, -24(%rbp)
 	xorl	%eax, %eax
 .L105:
 .LBB19:
 .LBB20:
-	.loc 1 391 9
+	.loc 1 394 9
 	leaq	-30880(%rbp), %rax
 	movq	%rax, -30920(%rbp)
 	movl	$0, -30936(%rbp)
 	jmp	.L78
 .L79:
-	.loc 1 391 9 is_stmt 0 discriminator 3
+	.loc 1 394 9 is_stmt 0 discriminator 3
 	movq	-30920(%rbp), %rax
 	movl	-30936(%rbp), %edx
 	movq	$0, (%rax,%rdx,8)
 	addl	$1, -30936(%rbp)
 .L78:
-	.loc 1 391 9 discriminator 1
+	.loc 1 394 9 discriminator 1
 	cmpl	$15, -30936(%rbp)
 	jbe	.L79
 .LBE20:
-	.loc 1 392 9 is_stmt 1
+	.loc 1 395 9 is_stmt 1
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	leal	63(%rax), %edx
@@ -2023,13 +2025,13 @@ handle_req:
 	orq	%rax, %rdx
 	movslq	%esi, %rax
 	movq	%rdx, -30880(%rbp,%rax,8)
-	.loc 1 395 24
+	.loc 1 398 24
 	movq	$10, -30896(%rbp)
 	movq	$0, -30888(%rbp)
-	.loc 1 398 38
+	.loc 1 401 38
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
-	.loc 1 398 29
+	.loc 1 401 29
 	leal	1(%rax), %edi
 	leaq	-30896(%rbp), %rdx
 	leaq	-30880(%rbp), %rax
@@ -2039,23 +2041,23 @@ handle_req:
 	movq	%rax, %rsi
 	call	select@PLT
 	movl	%eax, -30932(%rbp)
-	.loc 1 400 12
+	.loc 1 403 12
 	cmpl	$0, -30932(%rbp)
 	jns	.L80
-	.loc 1 403 47
+	.loc 1 406 47
 	call	__errno_location@PLT
-	.loc 1 402 13
+	.loc 1 405 13
 	movl	(%rax), %eax
 	movl	%eax, %edi
 	call	strerror@PLT
 	movq	%rax, %r12
-	.loc 1 403 31
+	.loc 1 406 31
 	call	__errno_location@PLT
-	.loc 1 402 13
+	.loc 1 405 13
 	movl	(%rax), %ebx
 	call	gettid@PLT
 	movl	%eax, %edx
-	.loc 1 402 13 is_stmt 0 discriminator 2
+	.loc 1 405 13 is_stmt 0 discriminator 2
 	movq	stderr(%rip), %rax
 	movq	%r12, %r8
 	movl	%ebx, %ecx
@@ -2063,25 +2065,25 @@ handle_req:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	fprintf@PLT
-	.loc 1 404 13 is_stmt 1
+	.loc 1 407 13 is_stmt 1
 	jmp	.L104
 .L80:
-	.loc 1 408 17
+	.loc 1 411 17
 	cmpl	$0, -30932(%rbp)
 	jne	.L82
-	.loc 1 410 13
+	.loc 1 413 13
 	call	gettid@PLT
-	.loc 1 410 13 is_stmt 0 discriminator 1
+	.loc 1 413 13 is_stmt 0 discriminator 1
 	movl	$10, %edx
 	movl	%eax, %esi
 	leaq	.LC46(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 414 13 is_stmt 1
+	.loc 1 417 13 is_stmt 1
 	jmp	.L104
 .L82:
-	.loc 1 418 18
+	.loc 1 421 18
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	leal	63(%rax), %edx
@@ -2098,24 +2100,24 @@ handle_req:
 	salq	%cl, %rsi
 	movq	%rsi, %rax
 	andq	%rdx, %rax
-	.loc 1 418 17
+	.loc 1 421 17
 	testq	%rax, %rax
 	je	.L105
 .LBB21:
-	.loc 1 420 13
+	.loc 1 423 13
 	leaq	-30752(%rbp), %rax
 	movl	$30720, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
-	.loc 1 423 13
+	.loc 1 426 13
 	leaq	-30906(%rbp), %rax
 	movl	$10, %edx
 	movl	$0, %esi
 	movq	%rax, %rdi
 	call	memset@PLT
 .LBB22:
-	.loc 1 425 13
+	.loc 1 428 13
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	leaq	-30906(%rbp), %rsi
@@ -2123,7 +2125,7 @@ handle_req:
 	movl	$10, %edx
 	movl	%eax, %edi
 	call	recv@PLT
-	.loc 1 425 13 is_stmt 0 discriminator 1
+	.loc 1 428 13 is_stmt 0 discriminator 1
 	movl	%eax, -30928(%rbp)
 	cmpl	$0, -30928(%rbp)
 	jns	.L84
@@ -2134,124 +2136,124 @@ handle_req:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 425 13 discriminator 2
+	.loc 1 428 13 discriminator 2
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 425 13
+	.loc 1 428 13
 	jmp	.L85
 .L84:
-	.loc 1 425 13 discriminator 2
+	.loc 1 428 13 discriminator 2
 	cmpl	$0, -30928(%rbp)
 	jne	.L86
-	.loc 1 425 13 discriminator 4
+	.loc 1 428 13 discriminator 4
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 425 13 discriminator 1
+	.loc 1 428 13 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 425 13 discriminator 2
+	.loc 1 428 13 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 425 13
+	.loc 1 428 13
 	jmp	.L85
 .L86:
 .LBE22:
-	.loc 1 427 13 is_stmt 1
+	.loc 1 430 13 is_stmt 1
 	leaq	.LC47(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 429 34
+	.loc 1 432 34
 	movzbl	-30906(%rbp), %eax
-	.loc 1 428 13
+	.loc 1 431 13
 	cmpb	$1, %al
 	je	.L87
-	.loc 1 429 74
+	.loc 1 432 74
 	movzbl	-30906(%rbp), %eax
-	.loc 1 430 56
+	.loc 1 433 56
 	testb	%al, %al
 	je	.L88
-	.loc 1 430 72 discriminator 1
+	.loc 1 433 72 discriminator 1
 	movzbl	-30906(%rbp), %eax
-	.loc 1 431 56
+	.loc 1 434 56
 	cmpb	$3, %al
 	je	.L89
-	.loc 1 431 72 discriminator 1
+	.loc 1 434 72 discriminator 1
 	movzbl	-30906(%rbp), %eax
-	.loc 1 432 56
+	.loc 1 435 56
 	cmpb	$2, %al
 	je	.L90
-	.loc 1 432 72 discriminator 1
+	.loc 1 435 72 discriminator 1
 	movzbl	-30906(%rbp), %eax
-	.loc 1 433 96
+	.loc 1 436 96
 	cmpb	$5, %al
 	jne	.L91
-	.loc 1 433 96 is_stmt 0 discriminator 1
+	.loc 1 436 96 is_stmt 0 discriminator 1
 	leaq	.LC48(%rip), %rax
 	jmp	.L96
 .L91:
-	.loc 1 433 96 discriminator 2
+	.loc 1 436 96 discriminator 2
 	leaq	.LC49(%rip), %rax
 	jmp	.L96
 .L90:
-	.loc 1 432 56 is_stmt 1 discriminator 2
+	.loc 1 435 56 is_stmt 1 discriminator 2
 	leaq	.LC50(%rip), %rax
 	jmp	.L96
 .L89:
-	.loc 1 431 56 discriminator 2
+	.loc 1 434 56 discriminator 2
 	leaq	.LC51(%rip), %rax
 	jmp	.L96
 .L88:
-	.loc 1 430 56 discriminator 2
+	.loc 1 433 56 discriminator 2
 	leaq	.LC52(%rip), %rax
 	jmp	.L96
 .L87:
-	.loc 1 428 13 discriminator 1
+	.loc 1 431 13 discriminator 1
 	leaq	.LC53(%rip), %rax
 .L96:
-	.loc 1 428 13 is_stmt 0 discriminator 3
+	.loc 1 431 13 is_stmt 0 discriminator 3
 	movq	%rax, %rsi
 	leaq	.LC54(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 434 71 is_stmt 1
+	.loc 1 437 71 is_stmt 1
 	movzbl	-30905(%rbp), %eax
-	.loc 1 434 13
+	.loc 1 437 13
 	movzbl	%al, %eax
 	movl	%eax, %esi
 	leaq	.LC55(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 435 13
+	.loc 1 438 13
 	movl	-30904(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC56(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 436 13
+	.loc 1 439 13
 	movl	-30900(%rbp), %eax
 	movl	%eax, %esi
 	leaq	.LC57(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 437 13
+	.loc 1 440 13
 	leaq	.LC58(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
 .LBB23:
-	.loc 1 439 13
+	.loc 1 442 13
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	$0, %ecx
@@ -2259,7 +2261,7 @@ handle_req:
 	leaq	.LC7(%rip), %rsi
 	movl	%eax, %edi
 	call	send@PLT
-	.loc 1 439 13 is_stmt 0 discriminator 1
+	.loc 1 442 13 is_stmt 0 discriminator 1
 	movl	%eax, -30924(%rbp)
 	cmpl	$0, -30924(%rbp)
 	jns	.L97
@@ -2270,39 +2272,39 @@ handle_req:
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 439 13 discriminator 2
+	.loc 1 442 13 discriminator 2
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 439 13
+	.loc 1 442 13
 	jmp	.L85
 .L97:
-	.loc 1 439 13 discriminator 2
+	.loc 1 442 13 discriminator 2
 	cmpl	$0, -30924(%rbp)
 	jne	.L98
-	.loc 1 439 13 discriminator 3
+	.loc 1 442 13 discriminator 3
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 439 13 discriminator 1
+	.loc 1 442 13 discriminator 1
 	call	__errno_location@PLT
-	.loc 1 439 13 discriminator 2
+	.loc 1 442 13 discriminator 2
 	movl	(%rax), %eax
 	movl	%eax, %esi
 	leaq	.LC2(%rip), %rax
 	movq	%rax, %rdi
 	movl	$0, %eax
 	call	printf@PLT
-	.loc 1 439 13
+	.loc 1 442 13
 	jmp	.L85
 .L98:
 .LBE23:
-	.loc 1 441 35 is_stmt 1
+	.loc 1 444 35 is_stmt 1
 	movzbl	-30906(%rbp), %eax
 	movzbl	%al, %eax
-	.loc 1 441 13
+	.loc 1 444 13
 	cmpl	$3, %eax
 	je	.L99
 	cmpl	$3, %eax
@@ -2315,58 +2317,58 @@ handle_req:
 	je	.L102
 	cmpl	$1, %eax
 	jne	.L105
-	.loc 1 444 17
-	leaq	-30906(%rbp), %rdx
-	movq	-30952(%rbp), %rax
-	movq	%rdx, %rsi
-	movq	%rax, %rdi
-	call	put_command
-	.loc 1 445 17
-	jmp	.L103
-.L102:
 	.loc 1 447 17
 	leaq	-30906(%rbp), %rdx
 	movq	-30952(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
-	call	get_command
+	call	put_command
 	.loc 1 448 17
 	jmp	.L103
-.L101:
+.L102:
 	.loc 1 450 17
 	leaq	-30906(%rbp), %rdx
 	movq	-30952(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
-	call	delete_command
+	call	get_command
 	.loc 1 451 17
 	jmp	.L103
-.L99:
+.L101:
 	.loc 1 453 17
 	leaq	-30906(%rbp), %rdx
 	movq	-30952(%rbp), %rax
 	movq	%rdx, %rsi
 	movq	%rax, %rdi
-	call	ls_command
+	call	delete_command
 	.loc 1 454 17
+	jmp	.L103
+.L99:
+	.loc 1 456 17
+	leaq	-30906(%rbp), %rdx
+	movq	-30952(%rbp), %rax
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	call	ls_command
+	.loc 1 457 17
 	jmp	.L103
 .L85:
 .LBE21:
-	.loc 1 404 13 discriminator 1
+	.loc 1 407 13 discriminator 1
 	jmp	.L104
 .L103:
 .LBE19:
-	.loc 1 390 5
+	.loc 1 393 5
 	jmp	.L105
 .L104:
-	.loc 1 463 5
+	.loc 1 466 5
 	movq	-30952(%rbp), %rax
 	movl	4(%rax), %eax
 	movl	%eax, %edi
 	call	close@PLT
-	.loc 1 465 12
+	.loc 1 468 12
 	movl	$0, %eax
-	.loc 1 466 1
+	.loc 1 469 1
 	movq	-24(%rbp), %rdx
 	subq	%fs:40, %rdx
 	je	.L107
@@ -2379,10 +2381,10 @@ handle_req:
 	.cfi_def_cfa 7, 8
 	ret
 	.cfi_endproc
-.LFE326:
+.LFE315:
 	.size	handle_req, .-handle_req
 .Letext0:
-	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/14/include/stddef.h"
+	.file 2 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h"
 	.file 3 "/usr/include/x86_64-linux-gnu/bits/types.h"
 	.file 4 "/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h"
 	.file 5 "/usr/include/x86_64-linux-gnu/bits/types/FILE.h"
@@ -2412,7 +2414,7 @@ handle_req:
 	.file 29 "/usr/include/errno.h"
 	.section	.debug_info,"",@progbits
 .Ldebug_info0:
-	.long	0x1487
+	.long	0x1486
 	.value	0x5
 	.byte	0x1
 	.byte	0x8
@@ -2441,7 +2443,7 @@ handle_req:
 	.long	.LASF3
 	.uleb128 0x27
 	.byte	0x8
-	.uleb128 0x12
+	.uleb128 0x10
 	.long	0x48
 	.uleb128 0x8
 	.byte	0x1
@@ -2784,8 +2786,8 @@ handle_req:
 	.long	.LASF56
 	.byte	0x4
 	.byte	0x5f
-	.byte	0x15
-	.long	0x346
+	.byte	0xa
+	.long	0x2e
 	.byte	0xb8
 	.uleb128 0x1
 	.long	.LASF57
@@ -2799,7 +2801,7 @@ handle_req:
 	.byte	0x4
 	.byte	0x62
 	.byte	0x8
-	.long	0x34b
+	.long	0x346
 	.byte	0xc4
 	.byte	0
 	.uleb128 0x3
@@ -2836,19 +2838,17 @@ handle_req:
 	.long	.LASF62
 	.uleb128 0x5
 	.long	0x33c
-	.uleb128 0x5
-	.long	0x318
 	.uleb128 0x7
 	.long	0x15b
-	.long	0x35b
+	.long	0x356
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x13
 	.byte	0
 	.uleb128 0x5
 	.long	0x162
-	.uleb128 0x12
-	.long	0x35b
+	.uleb128 0x10
+	.long	0x356
 	.uleb128 0x3
 	.long	.LASF63
 	.byte	0x6
@@ -2857,14 +2857,14 @@ handle_req:
 	.long	0x13e
 	.uleb128 0x5
 	.long	0x2fa
-	.uleb128 0x12
-	.long	0x371
+	.uleb128 0x10
+	.long	0x36c
 	.uleb128 0x2a
 	.long	.LASF248
 	.byte	0x6
 	.byte	0x97
 	.byte	0xe
-	.long	0x371
+	.long	0x36c
 	.uleb128 0x8
 	.byte	0x8
 	.byte	0x5
@@ -2877,7 +2877,7 @@ handle_req:
 	.byte	0x7
 	.byte	0x8
 	.byte	0x8
-	.long	0x3bb
+	.long	0x3b6
 	.uleb128 0x1
 	.long	.LASF67
 	.byte	0x7
@@ -2899,7 +2899,7 @@ handle_req:
 	.byte	0x8
 	.byte	0xb
 	.byte	0x8
-	.long	0x3e3
+	.long	0x3de
 	.uleb128 0x1
 	.long	.LASF67
 	.byte	0x8
@@ -2925,18 +2925,18 @@ handle_req:
 	.byte	0x80
 	.byte	0x9
 	.byte	0x3b
-	.long	0x405
+	.long	0x400
 	.uleb128 0x1
 	.long	.LASF72
 	.byte	0x9
 	.byte	0x40
 	.byte	0xf
-	.long	0x405
+	.long	0x400
 	.byte	0
 	.byte	0
 	.uleb128 0x7
-	.long	0x3e3
-	.long	0x415
+	.long	0x3de
+	.long	0x410
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0xf
@@ -2946,7 +2946,7 @@ handle_req:
 	.byte	0x9
 	.byte	0x46
 	.byte	0x5
-	.long	0x3ef
+	.long	0x3ea
 	.uleb128 0x8
 	.byte	0x8
 	.byte	0x7
@@ -2957,37 +2957,37 @@ handle_req:
 	.byte	0xa
 	.byte	0x33
 	.byte	0x10
-	.long	0x450
+	.long	0x44b
 	.uleb128 0x1
 	.long	.LASF76
 	.byte	0xa
 	.byte	0x35
 	.byte	0x23
-	.long	0x450
+	.long	0x44b
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF77
 	.byte	0xa
 	.byte	0x36
 	.byte	0x23
-	.long	0x450
+	.long	0x44b
 	.byte	0x8
 	.byte	0
 	.uleb128 0x5
-	.long	0x428
+	.long	0x423
 	.uleb128 0x3
 	.long	.LASF78
 	.byte	0xa
 	.byte	0x37
 	.byte	0x3
-	.long	0x428
+	.long	0x423
 	.uleb128 0xd
 	.long	.LASF79
 	.byte	0x28
 	.byte	0xb
 	.byte	0x16
 	.byte	0x8
-	.long	0x4d7
+	.long	0x4d2
 	.uleb128 0x1
 	.long	.LASF80
 	.byte	0xb
@@ -3042,7 +3042,7 @@ handle_req:
 	.byte	0xb
 	.byte	0x24
 	.byte	0x14
-	.long	0x455
+	.long	0x450
 	.byte	0x18
 	.byte	0
 	.uleb128 0x1e
@@ -3050,19 +3050,19 @@ handle_req:
 	.byte	0xc
 	.byte	0x43
 	.byte	0x9
-	.long	0x505
+	.long	0x500
 	.uleb128 0x13
 	.long	.LASF88
 	.byte	0xc
 	.byte	0x45
 	.byte	0x1c
-	.long	0x461
+	.long	0x45c
 	.uleb128 0x13
 	.long	.LASF89
 	.byte	0xc
 	.byte	0x46
 	.byte	0x8
-	.long	0x505
+	.long	0x500
 	.uleb128 0x13
 	.long	.LASF90
 	.byte	0xc
@@ -3072,7 +3072,7 @@ handle_req:
 	.byte	0
 	.uleb128 0x7
 	.long	0x15b
-	.long	0x515
+	.long	0x510
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x27
@@ -3082,9 +3082,11 @@ handle_req:
 	.byte	0xc
 	.byte	0x48
 	.byte	0x3
-	.long	0x4d7
+	.long	0x4d2
 	.uleb128 0x5
 	.long	0x526
+	.uleb128 0x10
+	.long	0x51c
 	.uleb128 0x2b
 	.uleb128 0x3
 	.long	.LASF92
@@ -3112,7 +3114,7 @@ handle_req:
 	.long	0x167
 	.uleb128 0x5
 	.long	0x156
-	.uleb128 0x12
+	.uleb128 0x10
 	.long	0x558
 	.uleb128 0x2d
 	.long	.LASF96
@@ -3182,20 +3184,20 @@ handle_req:
 	.long	.LASF104
 	.byte	0x10
 	.byte	0x11
-	.byte	0xb8
-	.byte	0x27
+	.byte	0xb7
+	.byte	0x8
 	.long	0x607
 	.uleb128 0x1
 	.long	.LASF105
 	.byte	0x11
-	.byte	0xba
+	.byte	0xb9
 	.byte	0x5
 	.long	0x5d3
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF106
 	.byte	0x11
-	.byte	0xbb
+	.byte	0xba
 	.byte	0xa
 	.long	0x607
 	.byte	0x2
@@ -3211,27 +3213,27 @@ handle_req:
 	.long	.LASF107
 	.byte	0x80
 	.byte	0x11
-	.byte	0xc5
-	.byte	0x27
+	.byte	0xc4
+	.byte	0x8
 	.long	0x64c
 	.uleb128 0x1
 	.long	.LASF108
 	.byte	0x11
-	.byte	0xc7
+	.byte	0xc6
 	.byte	0x5
 	.long	0x5d3
 	.byte	0
 	.uleb128 0x1
 	.long	.LASF109
 	.byte	0x11
-	.byte	0xc8
+	.byte	0xc7
 	.byte	0xa
 	.long	0x64c
 	.byte	0x2
 	.uleb128 0x1
 	.long	.LASF110
 	.byte	0x11
-	.byte	0xc9
+	.byte	0xc8
 	.byte	0x14
 	.long	0x3a
 	.byte	0x78
@@ -3250,7 +3252,7 @@ handle_req:
 	.byte	0x10
 	.byte	0x12
 	.byte	0xf7
-	.byte	0x27
+	.byte	0x8
 	.long	0x6a3
 	.uleb128 0x1
 	.long	.LASF112
@@ -3264,62 +3266,61 @@ handle_req:
 	.byte	0x12
 	.byte	0xfa
 	.byte	0xf
-	.long	0x71f
+	.long	0x71e
 	.byte	0x2
 	.uleb128 0x1
 	.long	.LASF114
 	.byte	0x12
 	.byte	0xfb
 	.byte	0x14
-	.long	0x704
+	.long	0x703
 	.byte	0x4
 	.uleb128 0x1
 	.long	.LASF115
 	.byte	0x12
 	.byte	0xfe
 	.byte	0x13
-	.long	0x7a4
+	.long	0x7a3
 	.byte	0x8
 	.byte	0
 	.uleb128 0x1f
 	.long	.LASF116
 	.byte	0x1c
 	.byte	0x12
-	.value	0x108
-	.byte	0x27
-	.long	0x6f8
+	.value	0x106
+	.long	0x6f7
 	.uleb128 0x9
 	.long	.LASF117
 	.byte	0x12
-	.value	0x10a
+	.value	0x108
 	.byte	0x5
 	.long	0x5d3
 	.byte	0
 	.uleb128 0x9
 	.long	.LASF118
 	.byte	0x12
-	.value	0x10b
+	.value	0x109
 	.byte	0xf
-	.long	0x71f
+	.long	0x71e
 	.byte	0x2
 	.uleb128 0x9
 	.long	.LASF119
 	.byte	0x12
-	.value	0x10c
+	.value	0x10a
 	.byte	0xe
 	.long	0x53f
 	.byte	0x4
 	.uleb128 0x9
 	.long	.LASF120
 	.byte	0x12
-	.value	0x10d
+	.value	0x10b
 	.byte	0x15
-	.long	0x789
+	.long	0x788
 	.byte	0x8
 	.uleb128 0x9
 	.long	.LASF121
 	.byte	0x12
-	.value	0x10e
+	.value	0x10c
 	.byte	0xe
 	.long	0x53f
 	.byte	0x18
@@ -3336,13 +3337,13 @@ handle_req:
 	.byte	0x12
 	.byte	0x1f
 	.byte	0x8
-	.long	0x71f
+	.long	0x71e
 	.uleb128 0x1
 	.long	.LASF124
 	.byte	0x12
 	.byte	0x21
 	.byte	0xf
-	.long	0x6f8
+	.long	0x6f7
 	.byte	0
 	.byte	0
 	.uleb128 0x3
@@ -3356,43 +3357,43 @@ handle_req:
 	.byte	0x12
 	.byte	0xdf
 	.byte	0x5
-	.long	0x759
+	.long	0x758
 	.uleb128 0x13
 	.long	.LASF126
 	.byte	0x12
 	.byte	0xe1
 	.byte	0xa
-	.long	0x759
+	.long	0x758
 	.uleb128 0x13
 	.long	.LASF127
 	.byte	0x12
 	.byte	0xe2
 	.byte	0xb
-	.long	0x769
+	.long	0x768
 	.uleb128 0x13
 	.long	.LASF128
 	.byte	0x12
 	.byte	0xe3
 	.byte	0xb
-	.long	0x779
+	.long	0x778
 	.byte	0
 	.uleb128 0x7
 	.long	0x527
-	.long	0x769
+	.long	0x768
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0xf
 	.byte	0
 	.uleb128 0x7
 	.long	0x533
-	.long	0x779
+	.long	0x778
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x7
 	.byte	0
 	.uleb128 0x7
 	.long	0x53f
-	.long	0x789
+	.long	0x788
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x3
@@ -3403,18 +3404,18 @@ handle_req:
 	.byte	0x12
 	.byte	0xdd
 	.byte	0x8
-	.long	0x7a4
+	.long	0x7a3
 	.uleb128 0x1
 	.long	.LASF130
 	.byte	0x12
 	.byte	0xe4
 	.byte	0x9
-	.long	0x72b
+	.long	0x72a
 	.byte	0
 	.byte	0
 	.uleb128 0x7
 	.long	0x4f
-	.long	0x7b4
+	.long	0x7b3
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x7
@@ -3424,8 +3425,7 @@ handle_req:
 	.byte	0x30
 	.byte	0x13
 	.value	0x235
-	.byte	0x8
-	.long	0x833
+	.long	0x831
 	.uleb128 0x9
 	.long	.LASF132
 	.byte	0x13
@@ -3480,18 +3480,18 @@ handle_req:
 	.byte	0x13
 	.value	0x23e
 	.byte	0x14
-	.long	0x833
+	.long	0x831
 	.byte	0x28
 	.byte	0
 	.uleb128 0x5
-	.long	0x7b4
+	.long	0x7b3
 	.uleb128 0xd
 	.long	.LASF140
 	.byte	0x90
 	.byte	0x14
 	.byte	0x1a
 	.byte	0x8
-	.long	0x909
+	.long	0x907
 	.uleb128 0x1
 	.long	.LASF141
 	.byte	0x14
@@ -3574,33 +3574,33 @@ handle_req:
 	.byte	0x14
 	.byte	0x4a
 	.byte	0x15
-	.long	0x3bb
+	.long	0x3b6
 	.byte	0x48
 	.uleb128 0x1
 	.long	.LASF153
 	.byte	0x14
 	.byte	0x4b
 	.byte	0x15
-	.long	0x3bb
+	.long	0x3b6
 	.byte	0x58
 	.uleb128 0x1
 	.long	.LASF154
 	.byte	0x14
 	.byte	0x4c
 	.byte	0x15
-	.long	0x3bb
+	.long	0x3b6
 	.byte	0x68
 	.uleb128 0x1
 	.long	.LASF155
 	.byte	0x14
 	.byte	0x59
 	.byte	0x17
-	.long	0x909
+	.long	0x907
 	.byte	0x78
 	.byte	0
 	.uleb128 0x7
 	.long	0x14a
-	.long	0x919
+	.long	0x917
 	.uleb128 0xe
 	.long	0x3a
 	.byte	0x2
@@ -3623,26 +3623,26 @@ handle_req:
 	.long	0x41
 	.byte	0x15
 	.byte	0x6d
-	.long	0x968
+	.long	0x966
 	.uleb128 0x19
 	.string	"GET"
 	.byte	0
 	.uleb128 0x19
 	.string	"PUT"
 	.byte	0x1
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF159
 	.byte	0x2
 	.uleb128 0x19
 	.string	"LS"
 	.byte	0x3
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF160
 	.byte	0x4
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF161
 	.byte	0x5
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF162
 	.byte	0x6
 	.byte	0
@@ -3650,7 +3650,7 @@ handle_req:
 	.byte	0xc8
 	.byte	0x15
 	.byte	0x7f
-	.long	0x9cc
+	.long	0x9ca
 	.uleb128 0x1
 	.long	.LASF163
 	.byte	0x15
@@ -3684,7 +3684,7 @@ handle_req:
 	.byte	0x15
 	.byte	0x87
 	.byte	0x16
-	.long	0x833
+	.long	0x831
 	.byte	0x90
 	.uleb128 0x1
 	.long	.LASF168
@@ -3698,7 +3698,7 @@ handle_req:
 	.byte	0x15
 	.byte	0x89
 	.byte	0x15
-	.long	0x515
+	.long	0x510
 	.byte	0xa0
 	.byte	0
 	.uleb128 0x3
@@ -3706,46 +3706,46 @@ handle_req:
 	.byte	0x15
 	.byte	0x8a
 	.byte	0x3
-	.long	0x968
+	.long	0x966
 	.uleb128 0x20
 	.long	0x41
 	.byte	0x16
 	.byte	0x2f
-	.long	0xa34
-	.uleb128 0x11
+	.long	0xa32
+	.uleb128 0x12
 	.long	.LASF171
 	.value	0x100
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF172
 	.value	0x200
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF173
 	.value	0x400
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF174
 	.value	0x800
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF175
 	.value	0x1000
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF176
 	.value	0x2000
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF177
 	.value	0x4000
-	.uleb128 0x11
+	.uleb128 0x12
 	.long	.LASF178
 	.value	0x8000
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF179
 	.byte	0x1
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF180
 	.byte	0x2
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF181
 	.byte	0x4
-	.uleb128 0x10
+	.uleb128 0x11
 	.long	.LASF182
 	.byte	0x8
 	.byte	0
@@ -3755,7 +3755,7 @@ handle_req:
 	.byte	0x1
 	.byte	0x41
 	.byte	0x10
-	.long	0xa76
+	.long	0xa74
 	.uleb128 0x1
 	.long	.LASF184
 	.byte	0x1
@@ -3790,7 +3790,7 @@ handle_req:
 	.byte	0x1
 	.byte	0x47
 	.byte	0x3
-	.long	0xa34
+	.long	0xa32
 	.uleb128 0x1a
 	.long	.LASF194
 	.byte	0x19
@@ -3803,35 +3803,35 @@ handle_req:
 	.byte	0x66
 	.byte	0xc
 	.long	0x88
-	.long	0xab8
+	.long	0xab6
 	.uleb128 0x2
 	.long	0x88
 	.uleb128 0x2
-	.long	0xabd
+	.long	0xabb
 	.uleb128 0x2
-	.long	0xabd
+	.long	0xabb
 	.uleb128 0x2
-	.long	0xabd
+	.long	0xabb
 	.uleb128 0x2
-	.long	0xac7
+	.long	0xac5
 	.byte	0
 	.uleb128 0x5
-	.long	0x415
-	.uleb128 0x12
-	.long	0xab8
+	.long	0x410
+	.uleb128 0x10
+	.long	0xab6
 	.uleb128 0x5
-	.long	0x393
-	.uleb128 0x12
-	.long	0xac2
+	.long	0x38e
+	.uleb128 0x10
+	.long	0xac0
 	.uleb128 0xa
 	.long	.LASF190
 	.byte	0x6
 	.byte	0x9e
 	.byte	0xc
 	.long	0x88
-	.long	0xae2
+	.long	0xae0
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.byte	0
 	.uleb128 0xa
 	.long	.LASF191
@@ -3839,9 +3839,9 @@ handle_req:
 	.byte	0x86
 	.byte	0xc
 	.long	0x88
-	.long	0xaf8
+	.long	0xaf6
 	.uleb128 0x2
-	.long	0xaf8
+	.long	0xaf6
 	.byte	0
 	.uleb128 0x5
 	.long	0x5c2
@@ -3850,10 +3850,10 @@ handle_req:
 	.byte	0x17
 	.byte	0xa4
 	.byte	0x17
-	.long	0xb13
-	.long	0xb13
+	.long	0xb11
+	.long	0xb11
 	.uleb128 0x2
-	.long	0xaf8
+	.long	0xaf6
 	.byte	0
 	.uleb128 0x5
 	.long	0x562
@@ -3863,27 +3863,27 @@ handle_req:
 	.byte	0x69
 	.byte	0xc
 	.long	0x88
-	.long	0xb2e
+	.long	0xb2c
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.byte	0
 	.uleb128 0x1a
 	.long	.LASF195
 	.byte	0x16
 	.byte	0x4f
 	.byte	0x23
-	.long	0xb3a
+	.long	0xb38
 	.uleb128 0x5
-	.long	0x38e
+	.long	0x389
 	.uleb128 0xb
 	.long	.LASF196
 	.byte	0x1a
 	.value	0x111
 	.byte	0xe
 	.long	0x156
-	.long	0xb5b
+	.long	0xb59
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x2
 	.long	0x88
 	.byte	0
@@ -3893,29 +3893,29 @@ handle_req:
 	.byte	0xcd
 	.byte	0xc
 	.long	0x88
-	.long	0xb76
+	.long	0xb74
 	.uleb128 0x2
-	.long	0x360
+	.long	0x35b
 	.uleb128 0x2
-	.long	0xb7b
+	.long	0xb79
 	.byte	0
 	.uleb128 0x5
-	.long	0x838
-	.uleb128 0x12
-	.long	0xb76
+	.long	0x836
+	.uleb128 0x10
+	.long	0xb74
 	.uleb128 0xb
 	.long	.LASF197
 	.byte	0x6
 	.value	0x181
 	.byte	0xc
 	.long	0x88
-	.long	0xba2
+	.long	0xba0
 	.uleb128 0x2
 	.long	0x156
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x16
 	.byte	0
 	.uleb128 0xa
@@ -3924,21 +3924,21 @@ handle_req:
 	.byte	0x9c
 	.byte	0xc
 	.long	0x88
-	.long	0xbbd
+	.long	0xbbb
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.byte	0
 	.uleb128 0xa
 	.long	.LASF199
 	.byte	0x17
 	.byte	0x8d
 	.byte	0xd
-	.long	0xaf8
-	.long	0xbd3
+	.long	0xaf6
+	.long	0xbd1
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.byte	0
 	.uleb128 0xa
 	.long	.LASF200
@@ -3946,21 +3946,21 @@ handle_req:
 	.byte	0x9f
 	.byte	0xc
 	.long	0x88
-	.long	0xbf3
+	.long	0xbf1
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF201
 	.byte	0x6
-	.value	0x2d8
+	.value	0x2e2
 	.byte	0xf
 	.long	0x2e
-	.long	0xc19
+	.long	0xc17
 	.uleb128 0x2
 	.long	0x4a
 	.uleb128 0x2
@@ -3968,7 +3968,7 @@ handle_req:
 	.uleb128 0x2
 	.long	0x2e
 	.uleb128 0x2
-	.long	0x376
+	.long	0x371
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF202
@@ -3976,29 +3976,29 @@ handle_req:
 	.value	0x197
 	.byte	0xf
 	.long	0x2e
-	.long	0xc30
+	.long	0xc2e
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF203
 	.byte	0x6
-	.value	0x307
+	.value	0x311
 	.byte	0x11
 	.long	0x9b
-	.long	0xc47
+	.long	0xc45
 	.uleb128 0x2
-	.long	0x371
+	.long	0x36c
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF204
 	.byte	0x6
-	.value	0x301
+	.value	0x30b
 	.byte	0xc
 	.long	0x88
-	.long	0xc68
+	.long	0xc66
 	.uleb128 0x2
-	.long	0x371
+	.long	0x36c
 	.uleb128 0x2
 	.long	0x9b
 	.uleb128 0x2
@@ -4010,32 +4010,32 @@ handle_req:
 	.byte	0xb8
 	.byte	0xc
 	.long	0x88
-	.long	0xc7e
+	.long	0xc7c
 	.uleb128 0x2
-	.long	0x371
+	.long	0x36c
 	.byte	0
 	.uleb128 0x2f
 	.long	.LASF249
 	.byte	0x18
 	.value	0x2af
 	.byte	0xd
-	.long	0xc91
+	.long	0xc8f
 	.uleb128 0x2
 	.long	0x48
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF206
 	.byte	0x6
-	.value	0x2df
+	.value	0x2e9
 	.byte	0xf
 	.long	0x2e
-	.long	0xcb7
+	.long	0xcb5
 	.uleb128 0x2
 	.long	0x521
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.uleb128 0x2
 	.long	0x371
 	.byte	0
@@ -4044,12 +4044,12 @@ handle_req:
 	.byte	0x1c
 	.byte	0x8a
 	.byte	0x10
-	.long	0x365
-	.long	0xcdc
+	.long	0x360
+	.long	0xcda
 	.uleb128 0x2
 	.long	0x88
 	.uleb128 0x2
-	.long	0x521
+	.long	0x51c
 	.uleb128 0x2
 	.long	0x2e
 	.uleb128 0x2
@@ -4061,7 +4061,7 @@ handle_req:
 	.value	0x1a3
 	.byte	0xe
 	.long	0x156
-	.long	0xcf3
+	.long	0xcf1
 	.uleb128 0x2
 	.long	0x88
 	.byte	0
@@ -4071,7 +4071,7 @@ handle_req:
 	.value	0x165
 	.byte	0xc
 	.long	0x88
-	.long	0xd10
+	.long	0xd0e
 	.uleb128 0x2
 	.long	0x371
 	.uleb128 0x2
@@ -4083,12 +4083,12 @@ handle_req:
 	.byte	0x6
 	.value	0x108
 	.byte	0xe
-	.long	0x371
-	.long	0xd2c
+	.long	0x36c
+	.long	0xd2a
 	.uleb128 0x2
-	.long	0x360
+	.long	0x35b
 	.uleb128 0x2
-	.long	0x360
+	.long	0x35b
 	.byte	0
 	.uleb128 0xb
 	.long	.LASF211
@@ -4096,11 +4096,11 @@ handle_req:
 	.value	0x193
 	.byte	0xc
 	.long	0x88
-	.long	0xd49
+	.long	0xd47
 	.uleb128 0x2
 	.long	0x55d
 	.uleb128 0x2
-	.long	0x360
+	.long	0x35b
 	.uleb128 0x16
 	.byte	0
 	.uleb128 0xb
@@ -4109,7 +4109,7 @@ handle_req:
 	.value	0x166
 	.byte	0xc
 	.long	0x88
-	.long	0xd60
+	.long	0xd5e
 	.uleb128 0x2
 	.long	0x88
 	.byte	0
@@ -4119,9 +4119,9 @@ handle_req:
 	.value	0x16b
 	.byte	0xc
 	.long	0x88
-	.long	0xd78
+	.long	0xd76
 	.uleb128 0x2
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x16
 	.byte	0
 	.uleb128 0x1a
@@ -4129,14 +4129,14 @@ handle_req:
 	.byte	0x1d
 	.byte	0x25
 	.byte	0xd
-	.long	0x92e
+	.long	0x92c
 	.uleb128 0xa
 	.long	.LASF215
 	.byte	0x1c
 	.byte	0x91
 	.byte	0x10
-	.long	0x365
-	.long	0xda9
+	.long	0x360
+	.long	0xda7
 	.uleb128 0x2
 	.long	0x88
 	.uleb128 0x2
@@ -4152,67 +4152,67 @@ handle_req:
 	.byte	0x3d
 	.byte	0xe
 	.long	0x48
-	.long	0xdc9
+	.long	0xdc7
 	.uleb128 0x2
 	.long	0x48
 	.uleb128 0x2
 	.long	0x88
 	.uleb128 0x2
-	.long	0x3a
+	.long	0x2e
 	.byte	0
 	.uleb128 0x30
 	.long	.LASF250
 	.byte	0x1
-	.value	0x180
+	.value	0x183
 	.byte	0x7
 	.long	0x48
-	.quad	.LFB326
-	.quad	.LFE326-.LFB326
+	.quad	.LFB315
+	.quad	.LFE315-.LFB315
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x21
 	.string	"sd"
-	.value	0x180
+	.value	0x183
 	.byte	0x21
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30968
 	.uleb128 0x6
 	.long	.LASF217
-	.value	0x182
+	.value	0x185
 	.byte	0xa
-	.long	0xf0c
+	.long	0xf0a
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30768
 	.uleb128 0x6
 	.long	.LASF218
-	.value	0x183
+	.value	0x186
 	.byte	0xc
-	.long	0x415
+	.long	0x410
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30896
 	.uleb128 0x22
 	.long	.LASF224
-	.value	0x1cb
+	.value	0x1ce
 	.quad	.L104
 	.uleb128 0xf
 	.quad	.LBB19
 	.quad	.LBE19-.LBB19
 	.uleb128 0x6
 	.long	.LASF219
-	.value	0x18b
+	.value	0x18e
 	.byte	0x18
-	.long	0x393
+	.long	0x38e
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30912
 	.uleb128 0x6
 	.long	.LASF220
-	.value	0x18e
+	.value	0x191
 	.byte	0xd
 	.long	0x88
 	.uleb128 0x4
@@ -4221,10 +4221,10 @@ handle_req:
 	.uleb128 0xc
 	.quad	.LBB20
 	.quad	.LBE20-.LBB20
-	.long	0xe98
-	.uleb128 0x23
+	.long	0xe96
+	.uleb128 0x1b
 	.string	"__i"
-	.value	0x187
+	.value	0x18a
 	.byte	0x9
 	.long	0x41
 	.uleb128 0x4
@@ -4232,9 +4232,9 @@ handle_req:
 	.sleb128 -30952
 	.uleb128 0x6
 	.long	.LASF221
-	.value	0x187
+	.value	0x18a
 	.byte	0x9
-	.long	0xab8
+	.long	0xab6
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30936
@@ -4244,19 +4244,19 @@ handle_req:
 	.quad	.LBE21-.LBB21
 	.uleb128 0x6
 	.long	.LASF222
-	.value	0x1a6
+	.value	0x1a9
 	.byte	0x1e
-	.long	0xa76
+	.long	0xa74
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30922
 	.uleb128 0xc
 	.quad	.LBB22
 	.quad	.LBE22-.LBB22
-	.long	0xee1
+	.long	0xedf
 	.uleb128 0x6
 	.long	.LASF223
-	.value	0x1a9
+	.value	0x1ac
 	.byte	0xd
 	.long	0x88
 	.uleb128 0x4
@@ -4268,7 +4268,7 @@ handle_req:
 	.quad	.LBE23-.LBB23
 	.uleb128 0x6
 	.long	.LASF223
-	.value	0x1b7
+	.value	0x1ba
 	.byte	0xd
 	.long	0x88
 	.uleb128 0x4
@@ -4279,66 +4279,66 @@ handle_req:
 	.byte	0
 	.byte	0
 	.uleb128 0x5
-	.long	0x9cc
+	.long	0x9ca
 	.uleb128 0x7
 	.long	0x15b
-	.long	0xf1d
-	.uleb128 0x24
+	.long	0xf1b
+	.uleb128 0x23
 	.long	0x3a
 	.value	0x77ff
 	.byte	0
 	.uleb128 0x31
 	.long	.LASF227
 	.byte	0x1
-	.value	0x140
+	.value	0x143
 	.byte	0x6
-	.quad	.LFB325
-	.quad	.LFE325-.LFB325
+	.quad	.LFB314
+	.quad	.LFE314-.LFB314
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0xfc3
+	.long	0xfc1
 	.uleb128 0x21
 	.string	"sd"
-	.value	0x140
+	.value	0x143
 	.byte	0x24
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30792
 	.uleb128 0x32
 	.long	.LASF222
 	.byte	0x1
-	.value	0x140
+	.value	0x143
 	.byte	0x3a
-	.long	0xfc3
+	.long	0xfc1
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30800
 	.uleb128 0x6
 	.long	.LASF217
-	.value	0x143
+	.value	0x146
 	.byte	0xa
-	.long	0xf0c
+	.long	0xf0a
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
 	.uleb128 0x22
 	.long	.LASF225
-	.value	0x16b
+	.value	0x16e
 	.quad	.L69
 	.uleb128 0x6
 	.long	.LASF226
-	.value	0x14d
+	.value	0x150
 	.byte	0xb
 	.long	0x156
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30768
-	.uleb128 0x23
+	.uleb128 0x1b
 	.string	"fs"
-	.value	0x150
+	.value	0x153
 	.byte	0xb
-	.long	0x371
+	.long	0x36c
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30760
@@ -4347,7 +4347,7 @@ handle_req:
 	.quad	.LBE18-.LBB18
 	.uleb128 0x6
 	.long	.LASF223
-	.value	0x14a
+	.value	0x14d
 	.byte	0x5
 	.long	0x88
 	.uleb128 0x4
@@ -4356,52 +4356,52 @@ handle_req:
 	.byte	0
 	.byte	0
 	.uleb128 0x5
-	.long	0xa76
+	.long	0xa74
 	.uleb128 0x17
 	.long	.LASF228
-	.byte	0xfb
-	.quad	.LFB324
-	.quad	.LFE324-.LFB324
+	.byte	0xfe
+	.quad	.LFB313
+	.quad	.LFE313-.LFB313
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x10bd
+	.long	0x10be
 	.uleb128 0x14
 	.string	"sd"
-	.byte	0xfb
+	.byte	0xfe
 	.byte	0x24
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8440
 	.uleb128 0x18
 	.long	.LASF229
-	.byte	0xfb
+	.byte	0xfe
 	.byte	0x34
-	.long	0x35b
+	.long	0x356
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8448
 	.uleb128 0x1b
 	.string	"dp"
-	.byte	0xfd
+	.value	0x100
 	.byte	0xa
-	.long	0xaf8
+	.long	0xaf6
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8424
-	.uleb128 0x4
+	.uleb128 0x6
 	.long	.LASF230
-	.byte	0xfe
+	.value	0x101
 	.byte	0x14
-	.long	0xb13
+	.long	0xb11
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8416
-	.uleb128 0x4
+	.uleb128 0x6
 	.long	.LASF231
-	.byte	0xff
+	.value	0x102
 	.byte	0x11
-	.long	0x838
+	.long	0x836
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8384
@@ -4410,9 +4410,9 @@ handle_req:
 	.quad	.LBE15-.LBB15
 	.uleb128 0x6
 	.long	.LASF232
-	.value	0x114
+	.value	0x117
 	.byte	0xe
-	.long	0x10bd
+	.long	0x10be
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8240
@@ -4421,7 +4421,7 @@ handle_req:
 	.quad	.LBE16-.LBB16
 	.uleb128 0x6
 	.long	.LASF233
-	.value	0x121
+	.value	0x124
 	.byte	0x13
 	.long	0x156
 	.uleb128 0x4
@@ -4432,15 +4432,15 @@ handle_req:
 	.quad	.LBE17-.LBB17
 	.uleb128 0x6
 	.long	.LASF234
-	.value	0x125
+	.value	0x128
 	.byte	0x16
-	.long	0x10bd
+	.long	0x10be
 	.uleb128 0x3
 	.byte	0x91
 	.sleb128 -4144
 	.uleb128 0x6
 	.long	.LASF185
-	.value	0x12b
+	.value	0x12e
 	.byte	0x15
 	.long	0x88
 	.uleb128 0x4
@@ -4448,9 +4448,9 @@ handle_req:
 	.sleb128 -8428
 	.uleb128 0x6
 	.long	.LASF235
-	.value	0x130
+	.value	0x133
 	.byte	0x22
-	.long	0xa76
+	.long	0xa74
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -8394
@@ -4460,32 +4460,32 @@ handle_req:
 	.byte	0
 	.uleb128 0x7
 	.long	0x15b
-	.long	0x10ce
-	.uleb128 0x24
+	.long	0x10cf
+	.uleb128 0x23
 	.long	0x3a
 	.value	0xfff
 	.byte	0
 	.uleb128 0x17
 	.long	.LASF236
-	.byte	0xe2
-	.quad	.LFB323
-	.quad	.LFE323-.LFB323
+	.byte	0xe5
+	.quad	.LFB312
+	.quad	.LFE312-.LFB312
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x1106
+	.long	0x1107
 	.uleb128 0x14
 	.string	"sd"
-	.byte	0xe2
+	.byte	0xe5
 	.byte	0x20
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x2
 	.byte	0x91
 	.sleb128 -24
 	.uleb128 0x18
 	.long	.LASF222
-	.byte	0xe2
+	.byte	0xe5
 	.byte	0x36
-	.long	0xfc3
+	.long	0xfc1
 	.uleb128 0x2
 	.byte	0x91
 	.sleb128 -32
@@ -4493,8 +4493,8 @@ handle_req:
 	.uleb128 0x17
 	.long	.LASF237
 	.byte	0x8e
-	.quad	.LFB322
-	.quad	.LFE322-.LFB322
+	.quad	.LFB311
+	.quad	.LFE311-.LFB311
 	.uleb128 0x1
 	.byte	0x9c
 	.long	0x12eb
@@ -4502,7 +4502,7 @@ handle_req:
 	.string	"sd"
 	.byte	0x8e
 	.byte	0x21
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61560
@@ -4510,7 +4510,7 @@ handle_req:
 	.long	.LASF222
 	.byte	0x8e
 	.byte	0x37
-	.long	0xfc3
+	.long	0xfc1
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61568
@@ -4526,7 +4526,7 @@ handle_req:
 	.long	.LASF217
 	.byte	0x91
 	.byte	0xa
-	.long	0xf0c
+	.long	0xf0a
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61472
@@ -4534,7 +4534,7 @@ handle_req:
 	.long	.LASF239
 	.byte	0x92
 	.byte	0xa
-	.long	0xf0c
+	.long	0xf0a
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30752
@@ -4546,15 +4546,14 @@ handle_req:
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61504
-	.uleb128 0x25
+	.uleb128 0x24
 	.long	.LASF225
-	.byte	0xdc
+	.byte	0xdd
 	.quad	.L28
-	.uleb128 0x1b
+	.uleb128 0x25
 	.string	"fs"
 	.byte	0x9e
-	.byte	0xb
-	.long	0x371
+	.long	0x36c
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61496
@@ -4570,7 +4569,7 @@ handle_req:
 	.long	.LASF235
 	.byte	0xb0
 	.byte	0x16
-	.long	0xa76
+	.long	0xa74
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -61482
@@ -4632,7 +4631,7 @@ handle_req:
 	.long	0x127c
 	.uleb128 0x4
 	.long	.LASF223
-	.byte	0xb7
+	.byte	0xb8
 	.byte	0x10
 	.long	0x88
 	.uleb128 0x4
@@ -4645,7 +4644,7 @@ handle_req:
 	.long	0x12a2
 	.uleb128 0x4
 	.long	.LASF223
-	.byte	0xc2
+	.byte	0xc3
 	.byte	0x14
 	.long	0x88
 	.uleb128 0x4
@@ -4658,7 +4657,7 @@ handle_req:
 	.long	0x12c8
 	.uleb128 0x4
 	.long	.LASF223
-	.byte	0xc9
+	.byte	0xca
 	.byte	0x10
 	.long	0x88
 	.uleb128 0x4
@@ -4670,7 +4669,7 @@ handle_req:
 	.quad	.LBE14-.LBB14
 	.uleb128 0x4
 	.long	.LASF223
-	.byte	0xda
+	.byte	0xdb
 	.byte	0x10
 	.long	0x88
 	.uleb128 0x4
@@ -4681,16 +4680,16 @@ handle_req:
 	.uleb128 0x17
 	.long	.LASF241
 	.byte	0x4a
-	.quad	.LFB321
-	.quad	.LFE321-.LFB321
+	.quad	.LFB310
+	.quad	.LFE310-.LFB310
 	.uleb128 0x1
 	.byte	0x9c
-	.long	0x145e
+	.long	0x145d
 	.uleb128 0x14
 	.string	"sd"
 	.byte	0x4a
 	.byte	0x21
-	.long	0xf07
+	.long	0xf05
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30840
@@ -4698,7 +4697,7 @@ handle_req:
 	.long	.LASF222
 	.byte	0x4a
 	.byte	0x37
-	.long	0xfc3
+	.long	0xfc1
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30848
@@ -4730,7 +4729,7 @@ handle_req:
 	.long	.LASF217
 	.byte	0x4d
 	.byte	0xa
-	.long	0xf0c
+	.long	0xf0a
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30768
@@ -4750,22 +4749,21 @@ handle_req:
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30784
-	.uleb128 0x25
+	.uleb128 0x24
 	.long	.LASF225
 	.byte	0x89
 	.quad	.L6
-	.uleb128 0x1b
+	.uleb128 0x25
 	.string	"fs"
 	.byte	0x5b
-	.byte	0xb
-	.long	0x371
+	.long	0x36c
 	.uleb128 0x4
 	.byte	0x91
 	.sleb128 -30776
 	.uleb128 0xc
 	.quad	.LBB2
 	.quad	.LBE2-.LBB2
-	.long	0x13c9
+	.long	0x13c8
 	.uleb128 0x4
 	.long	.LASF223
 	.byte	0x56
@@ -4778,7 +4776,7 @@ handle_req:
 	.uleb128 0xc
 	.quad	.LBB3
 	.quad	.LBE3-.LBB3
-	.long	0x13ef
+	.long	0x13ee
 	.uleb128 0x4
 	.long	.LASF223
 	.byte	0x63
@@ -4791,7 +4789,7 @@ handle_req:
 	.uleb128 0xc
 	.quad	.LBB4
 	.quad	.LBE4-.LBB4
-	.long	0x1415
+	.long	0x1414
 	.uleb128 0x4
 	.long	.LASF223
 	.byte	0x68
@@ -4804,7 +4802,7 @@ handle_req:
 	.uleb128 0xc
 	.quad	.LBB5
 	.quad	.LBE5-.LBB5
-	.long	0x143b
+	.long	0x143a
 	.uleb128 0x4
 	.long	.LASF223
 	.byte	0x77
@@ -4833,8 +4831,8 @@ handle_req:
 	.byte	0x36
 	.byte	0x7
 	.long	0x48
-	.quad	.LFB320
-	.quad	.LFE320-.LFB320
+	.quad	.LFB309
+	.quad	.LFE309-.LFB309
 	.uleb128 0x1
 	.byte	0x9c
 	.uleb128 0x14
@@ -5064,12 +5062,10 @@ handle_req:
 	.byte	0
 	.byte	0
 	.uleb128 0x10
-	.uleb128 0x28
+	.uleb128 0x37
 	.byte	0
-	.uleb128 0x3
-	.uleb128 0xe
-	.uleb128 0x1c
-	.uleb128 0xb
+	.uleb128 0x49
+	.uleb128 0x13
 	.byte	0
 	.byte	0
 	.uleb128 0x11
@@ -5078,14 +5074,16 @@ handle_req:
 	.uleb128 0x3
 	.uleb128 0xe
 	.uleb128 0x1c
-	.uleb128 0x5
+	.uleb128 0xb
 	.byte	0
 	.byte	0
 	.uleb128 0x12
-	.uleb128 0x37
+	.uleb128 0x28
 	.byte	0
-	.uleb128 0x49
-	.uleb128 0x13
+	.uleb128 0x3
+	.uleb128 0xe
+	.uleb128 0x1c
+	.uleb128 0x5
 	.byte	0
 	.byte	0
 	.uleb128 0x13
@@ -5221,7 +5219,7 @@ handle_req:
 	.uleb128 0x21
 	.sleb128 1
 	.uleb128 0x3b
-	.uleb128 0xb
+	.uleb128 0x5
 	.uleb128 0x39
 	.uleb128 0xb
 	.uleb128 0x49
@@ -5280,7 +5278,8 @@ handle_req:
 	.uleb128 0x3b
 	.uleb128 0x5
 	.uleb128 0x39
-	.uleb128 0xb
+	.uleb128 0x21
+	.sleb128 8
 	.uleb128 0x1
 	.uleb128 0x13
 	.byte	0
@@ -5343,24 +5342,6 @@ handle_req:
 	.byte	0
 	.byte	0
 	.uleb128 0x23
-	.uleb128 0x34
-	.byte	0
-	.uleb128 0x3
-	.uleb128 0x8
-	.uleb128 0x3a
-	.uleb128 0x21
-	.sleb128 1
-	.uleb128 0x3b
-	.uleb128 0x5
-	.uleb128 0x39
-	.uleb128 0xb
-	.uleb128 0x49
-	.uleb128 0x13
-	.uleb128 0x2
-	.uleb128 0x18
-	.byte	0
-	.byte	0
-	.uleb128 0x24
 	.uleb128 0x21
 	.byte	0
 	.uleb128 0x49
@@ -5369,7 +5350,7 @@ handle_req:
 	.uleb128 0x5
 	.byte	0
 	.byte	0
-	.uleb128 0x25
+	.uleb128 0x24
 	.uleb128 0xa
 	.byte	0
 	.uleb128 0x3
@@ -5384,6 +5365,25 @@ handle_req:
 	.sleb128 1
 	.uleb128 0x11
 	.uleb128 0x1
+	.byte	0
+	.byte	0
+	.uleb128 0x25
+	.uleb128 0x34
+	.byte	0
+	.uleb128 0x3
+	.uleb128 0x8
+	.uleb128 0x3a
+	.uleb128 0x21
+	.sleb128 1
+	.uleb128 0x3b
+	.uleb128 0xb
+	.uleb128 0x39
+	.uleb128 0x21
+	.sleb128 11
+	.uleb128 0x49
+	.uleb128 0x13
+	.uleb128 0x2
+	.uleb128 0x18
 	.byte	0
 	.byte	0
 	.uleb128 0x26
@@ -5650,8 +5650,6 @@ handle_req:
 	.string	"_shortbuf"
 .LASF196:
 	.string	"strrchr"
-.LASF56:
-	.string	"_prevchain"
 .LASF247:
 	.string	"_IO_lock_t"
 .LASF202:
@@ -5716,6 +5714,8 @@ handle_req:
 	.string	"__errno_location"
 .LASF16:
 	.string	"__ino_t"
+.LASF246:
+	.string	"GNU C17 13.3.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
 .LASF207:
 	.string	"send"
 .LASF75:
@@ -5752,8 +5752,6 @@ handle_req:
 	.string	"sin_family"
 .LASF10:
 	.string	"__uint16_t"
-.LASF7:
-	.string	"size_t"
 .LASF82:
 	.string	"__owner"
 .LASF51:
@@ -5924,6 +5922,8 @@ handle_req:
 	.string	"__pad0"
 .LASF203:
 	.string	"ftell"
+.LASF56:
+	.string	"__pad5"
 .LASF2:
 	.string	"long unsigned int"
 .LASF138:
@@ -5946,8 +5946,8 @@ handle_req:
 	.string	"uint16_t"
 .LASF118:
 	.string	"sin6_port"
-.LASF246:
-	.string	"GNU C17 14.2.0 -mtune=generic -march=x86-64 -g -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+.LASF7:
+	.string	"size_t"
 .LASF96:
 	.string	"dirent"
 .LASF133:
@@ -6147,7 +6147,7 @@ handle_req:
 	.string	"src/handle_req.c"
 .LASF1:
 	.string	"/home/parth/Work/All_data/university/Network System/Assignments/PA4/server"
-	.ident	"GCC: (Ubuntu 14.2.0-4ubuntu2) 14.2.0"
+	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"
 	.align 8
